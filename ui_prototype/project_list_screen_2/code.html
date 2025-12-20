@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>ExpenseBinder - 项目列表</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#16a34a", // Green 600 for better visibility on white
+                        "primary-hover": "#15803d", // Green 700
+                        "background-light": "#f8fafc", // Slate 50
+                        "surface-light": "#ffffff",
+                        "surface-border": "#e2e8f0", // Slate 200
+                        "text-main": "#0f172a", // Slate 900
+                        "text-muted": "#64748b", // Slate 500
+                        "text-light": "#94a3b8", // Slate 400
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"]
+                    },
+                    borderRadius: {
+                        "DEFAULT": "1rem", 
+                        "lg": "1.5rem", 
+                        "xl": "2rem", 
+                        "full": "9999px"
+                    },
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light font-display text-text-main min-h-screen flex flex-col overflow-x-hidden">
+<header class="sticky top-0 z-50 w-full border-b border-surface-border bg-white/90 backdrop-blur-md">
+<div class="px-4 md:px-10 py-3 flex items-center justify-between">
+<div class="flex items-center gap-4 text-text-main">
+<div class="text-primary">
+<span class="material-symbols-outlined" style="font-size: 32px;">inventory_2</span>
+</div>
+<h2 class="text-text-main text-lg font-bold leading-tight tracking-[-0.015em]">ExpenseBinder</h2>
+</div>
+<div class="flex items-center justify-end gap-8">
+<nav class="hidden md:flex items-center gap-9">
+<a class="text-text-main text-sm font-medium hover:text-primary transition-colors" href="#">工作台</a>
+<a class="text-text-muted text-sm font-medium hover:text-text-main transition-colors" href="#">报表</a>
+<a class="text-text-muted text-sm font-medium hover:text-text-main transition-colors" href="#">设置</a>
+</nav>
+<div class="bg-center bg-no-repeat bg-cover rounded-full h-10 w-10 border-2 border-surface-border" data-alt="User profile avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuCVmjVME6hdAp0i9ckv3YUvBw_GqCzmZjtaLtht15rc6sLdyDmGrwE5qzKJzilRdK0T4tliRJnw2Jc0i68WLg1BKBX1DriUXW169P7ineRFTOqSTYVTH2qegxcORHECJEsYdW1_rNTZYVkElOnc6iukLuHp7bCHkzPvpA13C_3_OXTyacf3uQnhjyGNa9b4qDf-uzqxV07a407kzO7iATFZsS1EyEtuQSicS75cOdwsMGNXEH7Yr4F4p5v2Mz2jPJ-ivF0eYyY6Tv77");'></div>
+</div>
+</div>
+</header>
+<div class="flex-1 flex justify-center py-8 px-4 md:px-10">
+<div class="w-full max-w-[1200px] flex flex-col gap-10">
+<div class="flex flex-col gap-5">
+<div class="flex items-center justify-between">
+<h1 class="text-text-main text-3xl md:text-4xl font-black leading-tight tracking-[-0.033em]">项目</h1>
+<button class="flex items-center justify-center gap-2 h-10 px-6 bg-primary hover:bg-primary-hover text-white font-bold rounded-full transition-colors whitespace-nowrap shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[20px]">add</span>
+<span>新建</span>
+</button>
+</div>
+<div class="relative w-full">
+<div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-text-muted">
+<span class="material-symbols-outlined">search</span>
+</div>
+<input class="w-full h-12 bg-white hover:bg-white text-text-main placeholder:text-text-light rounded-full pl-11 pr-12 focus:outline-none focus:ring-2 focus:ring-primary/50 border border-surface-border transition-all shadow-sm" placeholder="搜索项目名/项目号" type="text"/>
+<button class="absolute inset-y-0 right-0 flex items-center pr-4 text-text-muted hover:text-text-main transition-colors" title="Clear search">
+<span class="material-symbols-outlined text-[20px]">cancel</span>
+</button>
+</div>
+</div>
+<main class="flex flex-col gap-10">
+<section>
+<div class="flex items-center justify-between mb-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">push_pin</span>
+<h2 class="text-text-main text-xl font-bold tracking-tight">置顶项目</h2>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+<div class="group relative flex flex-col p-5 bg-surface-light border border-surface-border rounded-xl hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-lg font-bold truncate pr-6">Alpha Marketing Q1</h3>
+<div class="absolute top-4 right-2">
+<button class="p-2 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-4">
+<span>PRJ-2024-001</span>
+<span class="w-1 h-1 rounded-full bg-surface-border"></span>
+<span>2小时前更新</span>
+</div>
+<div class="mt-auto flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-red-50 text-red-600 border border-red-200">
+<span class="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                缺票 3
+                            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                                未导出 12
+                            </span>
+</div>
+</div>
+<div class="group relative flex flex-col p-5 bg-surface-light border border-surface-border rounded-xl hover:border-primary/50 hover:shadow-lg hover:shadow-primary/5 transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-lg font-bold truncate pr-6">Office Renovation</h3>
+<div class="absolute top-4 right-2">
+<button class="p-2 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-4">
+<span>PRJ-2024-004</span>
+<span class="w-1 h-1 rounded-full bg-surface-border"></span>
+<span>昨天更新</span>
+</div>
+<div class="mt-auto flex items-center gap-2">
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-50 text-slate-400 border border-slate-100">
+                                缺票 0
+                            </span>
+<span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200">
+                                未导出 45
+                            </span>
+</div>
+</div>
+</div>
+</section>
+<section>
+<div class="flex items-center justify-between mb-5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-text-muted">history</span>
+<h2 class="text-text-main text-xl font-bold tracking-tight">最近项目</h2>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+<div class="group relative flex flex-col p-4 bg-white border border-surface-border rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-base font-bold truncate pr-6">Client Retreat 2024</h3>
+<div class="absolute top-3 right-2">
+<button class="p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-3">
+<span>PRJ-2024-008</span>
+<span class="w-0.5 h-0.5 rounded-full bg-surface-border"></span>
+<span>3天前</span>
+</div>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200">
+                                缺票 5
+                            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                                未导出 8
+                            </span>
+</div>
+</div>
+<div class="group relative flex flex-col p-4 bg-white border border-surface-border rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-base font-bold truncate pr-6">Q3 Travel Expenses</h3>
+<div class="absolute top-3 right-2">
+<button class="p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-3">
+<span>PRJ-2023-099</span>
+<span class="w-0.5 h-0.5 rounded-full bg-surface-border"></span>
+<span>2023/10/24</span>
+</div>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-400 border border-slate-100">
+                                缺票 0
+                            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-400 border border-slate-100">
+                                未导出 0
+                            </span>
+</div>
+</div>
+<div class="group relative flex flex-col p-4 bg-white border border-surface-border rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-base font-bold truncate pr-6">Software Licenses</h3>
+<div class="absolute top-3 right-2">
+<button class="p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-3">
+<span>PRJ-2024-002</span>
+<span class="w-0.5 h-0.5 rounded-full bg-surface-border"></span>
+<span>1周前</span>
+</div>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200">
+                                缺票 1
+                            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                                未导出 124
+                            </span>
+</div>
+</div>
+<div class="group relative flex flex-col p-4 bg-white border border-surface-border rounded-xl hover:shadow-md transition-all cursor-pointer">
+<div class="flex justify-between items-start mb-1">
+<h3 class="text-text-main text-base font-bold truncate pr-6">Event Logistics</h3>
+<div class="absolute top-3 right-2">
+<button class="p-1.5 text-text-muted hover:text-text-main rounded-full hover:bg-surface-border transition-colors">
+<span class="material-symbols-outlined text-[20px]">more_vert</span>
+</button>
+</div>
+</div>
+<div class="flex items-center gap-2 text-xs text-text-muted font-mono mb-3">
+<span>PRJ-2024-010</span>
+<span class="w-0.5 h-0.5 rounded-full bg-surface-border"></span>
+<span>2周前</span>
+</div>
+<div class="mt-auto flex flex-wrap gap-2">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-400 border border-slate-100">
+                                缺票 0
+                            </span>
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-500 border border-slate-200">
+                                未导出 18
+                            </span>
+</div>
+</div>
+</div>
+</section>
+</main>
+<section class="border-t border-dashed border-surface-border pt-10 mt-5">
+<div class="flex items-center gap-2 mb-6">
+<span class="material-symbols-outlined text-text-muted">developer_mode</span>
+<h2 class="text-text-muted text-sm font-bold uppercase tracking-wider">UI States Reference</h2>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="space-y-3">
+<h3 class="text-xs text-text-muted font-mono mb-2">LOADING STATE</h3>
+<div class="p-5 bg-white border border-surface-border rounded-xl animate-pulse">
+<div class="flex justify-between mb-4">
+<div class="h-5 bg-surface-border rounded w-2/3"></div>
+<div class="h-5 w-5 bg-surface-border rounded-full"></div>
+</div>
+<div class="h-3 bg-surface-border rounded w-1/3 mb-6"></div>
+<div class="flex gap-2">
+<div class="h-6 w-16 bg-surface-border rounded"></div>
+<div class="h-6 w-16 bg-surface-border rounded"></div>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<h3 class="text-xs text-text-muted font-mono mb-2">EMPTY STATE</h3>
+<div class="flex flex-col items-center justify-center p-8 bg-slate-50 border border-dashed border-surface-border rounded-xl text-center min-h-[200px]">
+<div class="w-12 h-12 rounded-full bg-white border border-surface-border flex items-center justify-center mb-3">
+<span class="material-symbols-outlined text-text-muted">inventory_2</span>
+</div>
+<h4 class="text-text-main font-bold mb-1">还没有项目</h4>
+<p class="text-text-muted text-xs mb-4">开始管理您的第一个报销项目</p>
+<button class="text-primary text-sm font-bold hover:underline">创建第一个项目</button>
+</div>
+</div>
+<div class="space-y-3">
+<h3 class="text-xs text-text-muted font-mono mb-2">UNBIND MODAL</h3>
+<div class="relative bg-white border border-surface-border rounded-xl p-5 flex flex-col items-center text-center shadow-lg">
+<div class="w-10 h-10 rounded-full bg-red-50 text-red-600 flex items-center justify-center mb-3">
+<span class="material-symbols-outlined">link_off</span>
+</div>
+<h4 class="text-text-main font-bold mb-1">解除绑定?</h4>
+<p class="text-text-muted text-xs mb-4">此操作将移除票据与费用的关联。</p>
+<div class="flex gap-2 w-full">
+<button class="flex-1 py-1.5 text-xs font-bold text-text-main bg-white border border-surface-border hover:bg-slate-50 rounded-lg transition-colors">取消</button>
+<button class="flex-1 py-1.5 text-xs font-bold text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors">解除绑定</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+</div>
+<div aria-labelledby="slide-over-title" aria-modal="true" class="relative z-[60]" role="dialog">
+<div class="fixed inset-0 bg-slate-900/30 backdrop-blur-sm transition-opacity"></div>
+<div class="fixed inset-0 overflow-hidden">
+<div class="absolute inset-0 overflow-hidden">
+<div class="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+<div class="pointer-events-auto w-screen max-w-md transform transition-all">
+<div class="flex h-full flex-col bg-white shadow-2xl border-l border-surface-border">
+<div class="flex-shrink-0 px-6 py-6 border-b border-surface-border bg-white z-10">
+<div class="flex items-start justify-between">
+<h2 class="text-text-main text-lg font-bold">费用详情</h2>
+<div class="ml-3 flex h-7 items-center">
+<button class="rounded-md text-text-muted hover:text-text-main focus:outline-none transition-colors" type="button">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+<div class="mt-6 flex items-center justify-between">
+<div class="relative group">
+<div class="flex items-baseline text-text-main">
+<span class="text-xl font-medium mr-1 text-text-muted">¥</span>
+<input class="bg-transparent border-none p-0 text-4xl font-black text-text-main focus:ring-0 w-48 placeholder-slate-300 tracking-tight" type="text" value="3,580.00"/>
+</div>
+<div class="absolute bottom-0 left-0 w-full h-[1px] bg-surface-border group-hover:bg-primary transition-colors"></div>
+</div>
+<div class="px-3 py-1 rounded-full bg-red-50 border border-red-200 text-red-600 text-xs font-bold flex items-center gap-1.5 shadow-sm">
+<span class="material-symbols-outlined text-[16px]">receipt_long</span>
+                   缺票
+                </div>
+</div>
+</div>
+<div class="flex-1 overflow-y-auto">
+<div class="px-6 py-6 space-y-8">
+<div class="space-y-6">
+<div class="grid grid-cols-2 gap-4">
+<div class="space-y-2">
+<label class="text-[11px] font-bold text-text-muted uppercase tracking-wider">日期</label>
+<div class="relative">
+<input class="block w-full rounded-lg bg-white border-surface-border text-text-main focus:border-primary focus:ring-primary sm:text-sm h-10 px-3 transition-colors shadow-sm" type="date" value="2023-10-24"/>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold text-text-muted uppercase tracking-wider">类别</label>
+<select class="block w-full rounded-lg bg-white border-surface-border text-text-main focus:border-primary focus:ring-primary sm:text-sm h-10 px-3 transition-colors shadow-sm">
+<option>业务招待</option>
+<option>差旅费</option>
+<option>餐饮费</option>
+<option>办公用品</option>
+</select>
+</div>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold text-text-muted uppercase tracking-wider">事项备注</label>
+<textarea class="block w-full rounded-lg bg-white border-surface-border text-text-main placeholder:text-slate-400 focus:border-primary focus:ring-primary sm:text-sm resize-none px-3 py-2 transition-colors shadow-sm" rows="3">客户会议晚餐 - Shangri-La Hotel</textarea>
+</div>
+<div class="space-y-2">
+<label class="text-[11px] font-bold text-text-muted uppercase tracking-wider">票据状态</label>
+<div class="grid grid-cols-3 gap-2 bg-slate-100 p-1 rounded-lg border border-surface-border">
+<button class="flex items-center justify-center py-2 px-2 rounded-md bg-red-600 text-white text-xs font-bold shadow-md ring-1 ring-inset ring-black/5">
+                                缺票
+                            </button>
+<button class="flex items-center justify-center py-2 px-2 rounded-md text-text-muted hover:text-text-main hover:bg-white hover:shadow-sm transition-all text-xs font-medium">
+                                已匹配
+                            </button>
+<button class="flex items-center justify-center py-2 px-2 rounded-md text-text-muted hover:text-text-main hover:bg-white hover:shadow-sm transition-all text-xs font-medium">
+                                不需票
+                            </button>
+</div>
+</div>
+</div>
+<div class="space-y-4">
+<div class="flex items-center justify-between pb-2 border-b border-dashed border-surface-border">
+<h3 class="text-sm font-bold text-text-main flex items-center gap-2">
+<span class="material-symbols-outlined text-text-muted text-[18px]">attachment</span>
+                            已关联票据 (0)
+                        </h3>
+</div>
+<div class="grid grid-cols-2 gap-3">
+<button class="flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-surface-border bg-slate-50 hover:border-primary/50 hover:bg-white transition-all group cursor-pointer">
+<div class="w-10 h-10 rounded-full bg-white border border-surface-border group-hover:border-primary/20 group-hover:bg-primary/10 flex items-center justify-center mb-2 transition-all">
+<span class="material-symbols-outlined text-text-muted group-hover:text-primary transition-colors">add_a_photo</span>
+</div>
+<span class="text-xs font-bold text-text-muted group-hover:text-primary transition-colors">添加票据</span>
+</button>
+<div class="h-32 rounded-xl bg-slate-50 border border-surface-border flex items-center justify-center">
+<span class="text-text-muted/60 text-xs">暂无票据</span>
+</div>
+</div>
+</div>
+<div class="space-y-4 pt-2">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<h3 class="text-sm font-bold text-text-main">建议票据</h3>
+<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-primary/10 text-primary border border-primary/20">
+<span class="material-symbols-outlined text-[10px] mr-1">smart_toy</span>
+                                智能推荐
+                            </span>
+</div>
+<button class="text-xs font-bold text-text-muted hover:text-primary transition-colors flex items-center gap-1">
+                            从收纳箱选择
+                            <span class="material-symbols-outlined text-[14px]">arrow_forward</span>
+</button>
+</div>
+<div class="space-y-3">
+<div class="group flex gap-3 p-3 rounded-xl bg-white border border-surface-border hover:border-primary/40 hover:shadow-md transition-all shadow-sm">
+<div class="w-20 h-20 rounded-lg bg-slate-100 flex-shrink-0 bg-cover bg-center relative overflow-hidden border border-surface-border" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuClsufADgqvXCwqmkKye21Ro_3zdanFD1EfITx5gTPZICIavtTyp-VdbQNlPfQbKM3bytb_0pGvMO3B6ksNNgGUShVX22Pv9u5jRqJNwV2i-Wq7LemrfjU01XKyTpwjxnFYW9ToUZPkpbGkt3C7ugQsdUTX-k_S3b3b0envWvipHz2Ijjnn1TLPASEJrwzR9oDvrj8KGSIf5KQf6BOwNYZLViqXX0wBLTu07DRk9GLryBPu670AKgwlDSYspir5CHRksseoff9BPYI3');">
+<div class="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
+</div>
+<div class="flex-1 flex flex-col justify-between py-0.5">
+<div>
+<div class="flex justify-between items-start mb-1">
+<div class="text-text-main font-bold text-base">¥ 3,580.00</div>
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-green-50 text-green-600 border border-green-200 whitespace-nowrap">高置信度</span>
+</div>
+<div class="flex items-center gap-2 text-text-muted text-xs">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                        2023-10-24
+                                    </div>
+</div>
+<button class="mt-2 w-full py-1.5 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5 shadow-lg shadow-primary/20">
+<span class="material-symbols-outlined text-[16px]">link</span>
+                                    确认绑定
+                                </button>
+</div>
+</div>
+<div class="group flex gap-3 p-3 rounded-xl bg-white border border-surface-border hover:border-surface-border/80 transition-all shadow-sm">
+<div class="w-20 h-20 rounded-lg bg-slate-100 flex-shrink-0 bg-cover bg-center relative overflow-hidden border border-surface-border opacity-70 group-hover:opacity-100 transition-opacity" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAfW9kJKlm1ggHEh-zltgsAYKAtG3NxhyQRe9CcmTGMeulghKY0PTgS6l6ngBzgaBR-o8Xl23Z0nCuHmNYZqa9MWc72CQckjzTdZpDV0i2zYKqkUuvE8YyAa_YU3qMLMMQl-_D7rPauSkHS4Qx5cBqzOjjGFJA4v_xfNvoWNw05Z5u3D_pTl63q9s-UC17Q1IvuOGsLQsQO-2PKBQ1OvvpmajbSwuQTJpDpYIDncm1bIzI5rGkv4mjK6s8M07jtxqtixs0BVNj6bSwy');">
+</div>
+<div class="flex-1 flex flex-col justify-between py-0.5">
+<div>
+<div class="flex justify-between items-start mb-1">
+<div class="text-text-main font-bold text-base">¥ 3,500.00</div>
+<span class="text-[10px] font-bold px-1.5 py-0.5 rounded bg-yellow-50 text-yellow-600 border border-yellow-200 whitespace-nowrap">中置信度</span>
+</div>
+<div class="flex items-center gap-2 text-text-muted text-xs">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+                                        2023-10-25
+                                    </div>
+</div>
+<button class="mt-2 w-full py-1.5 bg-white border border-surface-border hover:bg-slate-50 text-text-main text-xs font-bold rounded-lg transition-colors flex items-center justify-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">link</span>
+                                    确认绑定
+                                </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="flex-shrink-0 border-t border-surface-border px-6 py-4 flex items-center justify-end gap-3 bg-white z-10">
+<button class="rounded-full border border-surface-border bg-white px-5 py-2 text-sm font-bold text-text-main hover:bg-slate-50 focus:outline-none transition-colors" type="button">取消</button>
+<button class="rounded-full bg-primary px-6 py-2 text-sm font-bold text-white hover:bg-primary-hover focus:outline-none shadow-lg shadow-primary/20 transition-colors" type="button">保存</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+</body></html>

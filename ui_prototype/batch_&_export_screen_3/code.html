@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>新建/编辑项目</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#16a34a", // Green 600
+                        "primary-hover": "#15803d", // Green 700
+                        "background": "#f8fafc", // Slate 50
+                        "surface": "#ffffff", // White
+                        "surface-highlight": "#f1f5f9", // Slate 100
+                        "text-main": "#0f172a", // Slate 900
+                        "text-secondary": "#64748b", // Slate 500
+                        "border-light": "#e2e8f0", // Slate 200
+                        "warning": "#f59e0b",
+                        "error": "#ef4444",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }.toggle-checkbox:checked {
+            right: 0;
+            border-color: #16a34a;
+        }
+        .toggle-checkbox:checked + .toggle-label {
+            background-color: #16a34a;
+        }
+    </style>
+</head>
+<body class="bg-background font-display text-text-main min-h-screen flex flex-col">
+<header class="flex items-center justify-between whitespace-nowrap border-b border-solid border-border-light px-10 py-3 bg-surface shrink-0 z-50">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 text-text-main">
+<div class="size-8 text-primary">
+<svg fill="none" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+<path d="M39.5563 34.1455V13.8546C39.5563 15.708 36.8773 17.3437 32.7927 18.3189C30.2914 18.916 27.263 19.2655 24 19.2655C20.737 19.2655 17.7086 18.916 15.2073 18.3189C11.1227 17.3437 8.44365 15.708 8.44365 13.8546V34.1455C8.44365 35.9988 11.1227 37.6346 15.2073 38.6098C17.7086 39.2069 20.737 39.5564 24 39.5564C27.263 39.5564 30.2914 39.2069 32.7927 38.6098C36.8773 37.6346 39.5563 35.9988 39.5563 34.1455Z" fill="currentColor"></path>
+<path clip-rule="evenodd" d="M10.4485 13.8519C10.4749 13.9271 10.6203 14.246 11.379 14.7361C12.298 15.3298 13.7492 15.9145 15.6717 16.3735C18.0007 16.9296 20.8712 17.2655 24 17.2655C27.1288 17.2655 29.9993 16.9296 32.3283 16.3735C34.2508 15.9145 35.702 15.3298 36.621 14.7361C37.3796 14.246 37.5251 13.9271 37.5515 13.8519C37.5287 13.7876 37.4333 13.5973 37.0635 13.2931C36.5266 12.8516 35.6288 12.3647 34.343 11.9175C31.79 11.0295 28.1333 10.4437 24 10.4437C19.8667 10.4437 16.2099 11.0295 13.657 11.9175C12.3712 12.3647 11.4734 12.8516 10.9365 13.2931C10.5667 13.5973 10.4713 13.7876 10.4485 13.8519ZM37.5563 18.7877C36.3176 19.3925 34.8502 19.8839 33.2571 20.2642C30.5836 20.9025 27.3973 21.2655 24 21.2655C20.6027 21.2655 17.4164 20.9025 14.7429 20.2642C13.1498 19.8839 11.6824 19.3925 10.4436 18.7877V34.1275C10.4515 34.1545 10.5427 34.4867 11.379 35.027C12.298 35.6207 13.7492 36.2054 15.6717 36.6644C18.0007 37.2205 20.8712 37.5564 24 37.5564C27.1288 37.5564 29.9993 37.2205 32.3283 36.6644C34.2508 36.2054 35.702 35.6207 36.621 35.027C37.4573 34.4867 37.5485 34.1546 37.5563 34.1275V18.7877ZM41.5563 13.8546V34.1455C41.5563 36.1078 40.158 37.5042 38.7915 38.3869C37.3498 39.3182 35.4192 40.0389 33.2571 40.5551C30.5836 41.1934 27.3973 41.5564 24 41.5564C20.6027 41.5564 17.4164 41.1934 14.7429 40.5551C12.5808 40.0389 10.6502 39.3182 9.20848 38.3869C7.84205 37.5042 6.44365 36.1078 6.44365 34.1455L6.44365 13.8546C6.44365 12.2684 7.37223 11.0454 8.39581 10.2036C9.43325 9.3505 10.8137 8.67141 12.343 8.13948C15.4203 7.06909 19.5418 6.44366 24 6.44366C28.4582 6.44366 32.5797 7.06909 35.657 8.13948C37.1863 8.67141 38.5667 9.3505 39.6042 10.2036C40.6278 11.0454 41.5563 12.2684 41.5563 13.8546Z" fill="currentColor" fill-rule="evenodd"></path>
+</svg>
+</div>
+<h2 class="text-text-main text-lg font-bold leading-tight tracking-[-0.015em]">Expensify Pro</h2>
+</div>
+<nav class="flex items-center gap-9">
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">首页</a>
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">项目</a>
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">费用</a>
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary transition-colors" href="#">报表</a>
+</nav>
+</div>
+<div class="flex flex-1 justify-end gap-8">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBBDz4NIM1Mq5Ov30CxvCsbyoWxqEizP8_EmPDoCE5H2HCh0lHvMFV3gVkLdvIOGtro-_F08OSxBFXMX31dCiBzppq-h85ciH6iwwf_gI5aBTjztKr8U8AhRAYLgBUklyepgi3KUlIfMYOW8GniLVrVh8C0Hh1D6voXWO-k91IZyj2QwrokMJf7THkPj5gaeW_VK_xs4PRyE2HOXIXlKdNlQzqy0nYktx-yFdQWHW8NJGDpsm4BcB7zQQK4qJBrKboyQ7GTXUJrYvj2");'></div>
+</div>
+</header>
+<div class="layout-container flex h-full grow flex-col overflow-y-auto relative pb-24">
+<div class="px-6 lg:px-16 flex flex-1 justify-center py-5">
+<div class="layout-content-container flex flex-col max-w-[800px] flex-1">
+<div class="flex flex-wrap gap-2 px-1 pt-4 pb-6 shrink-0">
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary" href="#">首页</a>
+<span class="text-text-secondary text-sm font-medium leading-normal">/</span>
+<a class="text-text-secondary text-sm font-medium leading-normal hover:text-primary" href="#">项目管理</a>
+<span class="text-text-secondary text-sm font-medium leading-normal">/</span>
+<span class="text-text-main text-sm font-medium leading-normal">新建项目</span>
+</div>
+<div class="flex items-center justify-between gap-3 px-1 pb-8 shrink-0">
+<div class="flex items-center gap-4">
+<button class="flex items-center justify-center size-10 rounded-full bg-surface border border-border-light hover:bg-surface-highlight text-text-main transition-colors shadow-sm">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div>
+<h1 class="text-text-main text-3xl font-black leading-tight tracking-[-0.033em]">新建项目</h1>
+<p class="text-text-secondary text-sm mt-1">创建新的报销项目，用于归集费用。</p>
+</div>
+</div>
+<button class="hidden md:flex items-center justify-center bg-transparent border border-border-light hover:border-text-secondary text-text-secondary hover:text-text-main font-bold py-2 px-4 rounded-xl text-sm transition-all">
+                        取消
+                    </button>
+</div>
+<div class="mx-1 mb-6 bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-pulse">
+<span class="material-symbols-outlined text-error mt-0.5">error</span>
+<div class="flex-1">
+<h4 class="text-error font-bold text-sm">无法保存</h4>
+<p class="text-error/80 text-sm mt-0.5">请至少填写项目名或项目号</p>
+</div>
+</div>
+<div class="bg-surface rounded-2xl p-6 md:p-8 space-y-8 shadow-sm border border-border-light">
+<div>
+<h3 class="text-text-main font-bold text-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">edit_document</span>
+                            基本信息
+                        </h3>
+<div class="grid grid-cols-1 gap-6">
+<div class="space-y-2">
+<label class="text-sm font-medium text-text-secondary flex items-center gap-1">
+                                    项目名 <span class="text-error">*</span>
+</label>
+<div class="relative group">
+<input class="w-full bg-surface border border-error text-text-main text-base rounded-xl px-4 py-3 placeholder:text-text-secondary/50 focus:outline-none focus:ring-1 focus:ring-error transition-all" placeholder="例如：X艺人12月物料拍摄" type="text"/>
+<div class="absolute right-3 top-3 text-error">
+<span class="material-symbols-outlined text-[20px]">error</span>
+</div>
+</div>
+<p class="text-xs text-error">项目名不能为空</p>
+</div>
+<div class="space-y-2">
+<label class="text-sm font-medium text-text-secondary">项目号（可选）</label>
+<input class="w-full bg-surface border border-border-light text-text-main text-base rounded-xl px-4 py-3 placeholder:text-text-secondary/50 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="例如：PRJ-2023-001" type="text"/>
+</div>
+</div>
+</div>
+<div class="h-px bg-border-light w-full"></div>
+<div>
+<h3 class="text-text-main font-bold text-lg mb-6 flex items-center gap-2">
+<span class="material-symbols-outlined text-primary">label</span>
+                            分类与设置
+                        </h3>
+<div class="space-y-6">
+<div class="space-y-2">
+<label class="text-sm font-medium text-text-secondary">标签（可选）</label>
+<div class="w-full bg-surface border border-border-light rounded-xl px-2 py-2 flex flex-wrap gap-2 min-h-[56px] focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-all">
+<div class="bg-surface-highlight text-text-main text-sm px-3 py-1.5 rounded-lg flex items-center gap-2 group cursor-pointer hover:bg-slate-200 transition-colors">
+<span>艺人相关</span>
+<button class="hover:text-error transition-colors flex items-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<div class="bg-surface-highlight text-text-main text-sm px-3 py-1.5 rounded-lg flex items-center gap-2 group cursor-pointer hover:bg-slate-200 transition-colors">
+<span>北京</span>
+<button class="hover:text-error transition-colors flex items-center">
+<span class="material-symbols-outlined text-[14px]">close</span>
+</button>
+</div>
+<input class="bg-transparent border-none text-text-main text-sm h-8 flex-1 min-w-[120px] focus:ring-0 placeholder:text-text-secondary/50" placeholder="输入标签后按回车..." type="text"/>
+</div>
+<p class="text-xs text-text-secondary">用于快速筛选，例如：艺人、城市、项目阶段。</p>
+</div>
+<div class="flex items-center justify-between bg-surface-highlight p-4 rounded-xl border border-border-light">
+<div class="flex flex-col gap-0.5">
+<span class="text-text-main font-medium text-base">置顶项目</span>
+<span class="text-text-secondary text-xs">开启后该项目将显示在列表最前方</span>
+</div>
+<div class="relative inline-block w-12 mr-2 align-middle select-none transition duration-200 ease-in">
+<input class="toggle-checkbox absolute block w-6 h-6 rounded-full bg-white border-4 border-slate-300 appearance-none cursor-pointer transition-all duration-300" id="toggle" name="toggle" type="checkbox"/>
+<label class="toggle-label block overflow-hidden h-6 rounded-full bg-slate-300 cursor-pointer transition-colors duration-300" for="toggle"></label>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 bg-surface/90 backdrop-blur-md border-t border-border-light px-6 py-4 z-40">
+<div class="max-w-[800px] mx-auto flex items-center justify-end gap-4">
+<button class="w-full md:w-auto bg-primary hover:bg-primary-hover text-white font-extrabold py-3 px-8 rounded-xl text-base transition-all shadow-lg shadow-primary/20 flex items-center justify-center gap-2">
+<span>保存</span>
+</button>
+</div>
+</div>
+<div class="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-[slide-down_0.3s_ease-out]">
+<div class="bg-surface border border-error/20 text-text-main px-6 py-4 rounded-2xl shadow-xl shadow-slate-200 flex items-center gap-4 min-w-[320px]">
+<div class="bg-error/10 p-2 rounded-full text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-[20px]">error</span>
+</div>
+<div class="flex flex-col">
+<span class="font-bold text-sm">保存失败</span>
+<span class="text-text-secondary text-xs">网络连接超时，请重试</span>
+</div>
+<button class="ml-auto text-text-secondary hover:text-text-main">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+</div>
+
+</body></html>

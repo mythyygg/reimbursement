@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Project Details: Batches</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#49e619",
+                        "primary-dark": "#3bc212",
+                        "background-light": "#f6f8f6",
+                        "surface-white": "#ffffff",
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "sans-serif"],
+                        "body": ["Noto Sans", "sans-serif"],
+                    },
+                    borderRadius: {"DEFAULT": "1rem", "lg": "2rem", "xl": "3rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+    </style>
+</head>
+<body class="bg-background-light font-display text-slate-900 h-screen overflow-hidden flex selection:bg-primary selection:text-black">
+<aside class="hidden lg:flex flex-col w-64 h-full border-r border-slate-200 bg-white flex-shrink-0">
+<div class="p-6 flex items-center gap-3">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="Abstract green geometric logo pattern" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuA0YkUp0_X1weX6N-vUx1r9SzjEEcm66ahLdrffZSvNlsp9DMQg-dLfO3faxNqhlmBGCJFNi2nqttRKfZPsN7zoeJ603S1PF0fiK3t2T4KUIKPJYYu3Nsu8-WHQkbhScI2ro5AwnkTbQOIxaCqgdkKDKdHdjoAIlEH2IMrP1sLam6met97GlnoCAVSr-33ol2CyhOnx53Z4IKeQwN00_awQyq8Qe1is4mynJPDhvvUTSF4ngNZLd8Q_Ct5qeg2qXeuvISi1ei8Crqgs");'></div>
+<h1 class="text-slate-900 text-lg font-bold tracking-tight">ExpenseApp</h1>
+</div>
+<nav class="flex-1 px-4 flex flex-col gap-2 overflow-y-auto">
+<a class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-900 transition-colors">dashboard</span>
+<span class="text-slate-500 group-hover:text-slate-900 font-medium text-sm transition-colors">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-xl bg-primary text-slate-900 shadow-sm" href="#">
+<span class="material-symbols-outlined text-slate-900" style="font-variation-settings: 'FILL' 1;">folder</span>
+<span class="text-slate-900 font-medium text-sm">Projects</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-900 transition-colors">receipt_long</span>
+<span class="text-slate-500 group-hover:text-slate-900 font-medium text-sm transition-colors">Expenses</span>
+</a>
+<a class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-900 transition-colors">donut_large</span>
+<span class="text-slate-500 group-hover:text-slate-900 font-medium text-sm transition-colors">Reports</span>
+</a>
+</nav>
+<div class="p-4 border-t border-slate-200">
+<a class="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-slate-50 transition-colors group" href="#">
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-900 transition-colors">settings</span>
+<span class="text-slate-500 group-hover:text-slate-900 font-medium text-sm transition-colors">Settings</span>
+</a>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 relative">
+<header class="h-16 border-b border-slate-200 bg-white/80 backdrop-blur-md flex items-center justify-between px-6 z-20 relative">
+<div class="flex items-center">
+<button class="flex items-center justify-center p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+</div>
+<div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+<button class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-slate-100 transition-colors group">
+<span class="text-slate-900 font-bold text-sm lg:text-base tracking-tight">Marketing Campaign Q4</span>
+<span class="material-symbols-outlined text-slate-400 group-hover:text-slate-600 text-xl transition-colors">expand_more</span>
+</button>
+</div>
+<div class="flex items-center">
+<button class="flex items-center justify-center p-2 text-slate-500 hover:text-slate-900 hover:bg-slate-100 rounded-full transition-colors" title="Batches">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">inventory_2</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto relative z-10">
+<div class="max-w-[1200px] mx-auto px-6 lg:px-10 py-8">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
+<div>
+<h1 class="text-4xl font-extrabold text-slate-900 tracking-tight mb-2">批次</h1>
+<p class="text-slate-500 font-normal">Manage expense batches for Marketing Campaign Q4</p>
+</div>
+<button class="group flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark active:scale-95 transition-all text-slate-900 font-bold py-3 px-6 rounded-full shadow-[0_0_20px_rgba(73,230,25,0.3)] hover:shadow-[0_0_30px_rgba(73,230,25,0.5)]">
+<span class="material-symbols-outlined text-xl">add</span>
+<span>新建批次</span>
+</button>
+</div>
+<div class="border-b border-slate-200 mb-8">
+<div class="flex gap-8">
+<a class="pb-3 text-slate-500 hover:text-slate-900 text-sm font-bold border-b-[3px] border-transparent transition-colors" href="#">
+                            Overview
+                        </a>
+<a class="pb-3 text-slate-500 hover:text-slate-900 text-sm font-bold border-b-[3px] border-transparent transition-colors" href="#">
+                            Expenses
+                        </a>
+<a class="pb-3 text-slate-900 text-sm font-bold border-b-[3px] border-primary" href="#">
+                            Batches
+                        </a>
+<a class="pb-3 text-slate-500 hover:text-slate-900 text-sm font-bold border-b-[3px] border-transparent transition-colors" href="#">
+                            Settings
+                        </a>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+<div class="bg-white border border-slate-200 hover:border-slate-300 rounded-[24px] p-6 transition-all group shadow-sm hover:shadow-md">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-emerald-700 p-3 rounded-2xl">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h3 class="text-slate-900 font-bold text-lg leading-tight">2023.10 报销</h3>
+<span class="text-slate-400 text-xs font-mono">ID: B-202310-01</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Items</span>
+<span class="text-slate-900 text-xl font-bold font-mono">42</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total</span>
+<span class="text-slate-900 text-xl font-bold font-mono">¥ 12,450.00</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+<span class="material-symbols-outlined text-emerald-600 text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-emerald-700 text-xs font-bold uppercase tracking-wide">已导出</span>
+</div>
+<span class="text-slate-400 text-xs">Oct 31, 2023</span>
+</div>
+</div>
+<div class="bg-white border border-slate-200 hover:border-slate-300 rounded-[24px] p-6 transition-all group shadow-sm hover:shadow-md">
+<div class="flex justify-between items-start mb-6">
+<div class="flex items-center gap-3">
+<div class="bg-primary/10 text-emerald-700 p-3 rounded-2xl">
+<span class="material-symbols-outlined">inventory_2</span>
+</div>
+<div>
+<h3 class="text-slate-900 font-bold text-lg leading-tight">2023.11 报销</h3>
+<span class="text-slate-400 text-xs font-mono">ID: B-202311-01</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6">
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Items</span>
+<span class="text-slate-900 text-xl font-bold font-mono">28</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total</span>
+<span class="text-slate-900 text-xl font-bold font-mono">¥ 8,320.50</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-100">
+<span class="material-symbols-outlined text-emerald-600 text-sm" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="text-emerald-700 text-xs font-bold uppercase tracking-wide">已导出</span>
+</div>
+<span class="text-slate-400 text-xs">Nov 30, 2023</span>
+</div>
+</div>
+<div class="bg-white border border-slate-200 rounded-[24px] p-6 transition-all group relative overflow-hidden shadow-sm">
+<div class="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-10 -mt-10 pointer-events-none"></div>
+<div class="flex justify-between items-start mb-6 relative">
+<div class="flex items-center gap-3">
+<div class="bg-slate-900 text-white p-3 rounded-2xl">
+<span class="material-symbols-outlined">edit_document</span>
+</div>
+<div>
+<h3 class="text-slate-900 font-bold text-lg leading-tight">2023.12 报销</h3>
+<span class="text-slate-400 text-xs font-mono">ID: B-202312-Draft</span>
+</div>
+</div>
+<button class="text-slate-400 hover:text-slate-700 p-1 rounded-full hover:bg-slate-100 transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</div>
+<div class="grid grid-cols-2 gap-4 mb-6 relative">
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Items</span>
+<span class="text-slate-900 text-xl font-bold font-mono">15</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-500 text-xs font-medium uppercase tracking-wider mb-1">Total</span>
+<span class="text-slate-900 text-xl font-bold font-mono">¥ 3,100.00</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-4 border-t border-slate-100 relative">
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-50 border border-amber-100">
+<span class="material-symbols-outlined text-amber-500 text-sm">pending</span>
+<span class="text-amber-600 text-xs font-bold uppercase tracking-wide">未导出</span>
+</div>
+<span class="text-slate-400 text-xs">Last edit: 2h ago</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="absolute inset-0 z-50 flex items-center justify-center p-4">
+<div class="absolute inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
+<div class="relative w-full max-w-lg bg-white border border-slate-200 rounded-[2rem] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+<div class="flex items-center justify-between p-6 border-b border-slate-100 bg-slate-50/50">
+<h2 class="text-xl font-bold text-slate-900">新建报销批次</h2>
+<button class="text-slate-400 hover:text-slate-700 transition-colors p-1 rounded-full hover:bg-slate-100">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<div class="p-6 overflow-y-auto space-y-6">
+<div class="space-y-3">
+<label class="text-slate-500 text-sm font-bold uppercase tracking-wide">时间范围</label>
+<div class="grid grid-cols-[1fr,auto,1fr] gap-2 items-center">
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-[20px]">calendar_today</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary focus:border-transparent placeholder-slate-400" placeholder="Start Date" type="text" value="2024-01-01"/>
+</div>
+<span class="text-slate-300 material-symbols-outlined">arrow_forward</span>
+<div class="relative">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined text-[20px]">calendar_today</span>
+<input class="w-full bg-slate-50 border border-slate-200 rounded-xl py-3 pl-10 pr-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary focus:border-transparent placeholder-slate-400" placeholder="End Date" type="text" value="2024-01-31"/>
+</div>
+</div>
+</div>
+<div class="space-y-3">
+<label class="text-slate-500 text-sm font-bold uppercase tracking-wide">类别筛选 (可选)</label>
+<div class="relative">
+<span class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 material-symbols-outlined">expand_more</span>
+<select class="w-full appearance-none bg-slate-50 border border-slate-200 rounded-xl py-3 px-4 text-slate-900 text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+<option>所有类别</option>
+<option>差旅费</option>
+<option>办公用品</option>
+<option>招待费</option>
+</select>
+</div>
+</div>
+<div class="space-y-3">
+<div class="flex justify-between items-center">
+<label class="text-slate-500 text-sm font-bold uppercase tracking-wide">包含状态</label>
+<span class="text-xs text-slate-400">34 items found</span>
+</div>
+<div class="flex flex-col gap-2">
+<label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-primary/40 cursor-pointer hover:bg-slate-100 transition-colors">
+<div class="flex items-center gap-3">
+<div class="bg-primary/20 text-emerald-700 p-1.5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">check</span>
+</div>
+<span class="text-slate-900 text-sm font-medium">已匹配 (Matched)</span>
+</div>
+<input checked="" class="rounded-full bg-white border-slate-300 text-primary focus:ring-0 focus:ring-offset-0 w-5 h-5" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+<div class="flex items-center gap-3">
+<div class="bg-orange-500/10 text-orange-500 p-1.5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+</div>
+<div class="flex flex-col">
+<span class="text-slate-900 text-sm font-medium">缺票 (Missing Receipt)</span>
+<span class="text-orange-500 text-xs">Warning: 3 items selected</span>
+</div>
+</div>
+<input class="rounded-full bg-white border-slate-300 text-primary focus:ring-0 focus:ring-offset-0 w-5 h-5" type="checkbox"/>
+</label>
+<label class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 cursor-pointer hover:bg-slate-100 transition-colors">
+<div class="flex items-center gap-3">
+<div class="bg-blue-500/10 text-blue-500 p-1.5 rounded-full flex items-center justify-center">
+<span class="material-symbols-outlined text-[18px]">hourglass_top</span>
+</div>
+<span class="text-slate-900 text-sm font-medium">处理中 (Processing)</span>
+</div>
+<input class="rounded-full bg-white border-slate-300 text-primary focus:ring-0 focus:ring-offset-0 w-5 h-5" type="checkbox"/>
+</label>
+</div>
+</div>
+</div>
+<div class="p-6 border-t border-slate-100 bg-slate-50/50 flex gap-4">
+<button class="flex-1 py-3 px-4 rounded-full border border-slate-200 text-slate-700 font-bold hover:bg-slate-100 transition-colors">取消</button>
+<button class="flex-1 py-3 px-4 rounded-full bg-primary text-slate-900 font-bold hover:bg-primary-dark transition-colors shadow-lg shadow-green-500/20">生成检查</button>
+</div>
+</div>
+</div>
+</main>
+</body></html>

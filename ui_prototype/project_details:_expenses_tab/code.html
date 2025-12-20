@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>项目详情 - 支出明细</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&amp;family=Noto+Sans+SC:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#16a34a",
+                        "primary-hover": "#15803d",
+                        "background": "#f8fafc",
+                        "surface": "#ffffff",
+                        "surface-hover": "#f8fafc",
+                        "surface-active": "#f1f5f9",
+                        "border": "#e2e8f0",
+                        "text-main": "#0f172a",
+                        "text-secondary": "#64748b",
+                        "status-warning": "#d97706",
+                        "status-error": "#ef4444",
+                        "status-success": "#16a34a",
+                        "status-neutral": "#94a3b8"
+                    },
+                    fontFamily: {
+                        "display": ["Manrope", "Noto Sans SC", "sans-serif"],
+                        "body": ["Noto Sans SC", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.5rem", "lg": "1rem", "xl": "1.5rem", "2xl": "2rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-background font-display text-text-main min-h-screen flex flex-col overflow-x-hidden antialiased selection:bg-primary/20 selection:text-primary">
+<div class="fixed top-0 left-0 right-0 z-40 bg-surface/80 backdrop-blur-xl border-b border-border shadow-sm">
+<div class="max-w-5xl mx-auto w-full">
+<div class="relative flex items-center justify-between px-4 h-16">
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-text-main hover:bg-slate-100 transition-colors z-20">
+<span class="material-symbols-outlined">arrow_back</span>
+</button>
+<div class="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
+<div class="relative group pointer-events-auto">
+<button class="flex flex-col items-center justify-center py-1 px-4 rounded-xl hover:bg-slate-100 transition-colors group-active:scale-95 duration-150 cursor-pointer">
+<div class="flex items-center gap-1.5">
+<span class="font-bold text-text-main text-lg tracking-tight">Q3 市场推广活动</span>
+<span class="material-symbols-outlined text-text-secondary text-[20px] transition-transform group-hover:rotate-180">expand_more</span>
+</div>
+<div class="text-[10px] text-text-secondary font-medium tracking-wide">项目 ID: MK-2023-Q3</div>
+</button>
+<div class="absolute top-[calc(100%+0.5rem)] left-1/2 -translate-x-1/2 w-72 bg-surface border border-border rounded-xl shadow-xl shadow-slate-200/50 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform origin-top p-1.5 z-50 ring-1 ring-black/5">
+<div class="px-3 py-2 text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-1">
+                    最近浏览的项目
+                </div>
+<div class="space-y-0.5">
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg bg-slate-50 cursor-default border border-border">
+<div class="flex flex-col items-start">
+<span class="text-sm font-bold text-text-main">Q3 市场推广活动</span>
+<span class="text-[10px] text-text-secondary">MK-2023-Q3</span>
+</div>
+<span class="material-symbols-outlined text-primary text-[20px]">check</span>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-50 text-text-secondary hover:text-text-main transition-colors group/item text-left">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium text-text-main group-hover/item:text-primary transition-colors">Q2 研发设备采购</span>
+<span class="text-[10px] text-text-secondary/70">RD-2023-Q2</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-50 text-text-secondary hover:text-text-main transition-colors group/item text-left">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium text-text-main group-hover/item:text-primary transition-colors">年度团建活动</span>
+<span class="text-[10px] text-text-secondary/70">HR-2023-TB</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-50 text-text-secondary hover:text-text-main transition-colors group/item text-left">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium text-text-main group-hover/item:text-primary transition-colors">新办公室装修</span>
+<span class="text-[10px] text-text-secondary/70">ADM-2023-RN</span>
+</div>
+</button>
+<button class="w-full flex items-center justify-between px-3 py-2.5 rounded-lg hover:bg-slate-50 text-text-secondary hover:text-text-main transition-colors group/item text-left">
+<div class="flex flex-col items-start">
+<span class="text-sm font-medium text-text-main group-hover/item:text-primary transition-colors">Q3 客户招待费</span>
+<span class="text-[10px] text-text-secondary/70">SLS-2023-Q3</span>
+</div>
+</button>
+</div>
+</div>
+</div>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full text-text-secondary hover:text-primary hover:bg-primary/10 transition-colors z-20 group/icon relative" title="批次处理">
+<span class="material-symbols-outlined fill-1">layers</span>
+<span class="absolute top-11 right-0 bg-text-main text-white text-xs px-2 py-1 rounded opacity-0 invisible group-hover/icon:opacity-100 group-hover/icon:visible transition-all whitespace-nowrap z-50">批次管理</span>
+</button>
+</div>
+<div class="flex px-4 gap-6">
+<button class="relative px-2 py-3 text-primary font-bold text-sm transition-colors">
+                支出
+                <span class="absolute bottom-0 left-0 w-full h-0.5 bg-primary rounded-t-full shadow-[0_2px_8px_rgba(22,163,74,0.3)]"></span>
+</button>
+<button class="relative px-2 py-3 text-text-secondary hover:text-text-main font-medium text-sm transition-colors hover:bg-slate-100/50 rounded-t-lg">
+                票据
+            </button>
+<button class="relative px-2 py-3 text-text-secondary hover:text-text-main font-medium text-sm transition-colors hover:bg-slate-100/50 rounded-t-lg">
+                批次
+            </button>
+</div>
+</div>
+</div>
+<div class="flex flex-col grow w-full max-w-5xl mx-auto px-4 md:px-6 pt-36 pb-32">
+<div class="mb-6 space-y-4">
+<div class="flex items-center gap-2 overflow-x-auto hide-scrollbar pb-2">
+<div class="flex p-1 bg-white rounded-xl border border-border shrink-0 shadow-sm">
+<label class="cursor-pointer">
+<input checked="" class="peer sr-only" name="status_filter" type="radio"/>
+<span class="block px-4 py-1.5 rounded-lg text-sm font-bold text-text-secondary peer-checked:bg-primary peer-checked:text-white peer-checked:shadow-sm transition-all hover:text-text-main">全部</span>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="status_filter" type="radio"/>
+<div class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-text-secondary peer-checked:bg-slate-100 peer-checked:text-text-main peer-checked:shadow-sm transition-all hover:text-text-main hover:bg-slate-50">
+<div class="w-2 h-2 rounded-full bg-status-error"></div>
+<span>缺票</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="status_filter" type="radio"/>
+<div class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-text-secondary peer-checked:bg-slate-100 peer-checked:text-text-main peer-checked:shadow-sm transition-all hover:text-text-main hover:bg-slate-50">
+<div class="w-2 h-2 rounded-full bg-primary"></div>
+<span>已匹配</span>
+</div>
+</label>
+<label class="cursor-pointer">
+<input class="peer sr-only" name="status_filter" type="radio"/>
+<div class="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-sm font-medium text-text-secondary peer-checked:bg-slate-100 peer-checked:text-text-main peer-checked:shadow-sm transition-all hover:text-text-main hover:bg-slate-50">
+<div class="w-2 h-2 rounded-full bg-status-neutral"></div>
+<span>无需票据</span>
+</div>
+</label>
+</div>
+<div class="w-px h-8 bg-border shrink-0 mx-1"></div>
+<button class="shrink-0 h-9 px-4 rounded-lg border border-border bg-surface hover:bg-slate-50 hover:text-text-main text-text-secondary text-sm font-medium transition-colors shadow-sm">
+                交通
+            </button>
+<button class="shrink-0 h-9 px-4 rounded-lg border border-border bg-surface hover:bg-slate-50 hover:text-text-main text-text-secondary text-sm font-medium transition-colors shadow-sm">
+                餐饮
+            </button>
+<button class="shrink-0 h-9 px-4 rounded-lg border border-border bg-surface hover:bg-slate-50 hover:text-text-main text-text-secondary text-sm font-medium transition-colors shadow-sm">
+                办公用品
+            </button>
+<button class="shrink-0 w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-surface hover:bg-slate-50 hover:text-text-main text-text-secondary transition-colors shadow-sm">
+<span class="material-symbols-outlined text-[20px]">tune</span>
+</button>
+</div>
+</div>
+<div class="space-y-3">
+<div class="sticky top-[7.5rem] z-20 pointer-events-none">
+<div class="inline-block px-3 py-1 rounded-full bg-surface/90 backdrop-blur text-xs font-bold text-text-secondary border border-border shadow-sm">
+               2023年 10月
+           </div>
+</div>
+<div class="group flex items-center gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all cursor-pointer hover:bg-slate-50 shadow-sm">
+<div class="flex flex-col items-center justify-center w-12 shrink-0 opacity-80 group-hover:opacity-100">
+<span class="text-xs font-semibold text-text-secondary">周二</span>
+<span class="text-xl font-bold text-text-main">24</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">local_taxi</span>
+</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-text-main truncate text-base">前往客户会议的优步行程</h3>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-text-secondary border border-border">交通</span>
+<span class="text-xs text-text-secondary truncate">旧金山 • Uber Technologies Inc.</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-text-main tabular-nums tracking-tight">¥328.50</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-medium text-status-error">缺票</span>
+<div class="w-2.5 h-2.5 rounded-full bg-status-error shadow-[0_0_8px_rgba(239,68,68,0.4)] animate-pulse"></div>
+</div>
+</div>
+</div>
+<div class="group flex items-center gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all cursor-pointer hover:bg-slate-50 shadow-sm">
+<div class="flex flex-col items-center justify-center w-12 shrink-0 opacity-80 group-hover:opacity-100">
+<span class="text-xs font-semibold text-text-secondary">周一</span>
+<span class="text-xl font-bold text-text-main">23</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">print</span>
+</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-text-main truncate text-base">Q3 宣传物料打印费用</h3>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-text-secondary border border-border">市场推广</span>
+<span class="text-xs text-text-secondary truncate">Staples Inc.</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-text-main tabular-nums tracking-tight">¥879.65</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-medium text-primary">已匹配</span>
+<div class="w-2.5 h-2.5 rounded-full bg-status-success shadow-[0_0_8px_rgba(22,163,74,0.4)]"></div>
+</div>
+</div>
+</div>
+<div class="group flex items-center gap-4 p-4 rounded-2xl bg-surface border border-border hover:border-primary/30 transition-all cursor-pointer hover:bg-slate-50 shadow-sm">
+<div class="flex flex-col items-center justify-center w-12 shrink-0 opacity-80 group-hover:opacity-100">
+<span class="text-xs font-semibold text-text-secondary">周六</span>
+<span class="text-xl font-bold text-text-main">21</span>
+</div>
+<div class="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary shrink-0">
+<span class="material-symbols-outlined text-[20px]">coffee</span>
+</div>
+<div class="flex-1 min-w-0 pr-2">
+<div class="flex items-center gap-2">
+<h3 class="font-bold text-text-main truncate text-base">团队下午茶</h3>
+</div>
+<div class="flex items-center gap-2 mt-1">
+<span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-slate-100 text-text-secondary border border-border">餐饮</span>
+<span class="text-xs text-text-secondary truncate">Blue Bottle Coffee</span>
+</div>
+</div>
+<div class="flex flex-col items-end gap-1 shrink-0">
+<div class="flex items-center gap-2">
+<span class="text-lg font-bold text-text-main tabular-nums tracking-tight">¥110.00</span>
+</div>
+<div class="flex items-center gap-1.5">
+<span class="text-xs font-medium text-text-secondary">无需票据</span>
+<div class="w-2.5 h-2.5 rounded-full bg-status-neutral"></div>
+</div>
+</div>
+</div>
+<div class="hidden animate-pulse flex items-center gap-4 p-4 rounded-2xl bg-surface border border-border">
+<div class="w-12 h-12 bg-slate-100 rounded-lg shrink-0"></div>
+<div class="flex-1 space-y-2">
+<div class="h-4 bg-slate-100 rounded w-1/3"></div>
+<div class="h-3 bg-slate-100 rounded w-1/2"></div>
+</div>
+<div class="w-20 h-6 bg-slate-100 rounded"></div>
+</div>
+</div>
+<div class="hidden py-12 text-center">
+<span class="material-symbols-outlined text-4xl text-text-secondary mb-2">filter_alt_off</span>
+<p class="text-text-secondary">没有找到符合条件的支出</p>
+</div>
+</div>
+<div class="fixed bottom-0 left-0 right-0 p-4 md:p-6 z-50 pointer-events-none">
+<div class="max-w-3xl mx-auto bg-surface/90 backdrop-blur-md border border-border rounded-xl shadow-2xl shadow-slate-200/50 p-2 pointer-events-auto ring-1 ring-inset ring-black/5 transition-all">
+<div class="hidden absolute -top-10 left-4 bg-status-error text-white text-xs px-3 py-1.5 rounded-lg shadow-lg animate-bounce">
+            请输入有效的金额
+        </div>
+<div class="flex items-center gap-2">
+<div class="relative group pl-3">
+<span class="absolute left-3 top-1/2 -translate-y-1/2 text-primary font-bold text-lg">¥</span>
+<input class="w-28 bg-slate-100 rounded-lg border-2 border-transparent focus:border-primary/50 text-text-main font-bold text-xl placeholder-text-secondary/30 focus:ring-0 p-0 pl-7 h-11 tracking-tight transition-all text-right pr-2" placeholder="0.00" type="text"/>
+</div>
+<div class="flex-1 relative">
+<input class="w-full bg-slate-100 rounded-lg border-2 border-transparent focus:border-primary/50 text-text-main text-base font-medium placeholder-text-secondary/50 focus:ring-0 px-3 h-11 transition-all" placeholder="描述支出内容..." type="text"/>
+</div>
+<div class="flex items-center gap-1">
+<button class="w-10 h-10 rounded-lg flex items-center justify-center text-text-secondary hover:text-text-main hover:bg-slate-100 transition-colors relative" title="更多选项">
+<span class="material-symbols-outlined text-[20px]">add_circle</span>
+</button>
+<button class="h-11 px-6 rounded-lg bg-primary hover:bg-primary-hover active:scale-95 text-white font-bold text-sm transition-all shadow-lg shadow-primary/20 hover:shadow-primary/30 flex items-center gap-1">
+<span class="material-symbols-outlined text-[18px]">save</span>
+<span>保存</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+
+</body></html>
