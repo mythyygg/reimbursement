@@ -1,0 +1,18 @@
+## 1. Implementation
+- [x] 1.1 Scaffold monorepo structure (apps/web, apps/api, apps/worker, packages/shared) with tooling.
+- [x] 1.2 Define database schema and migrations with Drizzle for core tables.
+- [x] 1.3 Implement password auth, session storage, and JWT access/refresh flows.
+- [x] 1.4 Implement project CRUD, search, pin, and archive endpoints.
+- [x] 1.5 Implement expense CRUD, filtering, status handling, and idempotency.
+- [x] 1.6 Implement receipt upload flow (signed URLs, complete, metadata) and download logging.
+- [x] 1.7 Implement match/unmatch endpoints with transactional integrity and status updates.
+- [x] 1.8 Implement OCR pipeline: frontend OCR fields + worker fallback adapter and statuses.
+- [x] 1.9 Implement batch creation, issue checks, and export generation (CSV/ZIP/PDF) with retention.
+- [x] 1.10 Implement settings endpoints for OCR, match rules, and export templates.
+- [x] 1.11 Build app shell navigation and core screens aligned with UI prototypes.
+- [x] 1.12 Build expense list, composer, and drawer flows with match actions.
+- [x] 1.13 Build receipt inbox flow: upload, OCR edit, suggestions, manual match.
+- [x] 1.14 Build batch flow: create, check results, export actions, and statuses.
+- [x] 1.15 Implement PWA offline queue with IndexedDB persistence and retry.
+- [x] 1.16 Add tests for matching rules, export naming, and critical API flows.
+- [x] 1.17 Update docs and OpenAPI to remove WeChat login references.

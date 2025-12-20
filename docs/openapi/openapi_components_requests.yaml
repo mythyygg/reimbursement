@@ -1,0 +1,196 @@
+components:
+  schemas:
+    PasswordRegisterRequest:
+      type: object
+      properties:
+        email_or_phone:
+          type: string
+        password:
+          type: string
+      required:
+        - email_or_phone
+        - password
+    PasswordLoginRequest:
+      type: object
+      properties:
+        email_or_phone:
+          type: string
+        password:
+          type: string
+      required:
+        - email_or_phone
+        - password
+    RefreshRequest:
+      type: object
+      properties:
+        refresh_token:
+          type: string
+      required:
+        - refresh_token
+    ProjectCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        pinned:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+      oneOf:
+        - required:
+            - name
+        - required:
+            - code
+    ProjectUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        pinned:
+          type: boolean
+        archived:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+    ExpenseCreateRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: double
+        category:
+          type: string
+        note:
+          type: string
+        status:
+          type: string
+          enum:
+            - missing_receipt
+            - matched
+            - no_receipt_required
+        client_request_id:
+          type: string
+      required:
+        - amount
+        - note
+    ExpenseUpdateRequest:
+      type: object
+      properties:
+        date:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: double
+        category:
+          type: string
+        note:
+          type: string
+        status:
+          type: string
+    ReceiptCreateRequest:
+      type: object
+      properties:
+        client_request_id:
+          type: string
+    UploadUrlRequest:
+      type: object
+      properties:
+        file_ext:
+          type: string
+        content_type:
+          type: string
+        file_size:
+          type: integer
+      required:
+        - file_ext
+        - content_type
+        - file_size
+    ReceiptCompleteRequest:
+      type: object
+      properties:
+        hash:
+          type: string
+      required:
+        - hash
+    ReceiptUpdateRequest:
+      type: object
+      properties:
+        ocr_amount:
+          type: number
+          format: double
+        ocr_date:
+          type: string
+          format: date
+        merchant_keyword:
+          type: string
+        receipt_amount:
+          type: number
+          format: double
+        receipt_date:
+          type: string
+          format: date
+        receipt_type:
+          type: string
+    ReceiptMatchRequest:
+      type: object
+      properties:
+        expense_id:
+          type: string
+          nullable: true
+    BatchCreateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        date_from:
+          type: string
+          format: date-time
+        date_to:
+          type: string
+          format: date-time
+        statuses:
+          type: array
+          items:
+            type: string
+        categories:
+          type: array
+          items:
+            type: string
+    ExportCreateRequest:
+      type: object
+      properties:
+        type:
+          type: string
+          enum:
+            - csv
+            - zip
+            - pdf
+      required:
+        - type
+    SettingsUpdateRequest:
+      type: object
+      properties:
+        ocr_enabled:
+          type: boolean
+        ocr_fallback_enabled:
+          type: boolean
+        ocr_provider_preference:
+          type: array
+          items:
+            type: string
+        match_rules:
+          type: object
+        export_template:
+          type: object

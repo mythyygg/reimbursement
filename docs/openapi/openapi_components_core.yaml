@@ -1,0 +1,438 @@
+components:
+  parameters:
+    project_id:
+      name: project_id
+      in: path
+      required: true
+      schema:
+        type: string
+    expense_id:
+      name: expense_id
+      in: path
+      required: true
+      schema:
+        type: string
+    receipt_id:
+      name: receipt_id
+      in: path
+      required: true
+      schema:
+        type: string
+    batch_id:
+      name: batch_id
+      in: path
+      required: true
+      schema:
+        type: string
+    export_id:
+      name: export_id
+      in: path
+      required: true
+      schema:
+        type: string
+    cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+    search:
+      name: search
+      in: query
+      schema:
+        type: string
+    archived:
+      name: archived
+      in: query
+      schema:
+        type: boolean
+    pinned:
+      name: pinned
+      in: query
+      schema:
+        type: boolean
+    status:
+      name: status
+      in: query
+      schema:
+        type: string
+    category:
+      name: category
+      in: query
+      schema:
+        type: string
+    date_from:
+      name: date_from
+      in: query
+      schema:
+        type: string
+        format: date
+    date_to:
+      name: date_to
+      in: query
+      schema:
+        type: string
+        format: date
+    matched:
+      name: matched
+      in: query
+      schema:
+        type: boolean
+    ocr_status:
+      name: ocr_status
+      in: query
+      schema:
+        type: string
+  responses:
+    ErrorResponse:
+      description: Error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        message:
+          type: string
+        request_id:
+          type: string
+      required:
+        - code
+        - message
+    AuthTokens:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+        session_id:
+          type: string
+      required:
+        - access_token
+        - refresh_token
+        - expires_in
+        - session_id
+    AuthResponse:
+      type: object
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        tokens:
+          $ref: "#/components/schemas/AuthTokens"
+      required:
+        - user
+        - tokens
+    User:
+      type: object
+      properties:
+        user_id:
+          type: string
+        email_or_phone:
+          type: string
+        status:
+          type: string
+          enum:
+            - active
+            - disabled
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - user_id
+        - status
+    Project:
+      type: object
+      properties:
+        project_id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+        pinned:
+          type: boolean
+        archived:
+          type: boolean
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - project_id
+    Expense:
+      type: object
+      properties:
+        expense_id:
+          type: string
+        project_id:
+          type: string
+        date:
+          type: string
+          format: date
+        amount:
+          type: number
+          format: double
+        category:
+          type: string
+        note:
+          type: string
+        status:
+          type: string
+          enum:
+            - missing_receipt
+            - matched
+            - no_receipt_required
+        receipt_ids:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - expense_id
+        - project_id
+        - date
+        - amount
+        - status
+    Receipt:
+      type: object
+      properties:
+        receipt_id:
+          type: string
+        project_id:
+          type: string
+        file_url:
+          type: string
+        file_ext:
+          type: string
+        file_size:
+          type: integer
+        hash:
+          type: string
+        upload_status:
+          type: string
+          enum:
+            - pending
+            - uploaded
+            - failed
+        ocr_status:
+          type: string
+          enum:
+            - pending
+            - processing
+            - ready
+            - failed
+            - disabled
+        ocr_source:
+          type: string
+          enum:
+            - frontend
+            - tencent
+            - aliyun
+            - baidu
+            - huawei
+            - none
+        ocr_confidence:
+          type: number
+          format: double
+        ocr_amount:
+          type: number
+          format: double
+        ocr_date:
+          type: string
+          format: date
+        merchant_keyword:
+          type: string
+        receipt_amount:
+          type: number
+          format: double
+        receipt_date:
+          type: string
+          format: date
+        receipt_type:
+          type: string
+        matched_expense_id:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - receipt_id
+        - project_id
+    Batch:
+      type: object
+      properties:
+        batch_id:
+          type: string
+        project_id:
+          type: string
+        name:
+          type: string
+        filter_json:
+          type: object
+        issue_summary_json:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - batch_id
+        - project_id
+    ExportRecord:
+      type: object
+      properties:
+        export_id:
+          type: string
+        batch_id:
+          type: string
+        type:
+          type: string
+          enum:
+            - csv
+            - zip
+            - pdf
+        status:
+          type: string
+          enum:
+            - pending
+            - running
+            - done
+            - failed
+        file_url:
+          type: string
+        file_size:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - export_id
+        - batch_id
+        - type
+        - status
+    Settings:
+      type: object
+      properties:
+        ocr_enabled:
+          type: boolean
+        ocr_fallback_enabled:
+          type: boolean
+        ocr_provider_preference:
+          type: array
+          items:
+            type: string
+        match_rules:
+          type: object
+        export_template:
+          type: object
+    ProjectList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Project"
+        next_cursor:
+          type: string
+    ExpenseList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Expense"
+        next_cursor:
+          type: string
+    ReceiptList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Receipt"
+        next_cursor:
+          type: string
+    BatchList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Batch"
+        next_cursor:
+          type: string
+    Candidate:
+      type: object
+      properties:
+        expense:
+          $ref: "#/components/schemas/Expense"
+        confidence:
+          type: string
+          enum:
+            - high
+            - medium
+            - low
+      required:
+        - expense
+        - confidence
+    CandidateList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Candidate"
+    UploadUrlResponse:
+      type: object
+      properties:
+        upload_url:
+          type: string
+        expire_at:
+          type: string
+          format: date-time
+        storage_key:
+          type: string
+        max_size:
+          type: integer
+      required:
+        - upload_url
+        - expire_at
+    DownloadUrlResponse:
+      type: object
+      properties:
+        download_url:
+          type: string
+        expire_at:
+          type: string
+          format: date-time
+      required:
+        - download_url
+        - expire_at

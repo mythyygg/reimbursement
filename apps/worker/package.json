@@ -1,0 +1,29 @@
+{
+  "name": "@reimbursement/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "latest",
+    "@reimbursement/shared": "0.1.0",
+    "archiver": "latest",
+    "bullmq": "latest",
+    "dotenv": "latest",
+    "drizzle-orm": "latest",
+    "ioredis": "latest",
+    "pdfkit": "latest",
+    "pg": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/dotenv": "latest",
+    "@types/archiver": "latest",
+    "@types/pdfkit": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

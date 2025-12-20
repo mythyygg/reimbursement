@@ -1,0 +1,36 @@
+{
+  "name": "@reimbursement/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "start": "node dist/index.js",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx src/db/migrate.ts"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "latest",
+    "@aws-sdk/s3-request-presigner": "latest",
+    "@hono/node-server": "latest",
+    "@reimbursement/shared": "0.1.0",
+    "bcryptjs": "latest",
+    "bullmq": "latest",
+    "dotenv": "latest",
+    "drizzle-orm": "latest",
+    "drizzle-zod": "latest",
+    "hono": "latest",
+    "ioredis": "latest",
+    "jose": "latest",
+    "pg": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "latest",
+    "@types/dotenv": "latest",
+    "@types/node": "latest",
+    "drizzle-kit": "latest",
+    "tsx": "latest",
+    "typescript": "latest"
+  }
+}

@@ -1,0 +1,458 @@
+openapi: 3.0.3
+info:
+  title: Reimbursement Prep API
+  version: 0.1.0
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+paths:
+  /auth/password/register:
+    post:
+      security: []
+      summary: Register with password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/PasswordRegisterRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/AuthResponse
+        "400":
+          $ref: ./openapi_components_core.yaml#/components/responses/ErrorResponse
+  /auth/password/login:
+    post:
+      security: []
+      summary: Login with password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/PasswordLoginRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/AuthResponse
+        "401":
+          $ref: ./openapi_components_core.yaml#/components/responses/ErrorResponse
+  /auth/refresh:
+    post:
+      security: []
+      summary: Refresh access token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/RefreshRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/AuthResponse
+        "401":
+          $ref: ./openapi_components_core.yaml#/components/responses/ErrorResponse
+  /auth/logout:
+    post:
+      summary: Logout current session
+      responses:
+        "200":
+          description: OK
+  /auth/logout-all:
+    post:
+      summary: Logout other sessions
+      responses:
+        "200":
+          description: OK
+  /me:
+    get:
+      summary: Get current user
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/User
+  /projects:
+    get:
+      summary: List projects
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/search
+        - $ref: ./openapi_components_core.yaml#/components/parameters/archived
+        - $ref: ./openapi_components_core.yaml#/components/parameters/pinned
+        - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/ProjectList
+    post:
+      summary: Create project
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ProjectCreateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Project
+  /projects/{project_id}:
+    patch:
+      summary: Update project
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ProjectUpdateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Project
+  /projects/{project_id}/archive:
+    post:
+      summary: Archive project
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+      responses:
+        "200":
+          description: OK
+  /projects/{project_id}/expenses:
+    get:
+      summary: List expenses
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+        - $ref: ./openapi_components_core.yaml#/components/parameters/status
+        - $ref: ./openapi_components_core.yaml#/components/parameters/category
+        - $ref: ./openapi_components_core.yaml#/components/parameters/date_from
+        - $ref: ./openapi_components_core.yaml#/components/parameters/date_to
+        - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/ExpenseList
+    post:
+      summary: Create expense
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ExpenseCreateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Expense
+  /expenses/{expense_id}:
+    patch:
+      summary: Update expense
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/expense_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ExpenseUpdateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Expense
+  /expenses/{expense_id}/receipt-candidates:
+    get:
+      summary: Get receipt match candidates
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/expense_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/CandidateList
+  /projects/{project_id}/receipts:
+    get:
+      summary: List receipts
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+        - $ref: ./openapi_components_core.yaml#/components/parameters/matched
+        - $ref: ./openapi_components_core.yaml#/components/parameters/ocr_status
+        - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/ReceiptList
+    post:
+      summary: Create receipt placeholder
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ReceiptCreateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Receipt
+  /receipts/{receipt_id}/upload-url:
+    post:
+      summary: Create upload url
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/UploadUrlRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/UploadUrlResponse
+  /receipts/{receipt_id}/complete:
+    post:
+      summary: Complete upload
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ReceiptCompleteRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Receipt
+  /receipts/{receipt_id}:
+    patch:
+      summary: Update receipt fields
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ReceiptUpdateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Receipt
+    delete:
+      summary: Delete receipt
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      responses:
+        "200":
+          description: OK
+  /receipts/{receipt_id}/match:
+    patch:
+      summary: Match or unmatch receipt
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ReceiptMatchRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Receipt
+  /receipts/{receipt_id}/download-url:
+    post:
+      summary: Create receipt download url
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/receipt_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/DownloadUrlResponse
+  /projects/{project_id}/batches:
+    get:
+      summary: List batches
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+        - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/BatchList
+    post:
+      summary: Create batch
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/BatchCreateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
+  /batches/{batch_id}:
+    get:
+      summary: Get batch
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
+  /batches/{batch_id}/check:
+    post:
+      summary: Recheck batch issues
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
+  /batches/{batch_id}/exports:
+    post:
+      summary: Create export
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/ExportCreateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/ExportRecord
+  /exports/{export_id}:
+    get:
+      summary: Get export record
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/export_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/ExportRecord
+  /exports/{export_id}/download-url:
+    post:
+      summary: Create export download url
+      parameters:
+        - $ref: ./openapi_components_core.yaml#/components/parameters/export_id
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/DownloadUrlResponse
+  /settings:
+    get:
+      summary: Get settings
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Settings
+    patch:
+      summary: Update settings
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: ./openapi_components_requests.yaml#/components/schemas/SettingsUpdateRequest
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: ./openapi_components_core.yaml#/components/schemas/Settings
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

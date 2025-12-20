@@ -1,0 +1,19 @@
+{
+  "name": "@reimbursement/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "drizzle-orm": "latest"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./db": "./src/db/index.ts",
+    "./domain": "./src/domain/index.ts",
+    "./utils": "./src/utils/index.ts"
+  },
+  "types": "./src/index.ts",
+  "scripts": {
+    "test": "node --test --import tsx"
+  }
+}

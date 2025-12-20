@@ -1,0 +1,9 @@
+{
+  "name": "Reimbursement Prep",
+  "short_name": "Reimburse",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f7f8fa",
+  "theme_color": "#2563eb",
+  "icons": []
+}
