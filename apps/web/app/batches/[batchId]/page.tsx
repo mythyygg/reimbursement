@@ -168,7 +168,17 @@ export default function BatchDetailPage() {
       const download = await apiFetch<any>(`/exports/${idToDownload}/download-url`, {
         method: "POST"
       });
-      window.open(download.signed_url, "_blank");
+
+      // 改用location.href或创建<a>标签下载，避免被PWA阻止
+      const link = document.createElement('a');
+      link.href = download.signed_url;
+      link.download = ''; // 提示浏览器这是下载链接
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
       setExportStatus("下载已开始");
       setTimeout(() => setExportStatus(null), 3000);
     } catch (error) {
