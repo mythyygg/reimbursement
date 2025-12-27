@@ -160,4 +160,35 @@ router.post("/exports/:exportId/download-url", async (c) => {
   return ok(c, { signed_url: signedUrl });
 });
 
+router.delete("/exports/:exportId", async (c) => {
+  const { userId } = c.get("auth");
+  const exportId = c.req.param("exportId");
+
+  const [record] = await db
+    .select()
+    .from(exportRecords)
+    .where(
+      and(
+        eq(exportRecords.exportId, exportId),
+        eq(exportRecords.userId, userId)
+      )
+    );
+
+  if (!record) {
+    return errorResponse(c, 404, "EXPORT_NOT_FOUND", "Export not found");
+  }
+
+  // 不允许删除进行中的任务
+  if (record.status === "pending" || record.status === "running") {
+    return errorResponse(c, 400, "EXPORT_IN_PROGRESS", "Cannot delete export in progress");
+  }
+
+  // 删除导出记录
+  await db
+    .delete(exportRecords)
+    .where(eq(exportRecords.exportId, exportId));
+
+  return ok(c, { success: true });
+});
+
 export default router;

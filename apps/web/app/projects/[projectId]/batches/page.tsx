@@ -29,9 +29,9 @@ export default function BatchesPage() {
       <div className="rounded-3xl bg-white border border-border p-6 shadow-card mb-6">
         <div className="flex items-start justify-between gap-4 mb-4">
           <div className="flex-1">
-            <div className="text-lg font-bold text-text-primary">批次管理</div>
+            <div className="text-lg font-bold text-text-primary">导出管理</div>
             <div className="text-xs text-text-secondary mt-1">
-              创建批次后可导出报销清单和票据
+              创建导出后可生成报销清单和票据文件
             </div>
           </div>
         </div>
@@ -44,7 +44,7 @@ export default function BatchesPage() {
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
-            创建新批次
+            创建新导出
           </span>
         </button>
       </div>
@@ -52,8 +52,8 @@ export default function BatchesPage() {
       <div className="space-y-4">
         {batches.length === 0 ? (
           <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
-            <div className="text-sm text-text-secondary font-medium">暂无批次</div>
-            <div className="text-xs text-text-tertiary mt-1">点击上方按钮创建第一个批次</div>
+            <div className="text-sm text-text-secondary font-medium">暂无导出</div>
+            <div className="text-xs text-text-tertiary mt-1">点击上方按钮创建第一个导出</div>
           </div>
         ) : null}
         {batches.map((batch: any, index: number) => {
@@ -71,7 +71,7 @@ export default function BatchesPage() {
             >
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex-1 min-w-0">
-                  <div className="text-base font-bold text-text-primary truncate">{batch.name || `批次 #${batch.batchId.slice(0, 8)}`}</div>
+                  <div className="text-base font-bold text-text-primary truncate">{batch.name || `导出 #${batch.batchId.slice(0, 8)}`}</div>
                   <div className="text-xs text-text-secondary mt-1">
                     创建于 {new Date(batch.createdAt).toLocaleDateString('zh-CN')}
                   </div>

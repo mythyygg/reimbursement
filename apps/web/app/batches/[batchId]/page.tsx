@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../../../lib/api";
 import BottomNav from "../../../components/BottomNav";
+import SwipeAction from "../../../components/SwipeAction";
 
 export default function BatchDetailPage() {
   const params = useParams();
@@ -176,6 +177,20 @@ export default function BatchDetailPage() {
     }
   };
 
+  const deleteExport = async (exportId: string) => {
+    try {
+      await apiFetch(`/exports/${exportId}`, { method: "DELETE" });
+      await loadRecentExports();
+    } catch (error: any) {
+      console.error("删除失败:", error);
+      if (error.message?.includes("EXPORT_IN_PROGRESS")) {
+        alert("无法删除进行中的导出任务");
+      } else {
+        alert("删除失败，请重试");
+      }
+    }
+  };
+
   if (!batch) {
     return (
       <div className="min-h-screen bg-surface-1 p-6">
@@ -212,43 +227,45 @@ export default function BatchDetailPage() {
           <div className="space-y-2">
             <div className="text-xs text-text-secondary">历史导出</div>
             {latestExports.slice(0, 5).map((record) => (
-              <div
+              <SwipeAction
                 key={record.exportId}
-                className="rounded-xl bg-surface-0 border border-border p-3 flex items-center justify-between"
+                onDelete={() => deleteExport(record.exportId)}
               >
-                <div className="flex-1">
-                  <div className="text-sm font-medium">
-                    {record.type === "zip" ? "完整包（ZIP）" : record.type === "csv" ? "清单（CSV）" : "其他"}
+                <div className="rounded-xl bg-surface-0 border border-border p-3 flex items-center justify-between">
+                  <div className="flex-1">
+                    <div className="text-sm font-medium">
+                      {record.type === "zip" ? "完整包（ZIP）" : record.type === "csv" ? "清单（CSV）" : "其他"}
+                    </div>
+                    <div className="text-xs text-text-tertiary mt-1">
+                      {new Date(record.createdAt).toLocaleString("zh-CN", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </div>
                   </div>
-                  <div className="text-xs text-text-tertiary mt-1">
-                    {new Date(record.createdAt).toLocaleString("zh-CN", {
-                      month: "2-digit",
-                      day: "2-digit",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
+                  <div className="flex items-center gap-2">
+                    {record.status === "done" && (
+                      <button
+                        className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium"
+                        onClick={() => downloadExport(record.exportId)}
+                      >
+                        下载
+                      </button>
+                    )}
+                    {record.status === "pending" && (
+                      <span className="text-xs text-blue-600">等待中</span>
+                    )}
+                    {record.status === "running" && (
+                      <span className="text-xs text-blue-600">生成中...</span>
+                    )}
+                    {record.status === "failed" && (
+                      <span className="text-xs text-red-600">失败</span>
+                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {record.status === "done" && (
-                    <button
-                      className="px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium"
-                      onClick={() => downloadExport(record.exportId)}
-                    >
-                      下载
-                    </button>
-                  )}
-                  {record.status === "pending" && (
-                    <span className="text-xs text-blue-600">等待中</span>
-                  )}
-                  {record.status === "running" && (
-                    <span className="text-xs text-blue-600">生成中...</span>
-                  )}
-                  {record.status === "failed" && (
-                    <span className="text-xs text-red-600">失败</span>
-                  )}
-                </div>
-              </div>
+              </SwipeAction>
             ))}
           </div>
         )}
