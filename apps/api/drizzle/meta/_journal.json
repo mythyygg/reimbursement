@@ -15,6 +15,13 @@
       "when": 1766814414347,
       "tag": "0001_clumsy_klaw",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1766854122873,
+      "tag": "0002_sloppy_santa_claus",
+      "breakpoints": true
     }
   ]
 }

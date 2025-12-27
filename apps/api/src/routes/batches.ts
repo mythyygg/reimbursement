@@ -1,20 +1,11 @@
 import { Hono } from "hono";
-import { z } from "zod";
-import { and, eq } from "drizzle-orm";
-import { batches, backendJobs } from "@reimbursement/shared/db";
+import { and, desc, eq } from "drizzle-orm";
+import { batches, backendJobs, exportRecords } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
-
-const batchCreateSchema = z.object({
-  name: z.string().optional(),
-  date_from: z.string().datetime().optional(),
-  date_to: z.string().datetime().optional(),
-  statuses: z.array(z.string()).optional(),
-  categories: z.array(z.string()).optional()
-});
 
 router.use("*", authMiddleware);
 
@@ -32,18 +23,13 @@ router.get("/projects/:projectId/batches", async (c) => {
 router.post("/projects/:projectId/batches", async (c) => {
   const { userId } = c.get("auth");
   const projectId = c.req.param("projectId");
-  const body = batchCreateSchema.safeParse(await c.req.json());
-  if (!body.success) {
-    return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
-  }
 
-  const name = body.data.name ?? `Batch ${new Date().toISOString().slice(0, 10)}`;
-  const filterJson = {
-    dateFrom: body.data.date_from,
-    dateTo: body.data.date_to,
-    statuses: body.data.statuses ?? ["processing"],
-    categories: body.data.categories ?? []
-  };
+  // 自动生成批次名称：格式为 "2024-12-28 导出"
+  const today = new Date();
+  const name = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")} 导出`;
+
+  // 不再使用筛选条件，filterJson 设为空对象
+  const filterJson = {};
 
   const [batch] = await db
     .insert(batches)
@@ -98,6 +84,30 @@ router.post("/batches/:batchId/check", async (c) => {
   });
 
   return ok(c, { success: true });
+});
+
+router.get("/batches/:batchId/exports", async (c) => {
+  const { userId } = c.get("auth");
+  const batchId = c.req.param("batchId");
+
+  // 验证批次存在且属于当前用户
+  const [batch] = await db
+    .select()
+    .from(batches)
+    .where(and(eq(batches.batchId, batchId), eq(batches.userId, userId)));
+
+  if (!batch) {
+    return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
+  }
+
+  // 获取该批次的所有导出记录，按创建时间倒序
+  const exports = await db
+    .select()
+    .from(exportRecords)
+    .where(and(eq(exportRecords.batchId, batchId), eq(exportRecords.userId, userId)))
+    .orderBy(desc(exportRecords.createdAt));
+
+  return ok(c, exports);
 });
 
 export default router;

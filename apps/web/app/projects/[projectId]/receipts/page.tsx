@@ -314,19 +314,22 @@ export default function ReceiptsPage() {
   const [expandedReceiptId, setExpandedReceiptId] = useState<string | null>(null);
 
   return (
-    <div className="pb-24 bg-gradient-to-b from-white via-surface-1/60 to-surface-1">
-      <div className="mb-5 flex flex-col gap-3 rounded-2xl border border-border bg-white/95 p-4 shadow-sm backdrop-blur">
-        <div className="flex items-start justify-between gap-3">
+    <div className="pb-24 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
+      <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-border bg-white p-5 shadow-card">
+        <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
-            <div className="text-sm font-semibold text-text-primary">票据收纳箱</div>
-            <div className="text-[11px] text-text-secondary mt-0.5">
-              已导入 {receipts.length} 张 · 上传后可在卡片内编辑信息 · 支持 JPG / PNG / PDF
+            <div className="text-base font-bold text-text-primary">票据收纳箱</div>
+            <div className="text-xs text-text-secondary mt-1">
+              已导入 <span className="font-bold text-primary">{receipts.length}</span> 张 · 支持 JPG / PNG / PDF 格式
             </div>
           </div>
-          <label className={`inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold text-white cursor-pointer shadow-sm transition hover:shadow-md ${uploading ? "bg-primary/40 cursor-not-allowed" : "bg-primary"
-            }`}>
-            <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
-              <path d="M4 17h16M12 3v12m0 0l-4-4m4 4 4-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+          <label className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white cursor-pointer shadow-md transition-all ${
+            uploading ? "bg-primary/40 cursor-not-allowed" : "bg-primary hover:bg-primary-hover hover:shadow-lg shadow-primary/25 hover:shadow-primary/30 active:scale-95"
+          }`}>
+            <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="17 8 12 3 7 8"></polyline>
+              <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             {uploading ? `上传中 ${uploadProgress.current}/${uploadProgress.total}` : "上传票据"}
             <input
@@ -344,8 +347,9 @@ export default function ReceiptsPage() {
 
       <div className="space-y-4">
         {receipts.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border bg-surface-0 p-6 text-sm text-text-secondary">
-            暂无票据。
+          <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
+            <div className="text-sm text-text-secondary font-medium">暂无票据</div>
+            <div className="text-xs text-text-tertiary mt-1">点击上方按钮上传票据</div>
           </div>
         ) : null}
         {sortedReceipts.map((receipt, index) => (
@@ -419,7 +423,7 @@ function ReceiptPreview({
       : null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
       onClick={onClose}
       onTouchMove={(e) => {
         if (e.target === e.currentTarget) {
@@ -428,28 +432,42 @@ function ReceiptPreview({
       }}
     >
       <div
-        className="w-full max-w-2xl overflow-hidden rounded-2xl bg-surface-0 shadow-2xl animate-scale-in"
+        className="w-full max-w-4xl overflow-hidden rounded-3xl bg-surface-0 shadow-2xl animate-scale-in"
         onClick={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div className="text-sm font-semibold">票据预览</div>
-          <button className="text-xs text-text-secondary" onClick={onClose}>
-            关闭
+        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-white">
+          <div className="text-lg font-bold text-text-primary">票据预览</div>
+          <button
+            className="rounded-full p-2 hover:bg-surface-2 transition-colors"
+            onClick={onClose}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
-        <div className="max-h-[70vh] overflow-auto bg-surface-1 p-4">
-          {loading ? <div className="text-sm text-text-secondary">加载中...</div> : null}
-          {error ? <div className="text-sm text-danger">{error}</div> : null}
+        <div className="max-h-[75vh] overflow-auto bg-surface-2 p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-sm text-text-secondary font-medium">加载中...</div>
+            </div>
+          ) : null}
+          {error ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-sm text-danger font-medium">{error}</div>
+            </div>
+          ) : null}
           {!loading && !error && url ? (
             isPdf ? (
               <iframe
                 src={pdfUrl || url}
-                className="h-[60vh] w-full rounded-xl bg-black"
+                className="h-[65vh] w-full rounded-2xl bg-black shadow-lg"
                 title="票据 PDF"
               />
             ) : (
-              <img src={url} alt="票据" className="w-full rounded-xl" />
+              <img src={url} alt="票据" className="w-full rounded-2xl shadow-lg" />
             )
           ) : null}
         </div>

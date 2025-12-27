@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&display=swap");
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,17 +8,36 @@
 }
 
 :root {
+  /* Surface Colors - 更优雅的背景层次 */
   --surface-0: 255 255 255;
-  --surface-1: 247 248 250;
-  --border: 230 232 236;
-  --text-primary: 17 24 39;
-  --text-secondary: 107 114 128;
-  --text-tertiary: 156 163 175;
+  --surface-1: 248 250 252;
+  --surface-2: 241 245 249;
+  --surface-highlight: 248 250 252;
+
+  /* Border Colors - 更精细的边框层次 */
+  --border: 226 232 240;
+  --border-light: 241 245 249;
+  --border-strong: 203 213 225;
+
+  /* Text Colors - 更清晰的文本层次 */
+  --text-primary: 15 23 42;
+  --text-secondary: 100 116 139;
+  --text-tertiary: 148 163 184;
+
+  /* Brand Colors - 保持蓝色但更鲜活 */
   --primary: 37 99 235;
+  --primary-hover: 29 78 216;
+  --primary-light: 219 234 254;
+
+  /* Semantic Colors - 更现代的语义色 */
   --success: 22 163 74;
-  --warning: 217 119 6;
-  --danger: 220 38 38;
+  --success-light: 220 252 231;
+  --warning: 245 158 11;
+  --warning-light: 254 243 199;
+  --danger: 239 68 68;
+  --danger-light: 254 226 226;
   --info: 14 165 233;
+  --info-light: 224 242 254;
 }
 
 html,
@@ -42,10 +61,11 @@ button {
   font-family: inherit;
 }
 
+/* 动画系统 - 更流畅的动画效果 */
 @keyframes fade-up {
   0% {
     opacity: 0;
-    transform: translateY(8px);
+    transform: translateY(12px);
   }
   100% {
     opacity: 1;
@@ -65,7 +85,7 @@ button {
 @keyframes scale-in {
   0% {
     opacity: 0;
-    transform: scale(0.98);
+    transform: scale(0.96);
   }
   100% {
     opacity: 1;
@@ -73,22 +93,80 @@ button {
   }
 }
 
+@keyframes slide-up {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-down {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .animate-fade-up {
-  animation: fade-up 0.45s ease both;
+  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in {
-  animation: fade-in 0.25s ease both;
+  animation: fade-in 0.3s ease both;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.3s ease both;
+  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+.animate-slide-up {
+  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.animate-slide-down {
+  animation: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* 无障碍 - 尊重用户的动画偏好 */
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,
-  .animate-scale-in {
+  .animate-scale-in,
+  .animate-slide-up,
+  .animate-slide-down {
     animation: none;
   }
+}
+
+/* 全局过渡效果 */
+button,
+a {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 自定义滚动条（仅webkit浏览器） */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgb(var(--surface-1));
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgb(var(--border));
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(var(--border-strong));
 }
