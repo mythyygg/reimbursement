@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm";
-import { projects, receipts } from "@reimbursement/shared/db";
+import { projects, receipts, expenses, batches } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
 import { authMiddleware } from "../middleware/auth.js";
 import { errorResponse, ok } from "../utils/http.js";
@@ -147,6 +147,56 @@ router.post(":projectId/archive", async (c) => {
   }
 
   return ok(c, project);
+});
+
+router.delete(":projectId", async (c) => {
+  const { userId } = c.get("auth");
+  const projectId = c.req.param("projectId");
+
+  // 检查项目是否存在
+  const [project] = await db
+    .select()
+    .from(projects)
+    .where(and(eq(projects.projectId, projectId), eq(projects.userId, userId)));
+
+  if (!project) {
+    return errorResponse(c, 404, "PROJECT_NOT_FOUND", "Project not found");
+  }
+
+  // 检查项目下是否有数据
+  const [expenseCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(expenses)
+    .where(eq(expenses.projectId, projectId));
+
+  const [receiptCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(receipts)
+    .where(and(eq(receipts.projectId, projectId), isNull(receipts.deletedAt)));
+
+  const [batchCount] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(batches)
+    .where(eq(batches.projectId, projectId));
+
+  const hasData =
+    (expenseCount?.count ?? 0) > 0 ||
+    (receiptCount?.count ?? 0) > 0 ||
+    (batchCount?.count ?? 0) > 0;
+
+  if (hasData) {
+    return errorResponse(
+      c,
+      400,
+      "PROJECT_HAS_DATA",
+      "Cannot delete project with existing data. Please delete all expenses, receipts, and exports first."
+    );
+  }
+
+  // 删除项目
+  await db.delete(projects).where(eq(projects.projectId, projectId));
+
+  return ok(c, { success: true });
 });
 
 export default router;

@@ -20,9 +20,19 @@ import type { ReactNode } from "react";
  * 这样可以设置网页标题、描述、图标等
  */
 export const metadata = {
-  title: "报销助手",                    // 浏览器标签页显示的标题
-  description: "报销准备工具",          // 网页描述（SEO 优化）
-  manifest: "/manifest.json"           // PWA 配置文件路径（让网页可以像 App 一样安装到手机）
+  title: "报销助手",
+  description: "报销准备工具",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512x512.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icon-192x192.png", sizes: "192x192", type: "image/png" },
+    ],
+  },
 };
 
 /**
@@ -30,9 +40,11 @@ export const metadata = {
  * 控制网页在移动设备上的显示方式
  */
 export const viewport = {
-  width: "device-width",               // 宽度等于设备宽度
-  initialScale: 1,                     // 初始缩放比例为 1（不缩放）
-  viewportFit: "cover"                 // 覆盖整个屏幕（包括刘海屏区域）
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover"
 };
 
 /**

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PWA 图标生成器</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
+    h1 {
+      color: #2563eb;
+      margin-bottom: 10px;
+      font-size: 32px;
+    }
+    .desc {
+      color: #64748b;
+      margin-bottom: 30px;
+      font-size: 16px;
+    }
+    .preview {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 30px;
+      padding: 30px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #e3e8f0 100%);
+      border-radius: 16px;
+    }
+    #preview-icon {
+      width: 150px;
+      height: 150px;
+      border-radius: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .preview-info {
+      flex: 1;
+    }
+    .preview-info h2 {
+      color: #1e293b;
+      margin-bottom: 8px;
+      font-size: 24px;
+    }
+    .preview-info p {
+      color: #64748b;
+      line-height: 1.6;
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 16px 32px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 12px;
+      cursor: pointer;
+      width: 100%;
+      margin-bottom: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+    }
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+    .icons-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 20px;
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 2px solid #e2e8f0;
+    }
+    .icon-item {
+      text-align: center;
+    }
+    .icon-item canvas {
+      width: 100%;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      margin-bottom: 8px;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+    .icon-item canvas:hover {
+      transform: scale(1.05);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .icon-item p {
+      color: #475569;
+      font-size: 14px;
+      font-weight: 500;
+    }
+    .success-msg {
+      background: #dcfce7;
+      color: #166534;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-weight: 500;
+      text-align: center;
+      display: none;
+    }
+    .note {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px;
+      border-radius: 8px;
+      margin-top: 20px;
+      color: #92400e;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 PWA 图标生成器</h1>
+    <p class="desc">一键生成所有尺寸的 PWA 应用图标</p>
+
+    <div class="preview">
+      <img id="preview-icon" src="icon.svg" alt="图标预览">
+      <div class="preview-info">
+        <h2>报销助手</h2>
+        <p>这个图标将显示在你的手机主屏幕上。<br>点击下方按钮生成所有需要的尺寸，然后依次点击每个图标下载。</p>
+      </div>
+    </div>
+
+    <div class="success-msg" id="success-msg">
+      ✅ 图标已生成！点击下面的图标可以下载对应尺寸的PNG文件
+    </div>
+
+    <button class="btn-primary" onclick="generateIcons()">🚀 生成所有图标</button>
+
+    <div class="icons-grid" id="icons-container"></div>
+
+    <div class="note">
+      <strong>💡 使用说明：</strong><br>
+      1. 点击"生成所有图标"按钮<br>
+      2. 依次点击每个生成的图标进行下载<br>
+      3. 将下载的图标文件放到项目的 <code>apps/web/public/</code> 目录下<br>
+      4. 所有图标会自动保存为正确的文件名
+    </div>
+  </div>
+
+  <script>
+    const sizes = [72, 96, 128, 144, 152, 192, 384, 512];
+
+    async function generateIcons() {
+      const container = document.getElementById('icons-container');
+      const successMsg = document.getElementById('success-msg');
+      container.innerHTML = '';
+
+      const svgResponse = await fetch('icon.svg');
+      const svgText = await svgResponse.text();
+
+      for (const size of sizes) {
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+
+        const img = new Image();
+        const svgBlob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(svgBlob);
+
+        await new Promise((resolve) => {
+          img.onload = () => {
+            ctx.drawImage(img, 0, 0, size, size);
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          img.src = url;
+        });
+
+        const iconItem = document.createElement('div');
+        iconItem.className = 'icon-item';
+        iconItem.innerHTML = `<p>${size}x${size}</p>`;
+        iconItem.insertBefore(canvas, iconItem.firstChild);
+
+        canvas.addEventListener('click', () => {
+          canvas.toBlob((blob) => {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `icon-${size}x${size}.png`;
+            a.click();
+            URL.revokeObjectURL(url);
+          });
+        });
+
+        container.appendChild(iconItem);
+      }
+
+      successMsg.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

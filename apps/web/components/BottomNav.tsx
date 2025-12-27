@@ -12,7 +12,7 @@ const tabs = [
 export default function BottomNav() {
   const pathname = usePathname();
   return (
-    <nav className="fixed bottom-0 left-0 right-0 pb-3">
+    <nav className="fixed bottom-0 left-0 right-0 pb-3" style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}>
       <div className="mx-auto max-w-md px-4">
         <div className="flex items-center justify-between rounded-2xl border border-border bg-surface-0/90 px-3 py-2 shadow-lg backdrop-blur">
           {tabs.map((tab) => {

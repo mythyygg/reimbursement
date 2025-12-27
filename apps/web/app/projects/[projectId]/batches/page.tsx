@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import { apiFetch } from "../../../../lib/api";
 import BottomNav from "../../../../components/BottomNav";
+import SwipeAction from "../../../../components/SwipeAction";
 
 export default function BatchesPage() {
   const params = useParams();
@@ -22,6 +23,20 @@ export default function BatchesPage() {
       method: "POST",
     });
     await refetch();
+  };
+
+  const deleteBatch = async (batchId: string) => {
+    try {
+      await apiFetch(`/batches/${batchId}`, { method: "DELETE" });
+      await refetch();
+    } catch (error: any) {
+      console.error("删除失败:", error);
+      if (error.message?.includes("BATCH_HAS_EXPORTS")) {
+        alert("导出包含文件记录，请先删除所有导出文件");
+      } else {
+        alert("删除失败，请重试");
+      }
+    }
   };
 
   return (
@@ -63,12 +78,15 @@ export default function BatchesPage() {
           const hasIssues = missingCount > 0 || duplicateCount > 0;
 
           return (
-            <Link
+            <SwipeAction
               key={batch.batchId}
-              href={`/batches/${batch.batchId}`}
-              className="block rounded-3xl border border-border bg-white p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all animate-fade-up"
-              style={{ animationDelay: `${index * 40}ms` }}
+              onDelete={() => deleteBatch(batch.batchId)}
             >
+              <Link
+                href={`/batches/${batch.batchId}`}
+                className="block rounded-3xl border border-border bg-white p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all animate-fade-up"
+                style={{ animationDelay: `${index * 40}ms` }}
+              >
               <div className="flex items-start justify-between gap-4 mb-3">
                 <div className="flex-1 min-w-0">
                   <div className="text-base font-bold text-text-primary truncate">{batch.name || `导出 #${batch.batchId.slice(0, 8)}`}</div>
@@ -123,6 +141,7 @@ export default function BatchesPage() {
                 <div className="text-xs text-text-secondary">检查中...</div>
               )}
             </Link>
+            </SwipeAction>
           );
         })}
       </div>

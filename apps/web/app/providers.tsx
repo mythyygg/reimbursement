@@ -26,6 +26,9 @@ import { flushQueue, startQueueListener } from "../lib/offlineQueue";
 // Toast 提示组件（类似于手机 App 的弹出提示）
 import { ToastProvider } from "../components/Toast";
 
+// 更新提示组件
+import UpdateNotification from "../components/UpdateNotification";
+
 /**
  * Providers 组件
  *
@@ -72,18 +75,10 @@ export default function Providers({ children }: { children: ReactNode }) {
     // 检查浏览器是否支持 Service Worker
     if ("serviceWorker" in navigator) {
       /**
-       * Service Worker 是什么？
-       * - 一个运行在后台的脚本，可以拦截网络请求
-       * - 实现离线缓存、推送通知等功能
-       * - 让 Web 应用可以像原生 App 一样工作
-       */
-
-      /**
        * 开发环境：注销所有 Service Worker 并清空缓存
        * 为什么开发时要这样做？
        * - Service Worker 会缓存旧版本的代码和 HTML
        * - 如果不清除，可能看到的是旧代码，导致调试困难
-       * - 生产环境不需要这样做，因为用户需要离线缓存功能
        */
       if (process.env.NODE_ENV !== "production") {
         // 获取所有已注册的 Service Worker
@@ -100,15 +95,8 @@ export default function Providers({ children }: { children: ReactNode }) {
           .keys()
           .then((keys) => Promise.all(keys.map((k) => caches.delete(k))))
           .catch(() => undefined);
-        return;
       }
-
-      /**
-       * 生产环境：注册 Service Worker
-       * - /sw.js 是 Service Worker 的脚本文件
-       * - 注册后，它会缓存静态资源，实现离线访问
-       */
-      navigator.serviceWorker.register("/sw.js").catch(() => undefined);
+      // 生产环境的 Service Worker 注册和更新检测在 UpdateNotification 组件中处理
     }
   }, []); // 空数组表示只在组件挂载时执行一次
 
@@ -130,7 +118,10 @@ export default function Providers({ children }: { children: ReactNode }) {
    */
   return (
     <QueryClientProvider client={client}>
-      <ToastProvider>{children}</ToastProvider>
+      <ToastProvider>
+        <UpdateNotification />
+        {children}
+      </ToastProvider>
     </QueryClientProvider>
   );
 }

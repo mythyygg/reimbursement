@@ -110,4 +110,39 @@ router.get("/batches/:batchId/exports", async (c) => {
   return ok(c, exports);
 });
 
+router.delete("/batches/:batchId", async (c) => {
+  const { userId } = c.get("auth");
+  const batchId = c.req.param("batchId");
+
+  // 检查批次是否存在
+  const [batch] = await db
+    .select()
+    .from(batches)
+    .where(and(eq(batches.batchId, batchId), eq(batches.userId, userId)));
+
+  if (!batch) {
+    return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
+  }
+
+  // 检查是否有关联的导出记录
+  const exports = await db
+    .select()
+    .from(exportRecords)
+    .where(eq(exportRecords.batchId, batchId));
+
+  if (exports.length > 0) {
+    return errorResponse(
+      c,
+      400,
+      "BATCH_HAS_EXPORTS",
+      "Cannot delete batch with existing exports. Please delete all exports first."
+    );
+  }
+
+  // 删除批次
+  await db.delete(batches).where(eq(batches.batchId, batchId));
+
+  return ok(c, { success: true });
+});
+
 export default router;

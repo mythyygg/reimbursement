@@ -43,6 +43,11 @@
 html,
 body {
   height: 100%;
+  /* 防止页面横向滚动 */
+  overflow-x: hidden;
+  /* 移动端优化 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 
 body {
@@ -51,6 +56,9 @@ body {
   background: rgb(var(--surface-1));
   color: rgb(var(--text-primary));
   overflow-x: hidden;
+  /* 支持顶部安全区域（刘海屏） */
+  padding-top: env(safe-area-inset-top);
+  /* 底部安全区域由BottomNav组件处理 */
 }
 
 * {

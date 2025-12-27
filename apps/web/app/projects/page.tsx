@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import BottomNav from "../../components/BottomNav";
+import SwipeAction from "../../components/SwipeAction";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { useErrorHandler } from "../../lib/useErrorHandler";
@@ -99,6 +100,20 @@ export default function ProjectsPage() {
         ? prev.filter(id => id !== projectId)
         : [...prev, projectId]
     );
+  };
+
+  const deleteProject = async (projectId: string) => {
+    try {
+      await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
+      await refetch();
+      showSuccess("项目已删除");
+    } catch (error: any) {
+      if (error.message?.includes("PROJECT_HAS_DATA")) {
+        showToast("项目包含数据，请先删除所有费用、票据和导出", "error");
+      } else {
+        handleError(error, "删除项目失败");
+      }
+    }
   };
 
   const projects = (Array.isArray(data) ? data : []).filter(
@@ -272,26 +287,30 @@ export default function ProjectsPage() {
             }
 
             return (
-              <Link
+              <SwipeAction
                 key={project.projectId}
-                href={`/projects/${project.projectId}/expenses`}
-                className="block rounded-3xl border border-border bg-surface-0 p-5 shadow-card transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-card-hover animate-fade-up"
-                style={{ animationDelay: `${index * 50}ms` }}
+                onDelete={() => deleteProject(project.projectId)}
               >
-                {content}
-                {Array.isArray(project.tags) && project.tags.length > 0 ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {project.tags.slice(0, 3).map((tag: string) => (
-                      <span
-                        key={tag}
-                        className="rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-text-secondary"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                ) : null}
-              </Link>
+                <Link
+                  href={`/projects/${project.projectId}/expenses`}
+                  className="block rounded-3xl border border-border bg-surface-0 p-5 shadow-card transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-card-hover animate-fade-up"
+                  style={{ animationDelay: `${index * 50}ms` }}
+                >
+                  {content}
+                  {Array.isArray(project.tags) && project.tags.length > 0 ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {project.tags.slice(0, 3).map((tag: string) => (
+                        <span
+                          key={tag}
+                          className="rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-text-secondary"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  ) : null}
+                </Link>
+              </SwipeAction>
             );
           })}
         </div>
