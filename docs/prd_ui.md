@@ -20,7 +20,7 @@
 - 快速录入固定在底部（类似聊天输入）
 - 支出详情用抽屉（避免跳页）
 - 匹配在票据卡片就完成（不进多层）
-- 可选字段折叠（类别/标签/OCR 编辑等）
+- 可选字段折叠（类别/标签等）
 
 ---
 
@@ -40,7 +40,7 @@
 # 逐屏组件清单 + 交互状态表（Screen 0–9）
 
 > 统一状态命名（供前端/设计共用）：
-> `EMPTY / LOADING / ERROR / UPLOADING / UPLOAD_FAILED / OCR_PENDING / OCR_PROCESSING / OCR_FAILED / SUGGESTIONS_AVAILABLE / MATCHING / MATCH_FAILED / MATCHED / EXPORTING / EXPORT_FAILED`
+> `EMPTY / LOADING / ERROR / UPLOADING / UPLOAD_FAILED / SUGGESTIONS_AVAILABLE / MATCHING / MATCH_FAILED / MATCHED / EXPORTING / EXPORT_FAILED`
 
 ---
 
@@ -144,8 +144,8 @@
 
 **组件**
 
-- 顶部：`上传票据`（主按钮）+ OCR 状态
-- Receipt Card：缩略图、OCR 字段（可编辑）、重复提示、候选匹配 Top3
+- 顶部：`上传票据`（主按钮）
+- Receipt Card：缩略图、重复提示、候选匹配 Top3
 - 全屏预览：缩放/左右切换
 - 手动匹配选择器：搜索（备注/金额）+ 快捷排序（缺票优先/日期最近/金额相同）
 
@@ -154,8 +154,6 @@
 - EMPTY：`还没有票据` + `上传票据`
 - UPLOADING：显示进度（单卡/全局）
 - UPLOAD_FAILED：卡片 `上传失败` + `重试`
-- OCR_PROCESSING：`识别中…` + 字段 skeleton
-- OCR_FAILED：`未识别到金额/日期，可手动填写`
 - SUGGESTIONS_AVAILABLE：展示 Top 3 + `确认匹配`
 - MATCHED：`已关联到：{支出摘要}` + `更换匹配 / 解除匹配`
 - 重复提示：Banner `疑似重复票据` + `查看对比`（对比页/弹层）
@@ -216,7 +214,8 @@
 
 **组件**
 
-- OCR 全局开关 + 说明：`用于预填金额/日期并辅助去重，可能不准确，可随时编辑`
+- [已移除]
+
 - 匹配策略：日期窗口（±3 天）、金额容差（0/0.01/1）、类别规则开关
 - 类别管理（可选）
 - 导出模板：字段勾选、排序、是否导出 PDF、命名规则展示
@@ -240,7 +239,7 @@
 - Meta：12–13 Regular
 - Caption：11–12 Regular
 
-**优先级**：金额/状态/项目名 > 事项备注 > 日期/类别/OCR
+**优先级**：金额/状态/项目名 > 事项备注 > 日期/类别
 
 ## 14. 组件尺寸建议
 
@@ -259,7 +258,7 @@
 
 **Project Card**：左文右 badge；padding 12–16
 **Expense Row**：左日期 56；右金额 88–104；中备注两行截断；状态点 8–10
-**Receipt Card**：上缩略图 72–88；中 OCR 字段；下候选列表每条 44；CTA 在候选条右侧或卡片底部
+**Receipt Card**：上缩略图 72–88；下候选列表每条 44；CTA 在候选条 right 侧或卡片底部
 
 ## 16. 快速录入条（Bottom Composer）
 
@@ -300,7 +299,7 @@
 
 # 文案与提示策略（防误操作）
 
-- OCR 字段旁提示：`可编辑`、`可能不准确`（弱提示）
+[已移除]
 - 确认匹配弹窗展示对比：票据日期/金额 vs 支出日期/金额（差异高亮）
 - 重复提示不阻断，但在批次检查必须再次出现
 - 关键 Toast：`已保存 / 上传失败，请重试 / 已关联 / 导出失败，请重试`
@@ -311,7 +310,7 @@
 
 1. 不做记账式图表与仪表盘
 2. 不让颜色承载全部信息（必须有文案/图标）
-3. OCR 字段默认不抢空间（可编辑但克制）
+3. [已移除]
 4. 候选匹配必须人工确认，确认前必须对比信息展示
 
 ---

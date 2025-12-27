@@ -139,11 +139,10 @@ export default function ExpensesPage() {
           {statusOptions.map((option) => (
             <button
               key={option}
-              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition shadow-[0_8px_24px_-20px_rgba(0,0,0,0.45)] ${
-                status === option
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition shadow-[0_8px_24px_-20px_rgba(0,0,0,0.45)] ${status === option
                   ? "bg-primary text-white"
                   : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
-              }`}
+                }`}
               onClick={() => setStatus(option)}
             >
               {{
@@ -181,27 +180,36 @@ export default function ExpensesPage() {
                 style={{ animationDelay: `${index * 40}ms` }}
                 onClick={() => setSelectedExpense(expense)}
               >
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-text-secondary">{weekday}</span>
-                  <span className="font-semibold text-text-primary truncate flex-shrink min-w-0">{expense.note}</span>
-                  <span className="text-text-secondary whitespace-nowrap">{dateStr}</span>
-                  {expense.category ? (
-                    <>
-                      <span className="h-1 w-1 rounded-full bg-border flex-shrink-0" />
-                      <span className="text-text-secondary whitespace-nowrap">{expense.category}</span>
-                    </>
-                  ) : null}
-                  {receiptCount > 0 ? (
-                    <>
-                      <span className="h-1 w-1 rounded-full bg-border flex-shrink-0" />
-                      <span className="text-text-secondary whitespace-nowrap">{receiptCount}张票据</span>
-                    </>
-                  ) : null}
-                  <span className="h-1 w-1 rounded-full bg-border flex-shrink-0" />
-                  <span className={`${meta.tone} whitespace-nowrap`}>{meta.label}</span>
-                  <span className="ml-auto font-semibold text-text-primary whitespace-nowrap">
-                    ¥{Number(expense.amount).toFixed(2)}
-                  </span>
+                <div className="flex items-start gap-4 text-sm">
+                  <div className="flex flex-col items-center justify-center pt-0.5 min-w-[32px] text-text-secondary text-[10px] leading-tight">
+                    <span>{weekday.slice(0, 1)}</span>
+                    <span>{weekday.slice(1, 2)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="font-semibold text-text-primary truncate">{expense.note}</span>
+                      <span className="font-semibold text-text-primary whitespace-nowrap">
+                        ¥{Number(expense.amount).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <span>{dateStr}</span>
+                      <span className="h-1 w-1 rounded-full bg-border" />
+                      <span className={meta.tone}>{meta.label}</span>
+                      {receiptCount > 0 ? (
+                        <>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span>{receiptCount}张票据</span>
+                        </>
+                      ) : null}
+                      {expense.category ? (
+                        <>
+                          <span className="h-1 w-1 rounded-full bg-border" />
+                          <span>{expense.category}</span>
+                        </>
+                      ) : null}
+                    </div>
+                  </div>
                 </div>
               </div>
             </SwipeAction>
@@ -221,9 +229,8 @@ export default function ExpensesPage() {
               <div className="relative w-28">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-semibold text-primary">¥</span>
                 <input
-                  className={`h-11 w-full rounded-xl border pl-7 pr-2 text-right text-sm font-semibold focus:border-primary/40 ${
-                    errors.amount ? "border-danger bg-danger/5" : "border-transparent bg-surface-1"
-                  }`}
+                  className={`h-11 w-full rounded-xl border pl-7 pr-2 text-right text-sm font-semibold focus:border-primary/40 ${errors.amount ? "border-danger bg-danger/5" : "border-transparent bg-surface-1"
+                    }`}
                   placeholder="0.00"
                   inputMode="decimal"
                   value={amount}
@@ -236,9 +243,8 @@ export default function ExpensesPage() {
                 />
               </div>
               <input
-                className={`h-11 flex-1 rounded-xl border px-3 text-sm focus:border-primary/40 ${
-                  errors.note ? "border-danger bg-danger/5" : "border-transparent bg-surface-1"
-                }`}
+                className={`h-11 flex-1 rounded-xl border px-3 text-sm focus:border-primary/40 ${errors.note ? "border-danger bg-danger/5" : "border-transparent bg-surface-1"
+                  }`}
                 placeholder="描述报销事项..."
                 value={note}
                 onChange={(event) => {
@@ -378,9 +384,8 @@ function ExpenseDrawer({
           <div className="flex items-center gap-3">
             <label className="text-sm text-text-secondary w-16 flex-shrink-0">金额</label>
             <input
-              className={`h-11 flex-1 rounded-xl border px-3 text-sm focus:border-primary/40 ${
-                amountError ? "border-danger" : "border-border bg-surface-1"
-              }`}
+              className={`h-11 flex-1 rounded-xl border px-3 text-sm focus:border-primary/40 ${amountError ? "border-danger" : "border-border bg-surface-1"
+                }`}
               placeholder="0.00"
               inputMode="decimal"
               value={amount}

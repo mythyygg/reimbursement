@@ -10,27 +10,25 @@
     "db:migrate": "tsx src/db/migrate.ts"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "latest",
-    "@aws-sdk/s3-request-presigner": "latest",
-    "@hono/node-server": "latest",
+    "@aws-sdk/client-s3": "3.958.0",
+    "@aws-sdk/s3-request-presigner": "3.958.0",
+    "@hono/node-server": "1.19.7",
     "@reimbursement/shared": "0.1.0",
-    "bcryptjs": "latest",
-    "bullmq": "latest",
-    "dotenv": "latest",
-    "drizzle-orm": "latest",
-    "drizzle-zod": "latest",
-    "hono": "latest",
-    "ioredis": "latest",
-    "jose": "latest",
-    "pg": "latest",
-    "zod": "latest"
+    "bcryptjs": "3.0.3",
+    "dotenv": "17.2.3",
+    "drizzle-orm": "0.45.1",
+    "drizzle-zod": "0.8.3",
+    "hono": "4.11.3",
+    "jose": "6.1.3",
+    "pg": "8.16.3",
+    "zod": "4.2.1"
   },
   "devDependencies": {
-    "@types/bcryptjs": "latest",
-    "@types/dotenv": "latest",
-    "@types/node": "latest",
-    "drizzle-kit": "latest",
-    "tsx": "latest",
-    "typescript": "latest"
+    "@types/bcryptjs": "3.0.0",
+    "@types/dotenv": "8.2.3",
+    "@types/node": "25.0.3",
+    "drizzle-kit": "0.31.8",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
   }
 }

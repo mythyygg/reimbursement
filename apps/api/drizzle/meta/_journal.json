@@ -8,6 +8,13 @@
       "when": 1766218159088,
       "tag": "0000_parched_psynapse",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1766814414347,
+      "tag": "0001_clumsy_klaw",
+      "breakpoints": true
     }
   ]
 }

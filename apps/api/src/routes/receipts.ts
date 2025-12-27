@@ -10,14 +10,14 @@ import {
   downloadLogs,
 } from "@reimbursement/shared/db";
 import { getReceiptCandidates } from "@reimbursement/shared/utils";
-import { db } from "../db/client";
-import { authMiddleware } from "../middleware/auth";
+import { db } from "../db/client.js";
+import { authMiddleware } from "../middleware/auth.js";
 import {
   createReceiptUploadUrl,
   createReceiptDownloadUrl,
-} from "../services/storage";
-import { config } from "../config";
-import { errorResponse, ok } from "../utils/http";
+} from "../services/storage.js";
+import { config } from "../config.js";
+import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
 
@@ -36,8 +36,6 @@ const completeSchema = z.object({
 });
 
 const receiptUpdateSchema = z.object({
-  ocr_amount: z.number().optional(),
-  ocr_date: z.string().datetime().optional(),
   merchant_keyword: z.string().optional(),
   receipt_amount: z.number().optional(),
   receipt_date: z.string().datetime().optional(),
@@ -54,7 +52,6 @@ router.get("/projects/:projectId/receipts", async (c) => {
   const { userId } = c.get("auth");
   const projectId = c.req.param("projectId");
   const matched = c.req.query("matched");
-  const ocrStatus = c.req.query("ocr_status");
 
   const filters = [
     eq(receipts.userId, userId),
@@ -70,9 +67,7 @@ router.get("/projects/:projectId/receipts", async (c) => {
     );
   }
 
-  if (ocrStatus) {
-    filters.push(eq(receipts.ocrStatus, ocrStatus));
-  }
+
 
   const data = await db
     .select()
@@ -129,7 +124,6 @@ router.post("/projects/:projectId/receipts", async (c) => {
       projectId,
       clientRequestId: body.data.client_request_id,
       uploadStatus: "pending",
-      ocrStatus: "pending",
     })
     .returning();
 
@@ -219,12 +213,7 @@ router.post("/receipts/:receiptId/complete", async (c) => {
       )
     );
 
-  const [userSettings] = await db
-    .select()
-    .from(settings)
-    .where(eq(settings.userId, userId));
 
-  const ocrEnabled = userSettings?.ocrEnabled ?? true;
 
   const fileUrl = receipt.storageKey
     ? `${config.s3PublicBaseUrl}/${receipt.storageKey}`
@@ -237,7 +226,6 @@ router.post("/receipts/:receiptId/complete", async (c) => {
       fileUrl,
       uploadStatus: "uploaded",
       duplicateFlag: duplicate.length > 0,
-      ocrStatus: ocrEnabled ? "pending" : "disabled",
       updatedAt: new Date(),
     })
     .where(eq(receipts.receiptId, receiptId))
@@ -248,7 +236,6 @@ router.post("/receipts/:receiptId/complete", async (c) => {
     receiptId,
     userId,
     projectId,
-    ocrStatus: updated?.ocrStatus,
     storageKey: updated?.storageKey,
   });
 
@@ -261,11 +248,7 @@ router.post("/receipts/:receiptId/complete", async (c) => {
     return errorResponse(c, 500, "UPLOAD_NOT_COMPLETE", "Receipt not updated");
   }
 
-  // 后端 OCR 已移除，依赖前端自动 OCR，状态变更仅在前端触发。
-  console.log("[api][receipt][ocr-skip-backend]", {
-    receiptId,
-    reason: "backend_ocr_removed",
-  });
+
 
   return ok(c, updated);
 });
@@ -279,16 +262,7 @@ router.patch("/receipts/:receiptId", async (c) => {
   }
 
   const update: Record<string, unknown> = { updatedAt: new Date() };
-  if (body.data.ocr_amount !== undefined) {
-    update.ocrAmount = String(body.data.ocr_amount);
-    update.ocrStatus = "ready";
-    update.ocrSource = "frontend";
-  }
-  if (body.data.ocr_date !== undefined) {
-    update.ocrDate = new Date(body.data.ocr_date);
-    update.ocrStatus = "ready";
-    update.ocrSource = "frontend";
-  }
+
   if (body.data.merchant_keyword !== undefined) {
     update.merchantKeyword = body.data.merchant_keyword;
   }
@@ -354,7 +328,7 @@ router.patch("/receipts/:receiptId/match", async (c) => {
           if (remaining.length === 0) {
             await tx
               .update(expenses)
-              .set({ status: "missing_receipt", updatedAt: new Date() })
+              .set({ status: "pending", updatedAt: new Date() })
               .where(eq(expenses.expenseId, expense.expenseId));
           }
         }
@@ -400,7 +374,7 @@ router.patch("/receipts/:receiptId/match", async (c) => {
       if (!expense.manualStatus) {
         await tx
           .update(expenses)
-          .set({ status: "matched", updatedAt: new Date() })
+          .set({ status: "processing", updatedAt: new Date() })
           .where(eq(expenses.expenseId, expenseId));
       }
     });
@@ -460,10 +434,8 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
     {
       amount: receipt.receiptAmount
         ? Number(receipt.receiptAmount)
-        : receipt.ocrAmount
-        ? Number(receipt.ocrAmount)
         : null,
-      date: receipt.receiptDate ?? receipt.ocrDate,
+      date: receipt.receiptDate,
       category: receipt.receiptType,
       note: receipt.merchantKeyword,
     },
@@ -499,30 +471,30 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
 
   const responseCandidates =
     candidates.length > 0
-      ? candidates.map((candidate) => {
-          const expense = expenseById.get(candidate.expenseId);
-          return {
-            ...candidate,
-            note: expense?.note ?? null,
-            amount: expense ? Number(expense.amount) : null,
-            date: expense?.date ?? null,
-            status: expense?.status ?? null,
-          };
-        })
+      ? candidates.map((candidate: any) => {
+        const expense = expenseById.get(candidate.expenseId);
+        return {
+          ...candidate,
+          note: (expense as any)?.note ?? null,
+          amount: expense ? Number((expense as any).amount) : null,
+          date: (expense as any)?.date ?? null,
+          status: (expense as any)?.status ?? null,
+        };
+      })
       : expenseRows.map((expense) => ({
-          expenseId: expense.expenseId,
-          confidence: "high",
-          reason: "manual selection",
-          note: expense.note,
-          amount: Number(expense.amount),
-          date: expense.date,
-          status: expense.status,
-        }));
+        expenseId: expense.expenseId,
+        confidence: "high",
+        reason: "manual selection",
+        note: expense.note,
+        amount: Number(expense.amount),
+        date: expense.date,
+        status: expense.status,
+      }));
 
   if (
     matchedExpense &&
     !responseCandidates.some(
-      (item) => item.expenseId === matchedExpense!.expenseId
+      (item: any) => item.expenseId === matchedExpense!.expenseId
     )
   ) {
     responseCandidates.unshift({

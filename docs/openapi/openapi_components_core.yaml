@@ -77,11 +77,7 @@ components:
       in: query
       schema:
         type: boolean
-    ocr_status:
-      name: ocr_status
-      in: query
-      schema:
-        type: string
+
   responses:
     ErrorResponse:
       description: Error
@@ -234,32 +230,7 @@ components:
             - pending
             - uploaded
             - failed
-        ocr_status:
-          type: string
-          enum:
-            - pending
-            - processing
-            - ready
-            - failed
-            - disabled
-        ocr_source:
-          type: string
-          enum:
-            - frontend
-            - tencent
-            - aliyun
-            - baidu
-            - huawei
-            - none
-        ocr_confidence:
-          type: number
-          format: double
-        ocr_amount:
-          type: number
-          format: double
-        ocr_date:
-          type: string
-          format: date
+
         merchant_keyword:
           type: string
         receipt_amount:
@@ -341,14 +312,6 @@ components:
     Settings:
       type: object
       properties:
-        ocr_enabled:
-          type: boolean
-        ocr_fallback_enabled:
-          type: boolean
-        ocr_provider_preference:
-          type: array
-          items:
-            type: string
         match_rules:
           type: object
         export_template:

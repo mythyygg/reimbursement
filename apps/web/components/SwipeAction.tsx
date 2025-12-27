@@ -1,6 +1,6 @@
 "use client";
 
-import { MouseEventHandler, ReactNode, useRef, useState } from "react";
+import { MouseEventHandler, ReactNode, useEffect, useRef, useState } from "react";
 import clsx from "clsx";
 
 type SwipeActionProps = {
@@ -23,6 +23,7 @@ export default function SwipeAction({
   const startXRef = useRef(0);
   const offsetRef = useRef(0);
   const isDraggingRef = useRef(false);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const setOffsetSafely = (value: number) => {
     offsetRef.current = value;
@@ -85,6 +86,37 @@ export default function SwipeAction({
     }
   };
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const onTouchStart = (event: TouchEvent) => {
+      handleStart(event.touches[0].clientX);
+    };
+
+    const onTouchMove = (event: TouchEvent) => {
+      handleMove(event.touches[0].clientX);
+      const distance = Math.abs(event.touches[0].clientX - startXRef.current);
+      if (distance > 8) {
+        event.preventDefault();
+      }
+    };
+
+    const onTouchEnd = () => {
+      handleEnd();
+    };
+
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: false });
+    container.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    return () => {
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+    };
+  }, [open]);
+
   const showAction = open || offsetRef.current < 0;
 
   return (
@@ -106,20 +138,12 @@ export default function SwipeAction({
         </button>
       </div>
       <div
+        ref={containerRef}
         className="relative touch-pan-y"
         style={{
           transform: `translateX(${offset}px)`,
           transition: "transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease"
         }}
-        onTouchStart={(event) => handleStart(event.touches[0].clientX)}
-        onTouchMove={(event) => {
-          handleMove(event.touches[0].clientX);
-          const distance = Math.abs(event.touches[0].clientX - startXRef.current);
-          if (distance > 8) {
-            event.preventDefault();
-          }
-        }}
-        onTouchEnd={handleEnd}
         onMouseDown={(event) => handleStart(event.clientX)}
         onMouseMove={(event) => handleMove(event.clientX)}
         onMouseUp={handleEnd}

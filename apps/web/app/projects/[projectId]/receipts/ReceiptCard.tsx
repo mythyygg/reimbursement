@@ -55,11 +55,9 @@ export function ReceiptCard({
   expanded,
   onToggle
 }: ReceiptCardProps) {
-  const [amountInput, setAmountInput] = useState(receipt.ocrAmount || "");
+  const [amountInput, setAmountInput] = useState(receipt.receiptAmount || "");
   const [dateInput, setDateInput] = useState(
-    formatDateInput(
-      receipt.receiptDate || receipt.updatedAt || receipt.createdAt || receipt.ocrDate
-    )
+    formatDateInput(receipt.receiptDate || receipt.updatedAt || receipt.createdAt)
   );
   const [merchantKeyword, setMerchantKeyword] = useState(receipt.merchantKeyword || "");
   const [manualExpenseId, setManualExpenseId] = useState("");
@@ -78,14 +76,12 @@ export function ReceiptCard({
   }, [receipt.fileUrl]);
 
   useEffect(() => {
-    setAmountInput(receipt.ocrAmount || "");
+    setAmountInput(receipt.receiptAmount || "");
     setDateInput(
-      formatDateInput(
-        receipt.receiptDate || receipt.updatedAt || receipt.createdAt || receipt.ocrDate
-      )
+      formatDateInput(receipt.receiptDate || receipt.updatedAt || receipt.createdAt)
     );
     setMerchantKeyword(receipt.merchantKeyword || "");
-  }, [receipt.ocrAmount, receipt.receiptDate, receipt.updatedAt, receipt.createdAt, receipt.ocrDate, receipt.merchantKeyword, receipt.receiptId]);
+  }, [receipt.receiptAmount, receipt.receiptDate, receipt.updatedAt, receipt.createdAt, receipt.merchantKeyword, receipt.receiptId]);
 
   useEffect(() => {
     const handleClickAway = (event: MouseEvent) => {
@@ -188,7 +184,6 @@ export function ReceiptCard({
     receipt.receiptDate ||
     receipt.updatedAt ||
     receipt.createdAt ||
-    receipt.ocrDate ||
     "";
 
   return (
@@ -294,9 +289,8 @@ export function ReceiptCard({
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium text-text-secondary w-12 flex-shrink-0">金额</label>
                 <input
-                  className={`h-11 flex-1 rounded-xl border px-3 text-xs focus:border-primary/40 ${
-                    amountError ? "border-danger bg-danger/5" : "border-border bg-surface-0"
-                  }`}
+                  className={`h-11 flex-1 rounded-xl border px-3 text-xs focus:border-primary/40 ${amountError ? "border-danger bg-danger/5" : "border-border bg-surface-0"
+                    }`}
                   placeholder="0.00"
                   inputMode="decimal"
                   value={amountInput}

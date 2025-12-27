@@ -2,9 +2,11 @@ import { S3Client, PutObjectCommand, GetObjectCommand } from "@aws-sdk/client-s3
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { config } from "../config";
 
+const s3Region = config.s3Region === 'us-east-1' ? 'auto' : config.s3Region;
+
 const s3 = new S3Client({
   endpoint: config.s3Endpoint,
-  region: config.s3Region,
+  region: s3Region,
   credentials: {
     accessKeyId: config.s3AccessKey,
     secretAccessKey: config.s3SecretKey

@@ -1,31 +1,89 @@
+/**
+ * 导出任务处理器 - Export Job
+ *
+ * 功能：将批次中的支出和票据导出为 ZIP 压缩包
+ *
+ * 导出内容包括：
+ * 1. CSV 文件：支出清单（金额、日期、备注等）
+ * 2. 票据图片/PDF：所有关联的票据文件
+ * 3. PDF 汇总页（可选）：索引页，方便查看所有票据
+ *
+ * 处理流程：
+ * 1. 从数据库获取批次信息和筛选条件
+ * 2. 查询符合条件的支出和票据
+ * 3. 生成 CSV 文件
+ * 4. 从对象存储下载所有票据文件
+ * 5. 打包成 ZIP 文件
+ * 6. 上传 ZIP 到对象存储
+ * 7. 更新导出记录状态
+ *
+ * 为什么需要 Worker？
+ * - 导出过程耗时较长（下载文件、打包等）
+ * - 如果在 API 中处理，用户需要等待很久
+ * - 使用 Worker 后台处理，用户可以继续使用系统
+ */
+
+// archiver: 用于创建 ZIP 压缩包的库
 import archiver from "archiver";
+
+// pdfkit: 用于生成 PDF 文档的库
 import PDFDocument from "pdfkit";
+
+// Node.js 流处理（Stream）
+// Stream 是 Node.js 处理大文件的方式，不需要一次性加载到内存
 import { PassThrough } from "node:stream";
+
+// Drizzle ORM 的查询构建器
 import { and, eq, gte, inArray, isNull, lte } from "drizzle-orm";
+
+// 数据库表定义
 import {
-  batches,
-  exportRecords,
-  expenses,
-  projects,
-  receipts,
-  settings,
+  batches,          // 批次表
+  exportRecords,    // 导出记录表
+  expenses,         // 支出表
+  projects,         // 项目表
+  receipts,         // 票据表
+  settings,         // 用户设置表
 } from "@reimbursement/shared/db";
+
+// 工具函数
 import {
-  buildCsv,
-  buildReceiptFilename,
-  formatAmount,
-  formatDate,
-  withUtf8Bom,
+  buildCsv,              // 构建 CSV 文件内容
+  buildReceiptFilename,  // 生成票据文件名（规范化命名）
+  formatAmount,          // 格式化金额（如 150.5 → "150.50"）
+  formatDate,            // 格式化日期（如 ISO 8601 → "2023-12-27"）
+  withUtf8Bom,          // 添加 UTF-8 BOM（防止 Excel 乱码）
 } from "@reimbursement/shared/utils";
+
+// 数据库客户端
 import { db } from "../db/client";
+
+// 对象存储服务（MinIO/S3）
 import { downloadObject, uploadObject } from "../services/storage";
 
+/**
+ * 导出条目的数据结构
+ * 每个条目包含一个支出和它关联的所有票据
+ */
 type ExportEntry = {
-  sequence: number;
-  expense: typeof expenses.$inferSelect;
-  receipts: Array<{ receiptId: string; filename: string; storageKey: string }>;
+  sequence: number;      // 序号（1、2、3...）
+  expense: typeof expenses.$inferSelect;  // 支出信息
+  receipts: Array<{      // 关联的票据列表
+    receiptId: string;   // 票据 ID
+    filename: string;    // 文件名
+    storageKey: string;  // 对象存储中的 Key
+  }>;
 };
 
+/**
+ * 处理导出任务的主函数
+ *
+ * @param input.exportId - 导出记录 ID
+ * @param input.userId - 用户 ID（用于权限验证）
+ *
+ * 这是一个异步函数，会在后台执行
+ * 执行时间可能较长（几秒到几分钟，取决于文件数量和大小）
+ */
 export async function processExportJob(input: {
   exportId: string;
   userId: string;
@@ -50,19 +108,23 @@ export async function processExportJob(input: {
     .where(eq(exportRecords.exportId, input.exportId));
 
   try {
-    const [batch] = await db
-      .select()
-      .from(batches)
-      .where(eq(batches.batchId, record.batchId));
+    const projectIds = (record.projectIds ?? []) as string[];
+    const isBatchExport = !!record.batchId;
 
-    if (!batch) {
-      throw new Error("Batch not found");
+    let batch: typeof batches.$inferSelect | undefined;
+    if (isBatchExport && record.batchId) {
+      [batch] = await db
+        .select()
+        .from(batches)
+        .where(eq(batches.batchId, record.batchId));
     }
 
-    const [project] = await db
+    const projectRows = await db
       .select()
       .from(projects)
-      .where(eq(projects.projectId, batch.projectId));
+      .where(inArray(projects.projectId, projectIds));
+
+    const projectMap = new Map(projectRows.map((p) => [p.projectId, p]));
 
     const [userSettings] = await db
       .select()
@@ -70,8 +132,6 @@ export async function processExportJob(input: {
       .where(eq(settings.userId, input.userId));
 
     const template = userSettings?.exportTemplateJson ?? {
-      includeOcrAmount: false,
-      includeOcrDate: false,
       includeMerchantKeyword: false,
       includeExpenseId: false,
       includeReceiptIds: false,
@@ -79,7 +139,7 @@ export async function processExportJob(input: {
       includePdf: true,
     };
 
-    const filter = (batch.filterJson ?? {}) as {
+    const filter = (batch?.filterJson ?? {}) as {
       dateFrom?: string;
       dateTo?: string;
       statuses?: string[];
@@ -88,7 +148,7 @@ export async function processExportJob(input: {
 
     const expenseFilters = [
       eq(expenses.userId, input.userId),
-      eq(expenses.projectId, batch.projectId),
+      inArray(expenses.projectId, projectIds),
     ];
 
     if (filter.statuses && filter.statuses.length > 0) {
@@ -114,7 +174,7 @@ export async function processExportJob(input: {
       .from(receipts)
       .where(
         and(
-          eq(receipts.projectId, batch.projectId),
+          inArray(receipts.projectId, projectIds),
           eq(receipts.userId, input.userId),
           isNull(receipts.deletedAt)
         )
@@ -162,17 +222,17 @@ export async function processExportJob(input: {
           storageKey: receipt.storageKey,
         }))
         .filter((entry) => Boolean(entry.storageKey)) as Array<{
-        receiptId: string;
-        filename: string;
-        storageKey: string;
-      }>;
+          receiptId: string;
+          filename: string;
+          storageKey: string;
+        }>;
 
       entries.push({ sequence, expense, receipts: exportReceipts });
 
       csvRows.push(
         buildCsvRow({
           sequence,
-          projectLabel: project?.name ?? "-",
+          projectLabel: projectMap.get(expense.projectId)?.name ?? "-",
           expense,
           receiptNames,
           template,
@@ -196,8 +256,8 @@ export async function processExportJob(input: {
 
     if (record.type === "pdf") {
       const pdfBuffer = await buildPdfIndex({
-        batchName: batch.name,
-        projectLabel: project?.name ?? "-",
+        batchName: batch?.name || "Items Export",
+        projectLabel: projectRows.length === 1 ? projectRows[0].name ?? "-" : "Multiple Projects",
         entries,
       });
       await finalizeExport(
@@ -212,10 +272,10 @@ export async function processExportJob(input: {
 
     const pdfBuffer = template.includePdf
       ? await buildPdfIndex({
-          batchName: batch.name,
-          projectLabel: project?.name ?? "-",
-          entries,
-        })
+        batchName: batch?.name || "Items Export",
+        projectLabel: projectRows.length === 1 ? projectRows[0].name ?? "-" : "Multiple Projects",
+        entries,
+      })
       : null;
 
     const zipBuffer = await buildZipArchive({ csvBuffer, entries, pdfBuffer });
@@ -247,12 +307,7 @@ function buildCsvHeader(template: Record<string, unknown>) {
     "\u7968\u636e\u6587\u4ef6\u540d\u5217\u8868",
   ];
 
-  if (template.includeOcrAmount) {
-    header.push("\u7968\u636eOCR\u91d1\u989d");
-  }
-  if (template.includeOcrDate) {
-    header.push("\u7968\u636eOCR\u65e5\u671f");
-  }
+
   if (template.includeMerchantKeyword) {
     header.push("\u5546\u6237\u5173\u952e\u5b57");
   }
@@ -275,14 +330,7 @@ function buildCsvRow(input: {
   receipts: (typeof receipts.$inferSelect)[];
 }) {
   const receiptCount = input.receipts.length;
-  const ocrAmounts = input.receipts
-    .map((receipt) => receipt.ocrAmount)
-    .filter(Boolean)
-    .join(";");
-  const ocrDates = input.receipts
-    .map((receipt) => (receipt.ocrDate ? formatDate(receipt.ocrDate) : null))
-    .filter(Boolean)
-    .join(";");
+
   const merchantKeywords = input.receipts
     .map((receipt) => receipt.merchantKeyword)
     .filter(Boolean)
@@ -300,12 +348,7 @@ function buildCsvRow(input: {
     input.receiptNames.join(";"),
   ];
 
-  if (input.template.includeOcrAmount) {
-    row.push(ocrAmounts || null);
-  }
-  if (input.template.includeOcrDate) {
-    row.push(ocrDates || null);
-  }
+
   if (input.template.includeMerchantKeyword) {
     row.push(merchantKeywords || null);
   }
@@ -321,12 +364,12 @@ function buildCsvRow(input: {
 
 function mapStatusLabel(status: string) {
   switch (status) {
-    case "missing_receipt":
-      return "\u7f3a\u7968";
-    case "matched":
-      return "\u5df2\u5339\u914d";
-    case "no_receipt_required":
-      return "\u4e0d\u9700\u7968";
+    case "pending":
+      return "新建";
+    case "processing":
+      return "处理中";
+    case "completed":
+      return "已报销";
     default:
       return status;
   }

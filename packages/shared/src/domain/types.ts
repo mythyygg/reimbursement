@@ -1,14 +1,14 @@
 /**
  * 费用状态枚举
- * 表示费用条目的票据匹配状态
+ * 表示报销单的处理状态
  */
 export type ExpenseStatus =
-  /** 缺少票据 - 费用已创建但未匹配到票据 */
-  | "missing_receipt"
-  /** 已关联 - 费用已成功匹配到一张或多张票据 */
-  | "matched"
-  /** 无需票据 - 用户标记此费用不需要票据（如补贴、津贴等） */
-  | "no_receipt_required";
+  /** 新建 - 报销单已创建，待处理 */
+  | "pending"
+  /** 处理中 - 报销单正在处理，已关联票据或正在审核 */
+  | "processing"
+  /** 已报销 - 报销单已完成，费用已发放 */
+  | "completed";
 
 /**
  * 票据上传状态枚举
@@ -22,39 +22,7 @@ export type ReceiptUploadStatus =
   /** 上传失败 - 文件上传过程中出现错误 */
   | "failed";
 
-/**
- * 票据OCR识别状态枚举
- * 跟踪OCR识别的处理进度
- */
-export type ReceiptOcrStatus =
-  /** 待处理 - 文件已上传，等待OCR识别 */
-  | "pending"
-  /** 处理中 - OCR识别正在进行 */
-  | "processing"
-  /** 已完成 - OCR识别成功完成，结果已保存 */
-  | "ready"
-  /** 识别失败 - OCR识别过程失败，可能需要手动输入 */
-  | "failed"
-  /** 已禁用 - 用户或系统禁用了OCR功能 */
-  | "disabled";
 
-/**
- * OCR识别来源枚举
- * 标识OCR识别使用的服务提供商
- */
-export type ReceiptOcrSource =
-  /** 前端识别 - 使用前端浏览器内置的OCR（如Tesseract.js） */
-  | "frontend"
-  /** 腾讯云OCR - 使用腾讯云文字识别服务 */
-  | "tencent"
-  /** 阿里云OCR - 使用阿里云文字识别服务 */
-  | "aliyun"
-  /** 百度OCR - 使用百度AI文字识别服务 */
-  | "baidu"
-  /** 华为云OCR - 使用华为云文字识别服务 */
-  | "huawei"
-  /** 无识别 - 未进行OCR识别 */
-  | "none";
 
 /**
  * 导出状态枚举
@@ -104,9 +72,7 @@ export type BatchIssueType =
   /** 重复票据 - 同一张票据被多次使用 */
   | "duplicate_receipt"
   /** 金额不匹配 - 费用金额与票据金额不一致 */
-  | "amount_mismatch"
-  /** OCR缺失 - 票据未进行OCR识别或识别失败 */
-  | "ocr_missing";
+  | "amount_mismatch";
 
 /**
  * 排序方向枚举
@@ -149,10 +115,6 @@ export type MatchRuleConfig = {
  * 定义导出文件的格式和包含的内容
  */
 export type ExportTemplateConfig = {
-  /** 是否包含OCR识别的金额 */
-  includeOcrAmount: boolean;
-  /** 是否包含OCR识别的日期 */
-  includeOcrDate: boolean;
   /** 是否包含商户关键词 */
   includeMerchantKeyword: boolean;
   /** 是否包含费用ID */

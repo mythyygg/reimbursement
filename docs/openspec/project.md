@@ -23,44 +23,41 @@ Key goals:
 - ORM/Migrations: Drizzle ORM + drizzle-kit.
 - Validation: drizzle-zod for schema-derived validation.
 - Auth: JWT access + refresh tokens; password-based login.
-- Queue/Jobs: BullMQ + Redis (OCR/export/check).
+- Queue/Jobs: Database-based Job Table (export/check).
 
 ### Data & Storage
 - Database: PostgreSQL.
 - Object storage: S3-compatible, direct upload via signed URLs.
 
-### OCR
-- Frontend OCR: Tesseract.js (default).
-- Cloud OCR fallback: Tencent/Aliyun/Baidu/Huawei (TBD).
 
 ### Key UI Components (from prototype)
 - Project List (pinned/recent/search).
 - Project Detail: Expenses tab, Receipts Inbox tab, Batches tab.
 - Expense Drawer (edit/match/attachments).
-- Receipt Card (OCR fields, suggestions, match/replace/unmatch).
+- Receipt Card (suggestions, match/replace/unmatch).
 - Batch List + Batch Detail (issue summary, export actions).
 - Bottom Composer (fast expense entry).
 
 ## Project Conventions
 
 ### Code Style
-- API payloads and DB fields use snake_case (e.g., `project_id`, `ocr_status`).
+- API payloads and DB fields use snake_case (e.g., `project_id`).
 - Status values are explicit enums (e.g., `missing_receipt`, `matched`).
 - Keep code changes minimal, reuse existing patterns, avoid over-engineering.
 
 ### Architecture Patterns
-- Monolithic API service + async worker for OCR/export/check.
+- Monolithic API service + async worker for export/check.
 - RESTful endpoints under `/api/v1`.
 - Direct-to-storage upload with server-issued signed URLs.
 - PWA supports offline queue and retries for uploads.
 
 **Worker 说明**
-- Worker 是独立的后台任务进程，用于执行 OCR、批次检查、导出等耗时任务。
+- Worker 是独立的后台任务进程，用于执行批次检查、导出等耗时任务。
 - API 只负责投递任务到队列，Worker 拉取执行并写回结果。
 
 ### Testing Strategy
 - Unit tests: matching rules, export naming, error handling.
-- Integration tests: upload → OCR → match → export pipelines.
+- Integration tests: upload → match → export pipelines.
 - E2E tests: critical mobile flows (quick entry, batch export).
 
 ### Git Workflow
@@ -70,7 +67,7 @@ Key goals:
 ## Domain Context
 - A **Project** groups related expenses and receipts.
 - An **Expense** is a user-entered cost with date/amount/category/note.
-- A **Receipt** is an uploaded file (image/PDF) optionally OCR-parsed.
+- A **Receipt** is an uploaded file (image/PDF).
 - Matching is **manual confirm**; 1 receipt → 1 expense by default; 1 expense can have many receipts.
 - **Batch** is a filtered set of expenses for export with issue checks.
 - Issues include missing receipts, duplicate receipts, and amount mismatches.
@@ -84,4 +81,4 @@ Key goals:
 
 ## External Dependencies
 - S3-compatible object storage (provider TBD).
-- Cloud OCR provider (Tencent/Aliyun/Baidu/Huawei) TBD.
+

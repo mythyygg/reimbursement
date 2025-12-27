@@ -61,7 +61,7 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
 
   for (const expense of expenseRows) {
     const linked = receiptsByExpense.get(expense.expenseId) ?? [];
-    if (linked.length === 0 || expense.status === "missing_receipt") {
+    if (linked.length === 0 || expense.status === "pending") {
       issues.push({
         type: "missing_receipt",
         severity: "warning",
@@ -71,7 +71,7 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
     }
 
     for (const receipt of linked) {
-      const compareAmount = receipt.receiptAmount ?? receipt.ocrAmount;
+      const compareAmount = receipt.receiptAmount;
       if (compareAmount) {
         const mismatch = Number(compareAmount) !== Number(expense.amount);
         if (mismatch) {
@@ -85,15 +85,7 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
         }
       }
 
-      if (receipt.ocrStatus === "failed" || (!receipt.ocrAmount && !receipt.ocrDate)) {
-        issues.push({
-          type: "ocr_missing",
-          severity: "info",
-          expenseId: expense.expenseId,
-          receiptId: receipt.receiptId,
-          message: "OCR fields missing"
-        });
-      }
+
     }
   }
 
@@ -145,7 +137,6 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
     missing_receipt: issues.filter((issue) => issue.type === "missing_receipt").length,
     duplicate_receipt: issues.filter((issue) => issue.type === "duplicate_receipt").length,
     amount_mismatch: issues.filter((issue) => issue.type === "amount_mismatch").length,
-    ocr_missing: issues.filter((issue) => issue.type === "ocr_missing").length
   };
 
   await db

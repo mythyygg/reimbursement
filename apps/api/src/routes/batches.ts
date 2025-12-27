@@ -1,11 +1,10 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { and, eq } from "drizzle-orm";
-import { batches } from "@reimbursement/shared/db";
-import { db } from "../db/client";
-import { authMiddleware } from "../middleware/auth";
-import { batchCheckQueue } from "../queue";
-import { errorResponse, ok } from "../utils/http";
+import { batches, backendJobs } from "@reimbursement/shared/db";
+import { db } from "../db/client.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
 
@@ -42,7 +41,7 @@ router.post("/projects/:projectId/batches", async (c) => {
   const filterJson = {
     dateFrom: body.data.date_from,
     dateTo: body.data.date_to,
-    statuses: body.data.statuses ?? ["matched"],
+    statuses: body.data.statuses ?? ["processing"],
     categories: body.data.categories ?? []
   };
 
@@ -56,11 +55,11 @@ router.post("/projects/:projectId/batches", async (c) => {
     })
     .returning();
 
-  await batchCheckQueue.add(
-    "batch-check",
-    { batchId: batch.batchId, userId },
-    { removeOnComplete: true, removeOnFail: true }
-  );
+  await db.insert(backendJobs).values({
+    type: "batch_check",
+    payload: { batchId: batch.batchId, userId },
+    status: "pending",
+  });
 
   return ok(c, batch);
 });
@@ -92,11 +91,11 @@ router.post("/batches/:batchId/check", async (c) => {
     return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
   }
 
-  await batchCheckQueue.add(
-    "batch-check",
-    { batchId, userId },
-    { removeOnComplete: true, removeOnFail: true }
-  );
+  await db.insert(backendJobs).values({
+    type: "batch_check",
+    payload: { batchId, userId },
+    status: "pending",
+  });
 
   return ok(c, { success: true });
 });

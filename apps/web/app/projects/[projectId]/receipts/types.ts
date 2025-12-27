@@ -2,15 +2,13 @@ export type ReceiptRecord = {
   receiptId: string;
   fileUrl?: string | null;
   fileExt?: string | null;
-  ocrStatus?: string | null;
-  ocrAmount?: string | null;
-  ocrDate?: string | null;
   merchantKeyword?: string | null;
   matchedExpenseId?: string | null;
   duplicateFlag?: boolean | null;
   receiptDate?: string | null;
   createdAt?: string | null;
   updatedAt?: string | null;
+  receiptAmount?: string | null;
 };
 
 export type CandidateRecord = {

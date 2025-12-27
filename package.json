@@ -11,17 +11,22 @@
     "dev:worker": "npm --workspace apps/worker run dev",
     "dev": "concurrently -k -n web,api,worker \"npm:dev:web\" \"npm:dev:api\" \"npm:dev:worker\"",
     "build": "npm --workspace apps/web run build",
-    "lint": "npm --workspace apps/web run lint"
+    "lint": "npm --workspace apps/web run lint",
+    "db:generate": "drizzle-kit generate --config=apps/api/drizzle.config.ts",
+    "db:migrate": "drizzle-kit migrate --config=apps/api/drizzle.config.ts",
+    "db:push": "drizzle-kit push --config=apps/api/drizzle.config.ts",
+    "db:studio": "drizzle-kit studio --config=apps/api/drizzle.config.ts"
   },
   "devDependencies": {
     "@types/pg": "^8.16.0",
-    "browserslist": "latest",
-    "caniuse-lite": "latest",
-    "concurrently": "latest",
-    "tsx": "latest",
-    "typescript": "latest"
+    "browserslist": "4.28.1",
+    "caniuse-lite": "1.0.30001761",
+    "concurrently": "9.2.1",
+    "tsx": "4.21.0",
+    "typescript": "5.9.3"
   },
   "dependencies": {
-    "drizzle-kit": "latest"
+    "drizzle-kit": "0.31.8",
+    "drizzle-orm": "^0.45.1"
   }
 }

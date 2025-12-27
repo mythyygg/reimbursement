@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { setTokens } from "../../lib/auth";
+import { useEffect } from "react";
+import { setTokens, getAccessToken } from "../../lib/auth";
 import { useToast } from "../../components/Toast";
-
-const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "";
+import { apiFetch } from "../../lib/api";
+import { useErrorHandler } from "../../lib/useErrorHandler";
 
 // 邮箱验证正则
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -15,11 +16,19 @@ const PHONE_REGEX = /^1[3-9]\d{9}$/;
 export default function LoginPage() {
   const router = useRouter();
   const { showError } = useToast();
+  const { handleError } = useErrorHandler();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [emailOrPhone, setEmailOrPhone] = useState("");
   const [password, setPassword] = useState("");
   const [errors, setErrors] = useState<{ emailOrPhone?: string; password?: string }>({});
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const token = getAccessToken();
+    if (token) {
+      router.replace("/projects");
+    }
+  }, [router]);
 
   const validateForm = () => {
     const newErrors: { emailOrPhone?: string; password?: string } = {};
@@ -34,8 +43,8 @@ export default function LoginPage() {
     // 验证密码
     if (!password) {
       newErrors.password = "请输入密码";
-    } else if (password.length < 6) {
-      newErrors.password = "密码至少需要6位";
+    } else if (password.length < 8) {
+      newErrors.password = "密码至少需要8位";
     }
 
     setErrors(newErrors);
@@ -51,21 +60,14 @@ export default function LoginPage() {
     setLoading(true);
     const path = mode === "login" ? "/auth/password/login" : "/auth/password/register";
     try {
-      const response = await fetch(`${apiBase}${path}`, {
+      const data = await apiFetch<{ tokens: any }>(path, {
         method: "POST",
-        headers: { "content-type": "application/json" },
         body: JSON.stringify({ email_or_phone: emailOrPhone, password })
       });
-      const payload = await response.json();
-      if (!response.ok) {
-        const errorMessage = payload?.error?.message || "认证失败";
-        showError(errorMessage);
-        return;
-      }
-      setTokens(payload.data.tokens);
+      setTokens(data.tokens);
       router.replace("/projects");
     } catch (err) {
-      showError(err instanceof Error ? err.message : "网络请求失败，请稍后重试");
+      handleError(err, "认证失败");
     } finally {
       setLoading(false);
     }
@@ -94,17 +96,15 @@ export default function LoginPage() {
         </p>
         <div className="flex gap-2 mb-6">
           <button
-            className={`flex-1 rounded-full px-3 py-2 text-sm ${
-              mode === "login" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
-            }`}
+            className={`flex-1 rounded-full px-3 py-2 text-sm ${mode === "login" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
+              }`}
             onClick={() => setMode("login")}
           >
             登录
           </button>
           <button
-            className={`flex-1 rounded-full px-3 py-2 text-sm ${
-              mode === "register" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
-            }`}
+            className={`flex-1 rounded-full px-3 py-2 text-sm ${mode === "register" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
+              }`}
             onClick={() => setMode("register")}
           >
             注册
@@ -113,9 +113,8 @@ export default function LoginPage() {
         <div className="flex flex-col gap-3">
           <div>
             <input
-              className={`h-11 w-full rounded-xl border px-3 text-sm ${
-                errors.emailOrPhone ? "border-danger" : "border-border"
-              }`}
+              className={`h-11 w-full rounded-xl border px-3 text-sm ${errors.emailOrPhone ? "border-danger" : "border-border"
+                }`}
               placeholder="邮箱或手机号"
               value={emailOrPhone}
               onChange={(event) => handleEmailOrPhoneChange(event.target.value)}
@@ -132,9 +131,8 @@ export default function LoginPage() {
           </div>
           <div>
             <input
-              className={`h-11 w-full rounded-xl border px-3 text-sm ${
-                errors.password ? "border-danger" : "border-border"
-              }`}
+              className={`h-11 w-full rounded-xl border px-3 text-sm ${errors.password ? "border-danger" : "border-border"
+                }`}
               placeholder="密码"
               type="password"
               value={password}

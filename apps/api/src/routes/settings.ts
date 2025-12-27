@@ -2,9 +2,9 @@ import { Hono } from "hono";
 import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { settings } from "@reimbursement/shared/db";
-import { db } from "../db/client";
-import { authMiddleware } from "../middleware/auth";
-import { errorResponse, ok } from "../utils/http";
+import { db } from "../db/client.js";
+import { authMiddleware } from "../middleware/auth.js";
+import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
 
@@ -15,8 +15,6 @@ const matchRulesSchema = z.object({
 });
 
 const exportTemplateSchema = z.object({
-  includeOcrAmount: z.boolean(),
-  includeOcrDate: z.boolean(),
   includeMerchantKeyword: z.boolean(),
   includeExpenseId: z.boolean(),
   includeReceiptIds: z.boolean(),
@@ -25,9 +23,6 @@ const exportTemplateSchema = z.object({
 });
 
 const settingsUpdateSchema = z.object({
-  ocr_enabled: z.boolean().optional(),
-  ocr_fallback_enabled: z.boolean().optional(),
-  ocr_provider_preference: z.array(z.string()).optional(),
   match_rules: matchRulesSchema.optional(),
   export_template: exportTemplateSchema.optional()
 });
@@ -43,17 +38,12 @@ router.get("/settings", async (c) => {
 
   const defaults = {
     userId,
-    ocrEnabled: true,
-    ocrFallbackEnabled: true,
-    ocrProviderPreference: [],
     matchRulesJson: {
       dateWindowDays: 3,
       amountTolerance: 0,
       requireCategoryMatch: false
     },
     exportTemplateJson: {
-      includeOcrAmount: false,
-      includeOcrDate: false,
       includeMerchantKeyword: false,
       includeExpenseId: false,
       includeReceiptIds: false,
@@ -76,15 +66,7 @@ router.patch("/settings", async (c) => {
 
   const [existing] = await db.select().from(settings).where(eq(settings.userId, userId));
   const update: Record<string, unknown> = { updatedAt: new Date() };
-  if (body.data.ocr_enabled !== undefined) {
-    update.ocrEnabled = body.data.ocr_enabled;
-  }
-  if (body.data.ocr_fallback_enabled !== undefined) {
-    update.ocrFallbackEnabled = body.data.ocr_fallback_enabled;
-  }
-  if (body.data.ocr_provider_preference !== undefined) {
-    update.ocrProviderPreference = body.data.ocr_provider_preference;
-  }
+
   if (body.data.match_rules !== undefined) {
     update.matchRulesJson = body.data.match_rules;
   }
@@ -95,17 +77,12 @@ router.patch("/settings", async (c) => {
   if (!existing) {
     const defaults = {
       userId,
-      ocrEnabled: true,
-      ocrFallbackEnabled: true,
-      ocrProviderPreference: [],
       matchRulesJson: {
         dateWindowDays: 3,
         amountTolerance: 0,
         requireCategoryMatch: false
       },
       exportTemplateJson: {
-        includeOcrAmount: false,
-        includeOcrDate: false,
         includeMerchantKeyword: false,
         includeExpenseId: false,
         includeReceiptIds: false,

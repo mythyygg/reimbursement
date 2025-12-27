@@ -5,7 +5,7 @@
 ## 前置要求
 
 - Node.js 18+（建议 20.x）和 npm（已随 Node 安装）
-- Docker / Docker Desktop 已安装并已启动（用于 Postgres、Redis、MinIO）
+- Docker / Docker Desktop 已安装并已启动（用于 Postgres、MinIO）
 - 推荐使用 macOS/Linux 终端；Windows 用户建议在 WSL2 下运行
 
 ## 第一次启动（10 分钟）
@@ -30,11 +30,6 @@ cp .env.example .env
 
 - `NEXT_PUBLIC_API_BASE=http://localhost:8787/api/v1`：前端访问 API 的基址
 - `NEXT_PUBLIC_APP_URL=http://localhost:3000`：前端自身地址
-- OCR：如果使用前端调用百度 AI Studio OCR，请在前端可见环境中设置
-  - `NEXT_PUBLIC_BAIDU_OCR_URL=<AI Studio OCR 接口 URL，例如 https://xxx.baidubce.com/ocr>`
-  - `NEXT_PUBLIC_BAIDU_OCR_TOKEN=<AI Studio 颁发的 token>`（注意大小写，值形如 `token abc...` 中的后半段）
-  - `fileType` 已默认按图片传 1，如需 PDF 可在代码中传 0
-  - 若不设置则本地 OCR 按钮会提示缺少配置
 
 3. 启动基础设施（确保 Docker Desktop 已运行）
 
@@ -44,7 +39,7 @@ docker-compose up -d
 
 这会启动：
 
-- Postgres（5432）、Redis（6379）
+- Postgres（5432）
 - MinIO（9000 API / 9001 控制台），账号 `minio / minio123`
   首次启动后，请在 MinIO 控制台 <http://localhost:9001> 创建名为 `reimbursement` 的桶（对应 `.env` 里的 `S3_BUCKET`）。
 
@@ -63,7 +58,7 @@ npm run dev
 
 - Web（Next.js）默认在 `http://localhost:3000`（若 3000 被占用会提示使用 3001）
 - API 在 `http://localhost:8787`
-- Worker 同步启动，处理 OCR/批次检查/导出任务
+- Worker 同步启动，处理批次检查/导出任务
 
 6. 打开登录页并注册账号
 

@@ -31,10 +31,6 @@ export type AppConfig = {
   s3Bucket: string;
   /** S3公开访问基础URL - 用于生成文件的公开访问地址 */
   s3PublicBaseUrl: string;
-  /** 默认OCR服务提供商 - tencent | aliyun | baidu | huawei | none */
-  ocrProvider: string;
-  /** OCR服务商配置JSON字符串 - 包含各服务商的API密钥等配置 */
-  ocrProvidersJson: string;
 };
 
 /**
@@ -115,8 +111,6 @@ function getEnv(name: string, fallback?: string): string {
  * - S3_SECRET_KEY: S3密钥密码（必需）
  * - S3_BUCKET: S3存储桶名称（必需）
  * - S3_PUBLIC_BASE_URL: S3公开URL基础路径，默认空字符串
- * - OCR_PROVIDER: OCR服务提供商，默认 "none"
- * - OCR_PROVIDERS_JSON: OCR配置JSON，默认 "[]"
  */
 export const config: AppConfig = {
   jwtAccessSecret: getEnv("JWT_ACCESS_SECRET"),
@@ -128,7 +122,5 @@ export const config: AppConfig = {
   s3AccessKey: getEnv("S3_ACCESS_KEY"),
   s3SecretKey: getEnv("S3_SECRET_KEY"),
   s3Bucket: getEnv("S3_BUCKET"),
-  s3PublicBaseUrl: getEnv("S3_PUBLIC_BASE_URL", ""),
-  ocrProvider: getEnv("OCR_PROVIDER", "none"),
-  ocrProvidersJson: getEnv("OCR_PROVIDERS_JSON", "[]")
+  s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL || ""
 };

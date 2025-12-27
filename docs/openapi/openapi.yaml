@@ -212,7 +212,6 @@ paths:
       parameters:
         - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
         - $ref: ./openapi_components_core.yaml#/components/parameters/matched
-        - $ref: ./openapi_components_core.yaml#/components/parameters/ocr_status
         - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
       responses:
         "200":

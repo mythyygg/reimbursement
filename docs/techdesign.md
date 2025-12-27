@@ -24,8 +24,7 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 | 阶段 | UI 状态                                                       | 触发/条件          | 后端字段/动作                       |
 | ---- | ------------------------------------------------------------- | ------------------ | ----------------------------------- |
 | 上传 | `UPLOADING` / `UPLOAD_FAILED`                                 | 创建占位、直传失败 | `upload_status` 写入；失败可重试    |
-| OCR  | `OCR_PENDING` / `OCR_PROCESSING` / `OCR_FAILED` / `OCR_READY` | OCR 队列或前端 OCR | `ocr_status`、`ocr_source`、`ocr_*` |
-| 候选 | `SUGGESTING` / `SUGGESTIONS_AVAILABLE`                        | OCR 写入或字段编辑 | 计算候选 Top3（或缓存）             |
+| 候选 | `SUGGESTING` / `SUGGESTIONS_AVAILABLE`                        | 字段编辑           | 计算候选 Top3（或缓存）             |
 | 匹配 | `MATCHING` / `MATCHED` / `MATCH_FAILED`                       | 确认绑定           | `PATCH /receipts/{id}/match`        |
 | 解除 | `UNMATCHING`                                                  | 解除绑定           | 解除关联并刷新状态                  |
 
@@ -68,13 +67,10 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 7. `状态`（缺票/已关联/不需票）
 8. `票据数量`（receipt_ids.length）
 9. `票据文件名列表`（导出命名后的文件名，用 `;` 分隔）
-10. `票据OCR金额`（可选：若有多个票据，用 `;` 分隔；默认可关闭）
-11. `票据OCR日期`（可选，同上）
-12. `商户关键字`（可选，同上）
-13. `支出ID`（内部追溯，可选默认关闭）
-14. `票据ID列表`（内部追溯，可选默认关闭）
+10. `支出ID`（内部追溯，可选默认关闭）
+11. `票据ID列表`（内部追溯，可选默认关闭）
 
-> 默认建议开启到第 9 列即可；10–14 属于“排查/对账”增强列，可在设置中启用。
+> 默认建议开启到第 9 列即可；10–11 属于“排查/对账”增强列，可在设置中启用。
 
 ### 2) CSV 编码与格式
 
@@ -204,8 +200,8 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 # 交付给开发/测试的“关键用例清单”（用于验证状态机 + 导出）
 
-1. 票据上传失败 → 重试 → 成功 →OCR→ 候选 → 确认匹配
-2. OCR 失败 → 手填金额/日期 → 候选出现 → 匹配
+1. 票据上传失败 → 重试 → 成功 → 候选 → 确认匹配
+2. 手填金额/日期 → 候选出现 → 匹配
 3. 已关联票据 → 更换匹配 → 原子换绑成功
 4. 一笔支出绑定 2 张票据 →ZIP 文件名 `001a/001b` → CSV 文件名列表一致
 5. 批次存在缺票/重复/不一致 → 检查清单正确 → 仍可导出 →PDF 附录列出问题
@@ -220,13 +216,13 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 **目标**
 
-- 支撑 PWA 移动端高频录入、票据上传、OCR、智能匹配、批次检查、导出。
+- 支撑 PWA 移动端高频录入、票据上传、智能匹配、批次检查、导出。
 - 保证票据文件安全可追溯、匹配关系一致性、导出结果稳定可复现。
 - 支持弱网与重复提交场景（离线队列 + 幂等）。
 
 **范围内**
 
-- API 服务、对象存储、异步任务（OCR/导出/检查）、基础鉴权。
+- API 服务、对象存储、异步任务（导出/检查）、基础鉴权。
 - 只做项目维度数据隔离（不含组织/协作权限扩展）。
 
 **范围外**
@@ -238,15 +234,14 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 ## 1. 总体架构（建议）
 
 **形态**：单体 API 服务 + 异步任务 Worker + 对象存储（文件）+ 关系型数据库（云部署）。  
-**动机**：业务边界清晰，迭代快，满足 1–2 个团队的开发规模；后续可拆分 OCR/导出服务。
+**动机**：业务边界清晰，迭代快，满足 1–2 个团队的开发规模；后续可拆分导出服务。
 
 **核心组件**
 
 - API 服务：鉴权、项目/支出/票据/批次/导出/设置读写。
-- Worker 服务：OCR 识别、候选匹配刷新、批次检查、导出文件生成。
+- Worker 服务：候选匹配刷新、批次检查、导出文件生成。
 - 数据库：事务一致性、复杂筛选、索引支持。
 - 对象存储：S3 兼容存储（票据文件、导出 ZIP/PDF、缩略图）。
-- OCR 适配层：前端 OCR 优先，失败后回落到第三方 OCR（供应商待定）。
 
 **约束与策略**
 
@@ -298,10 +293,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 - `file_url`, `file_ext`, `file_size`
 - `hash`（用于重复检测）
 - `upload_status`：`pending | uploaded | failed`
-- `ocr_status`：`pending | processing | ready | failed | disabled`
-- `ocr_source`：`frontend | tencent | aliyun | baidu | huawei | none`
-- `ocr_confidence`?（0-1）
-- `ocr_amount`?, `ocr_date`?, `merchant_keyword`?
 - `receipt_amount`?（手动修正）
 - `receipt_date`?（手动修正）
 - `receipt_type`?（交通/餐饮/其他）
@@ -347,9 +338,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 ### 2.9 Settings
 
 - `user_id`
-- `ocr_enabled`（全局）
-- `ocr_fallback_enabled`（前端失败后后端 OCR）
-- `ocr_provider_preference`（供应商优先级配置）
 - `match_rules_json`（日期窗口、金额容差、类别规则）
 - `export_template_json`
 - `updated_at`
@@ -393,7 +381,7 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 1. 前端创建 Receipt（`POST /receipts`），返回 `receipt_id`。
 2. 后端生成签名上传 URL（`POST /receipts/{id}/upload-url`）。
 3. 前端直传对象存储，回传 `file_url, hash, size` 完成入库。
-4. 后端写入 `receipt.upload_status=uploaded`；若 OCR 开启，创建 OCR 任务并置 `ocr_status=pending`。
+4. 后端写入 `receipt.upload_status=uploaded`。
 5. 去重检测：基于 `hash` 找同项目相同 hash，仅提示不阻断。
 
 **注意**
@@ -402,22 +390,12 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 - 上传失败可重试，Receipt 保留 `upload_status=failed`。
 - 存储路径建议：`users/{user_id}/projects/{project_id}/receipts/{receipt_id}.{ext}`。
 
-### 3.3 OCR 任务与字段回填
-
-- 前端 OCR 成功：写入 `ocr_*`，`ocr_source=frontend`，进入候选匹配。
-- 前端 OCR 失败或低置信：触发后端 OCR 任务（`ocr_fallback_enabled=true`）。
-- 后端 OCR 供应商：按 `settings.ocr_provider_preference` 顺序尝试，失败则降级下一家。
-- 低置信阈值：默认 0.6，可在设置中调整。
-- Worker 拉取 `ocr_status=pending` 的 Receipt。
-- OCR 结果写入 `ocr_amount/ocr_date/merchant_keyword`，状态置 `ready`。
-- OCR 失败或超时：`ocr_status=failed`，前端允许手动填字段。
-- 用户编辑 OCR 字段后，触发候选匹配刷新。
 
 ### 3.4 候选匹配刷新
 
 **触发时机**
 
-- 票据上传完成或 OCR 字段更新。
+- 票据上传完成。
 - 支出金额/日期/类别变更。
 
 **计算规则（与 PRD 一致）**
@@ -441,8 +419,7 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 ### 3.6 批次检查
 
 - 输入：`filter_json`（日期范围、状态、类别）。
-- 输出：缺票、重复、金额不一致、OCR 缺字段（可选）。
-- 结果可落库至 `Batch_Issue`，也可实时计算。
+- 输出：缺票、重复、金额不一致。- 结果可落库至 `Batch_Issue`，也可实时计算。
 
 ### 3.7 导出生成
 
@@ -455,7 +432,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 ### 3.8 异步任务与队列策略（建议）
 
-- OCR：以 `receipt_id` 为幂等键，最多重试 3 次，指数退避。
 - 导出：以 `export_id` 为幂等键，失败可重试，生成失败记录错误原因。
 - 批次检查：支持手动触发重检查，旧结果标记为过期。
 - 队列阻塞：连续失败进入隔离队列或告警，避免无限重试。
@@ -492,11 +468,11 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 ### 4.4 票据
 
-- `GET /projects/{project_id}/receipts?matched=&ocr_status=`
+- `GET /projects/{project_id}/receipts?matched=`
 - `POST /projects/{project_id}/receipts`（创建占位）
 - `POST /receipts/{receipt_id}/upload-url`
 - `POST /receipts/{receipt_id}/complete`（提交 hash/size）
-- `PATCH /receipts/{receipt_id}`（编辑 OCR 字段/手填字段）
+- `PATCH /receipts/{receipt_id}`（手填字段）
 - `PATCH /receipts/{receipt_id}/match`（绑定/更换/解除）
 - `DELETE /receipts/{receipt_id}`
 - `POST /receipts/{receipt_id}/download-url`（记录下载）
@@ -579,8 +555,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 - `UPLOAD_URL_EXPIRED`
 - `FILE_TOO_LARGE`
 - `FILE_TYPE_NOT_ALLOWED`
-- `OCR_DISABLED`
-- `OCR_PROVIDER_UNAVAILABLE`
 - `EXPORT_IN_PROGRESS`
 - `EXPORT_EXPIRED`
 - `BATCH_FILTER_INVALID`
@@ -591,7 +565,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 ## 9. 与前端状态对齐
 
 - `receipt.upload_status` → `UPLOADING / UPLOAD_FAILED / READY`
-- `receipt.ocr_status` → `OCR_PENDING / OCR_PROCESSING / OCR_FAILED / OCR_READY`
 - `export.status` → `EXPORTING / EXPORT_FAILED / DONE`
 - `match` 相关错误码 → `MATCH_FAILED` Toast
 
@@ -599,5 +572,5 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 ## 10. 监控与日志（最低可用）
 
-- 指标：上传成功率、OCR 成功率、导出成功率、匹配成功率。
-- 日志：OCR 超时、导出失败原因、签名 URL 访问异常。
+- 指标：上传成功率、导出成功率、匹配成功率。
+- 日志：导出失败原因、签名 URL 访问异常。

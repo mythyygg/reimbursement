@@ -21,9 +21,9 @@ export type ExpenseForMatch = {
  * 用于匹配的票据数据结构
  */
 export type ReceiptForMatch = {
-  /** 票据金额（OCR识别或手动输入） */
+  /** 票据金额（手动输入） */
   amount: number | null;
-  /** 票据日期（OCR识别或手动输入） */
+  /** 票据日期（手动输入） */
   date: string | Date | null;
   /** 票据类别 */
   category: string | null;

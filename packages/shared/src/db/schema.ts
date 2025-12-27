@@ -91,7 +91,7 @@ export const projects = pgTable("projects", {
  *
  * @description
  * - 每条费用记录必须关联到某个项目
- * - status 表示票据匹配状态：missing_receipt(缺少票据) | matched(已关联) | no_receipt_required(无需票据)
+ * - status 表示报销单处理状态：pending(新建) | processing(处理中) | completed(已报销)
  * - manualStatus 标记是否由用户手动设置状态，手动设置后系统不会自动修改
  * - clientRequestId 用于幂等性控制，防止重复提交
  * - amount 使用 NUMERIC(12,2) 确保金额计算精度
@@ -111,8 +111,8 @@ export const expenses = pgTable("expenses", {
   category: text("category"),
   /** 备注说明 */
   note: text("note").notNull(),
-  /** 票据匹配状态 - missing_receipt | matched | no_receipt_required */
-  status: text("status").notNull().default("missing_receipt"),
+  /** 报销单状态 - pending | processing | completed */
+  status: text("status").notNull().default("pending"),
   /** 是否手动设置状态 - true时系统不再自动更新status */
   manualStatus: boolean("manual_status").notNull().default(false),
   /** 客户端请求ID - 用于幂等性控制，防止重复提交 */
@@ -129,15 +129,9 @@ export const expenses = pgTable("expenses", {
 
 /**
  * 票据表
- * 存储上传的票据图片及OCR识别结果
+ * 存储上传的票据图片及其关联信息
  *
  * @description
- * - 支持上传图片并进行OCR识别提取金额、日期等信息
- * - uploadStatus 跟踪文件上传状态：pending(待上传) | uploaded(已上传) | failed(失败)
- * - ocrStatus 跟踪OCR识别状态：pending(待处理) | processing(处理中) | ready(已完成) | failed(失败) | disabled(已禁用)
- * - ocrSource 记录OCR来源：frontend(前端) | tencent(腾讯云) | aliyun(阿里云) | baidu(百度) | huawei(华为) | none(无)
- * - ocrAmount/ocrDate 存储OCR原始识别结果
- * - receiptAmount/receiptDate 存储用户确认或修正后的最终值
  * - matchedExpenseId 关联已关联的费用条目
  * - duplicateFlag 标记疑似重复的票据
  * - hash 用于检测重复上传（相同文件内容）
@@ -164,17 +158,7 @@ export const receipts = pgTable("receipts", {
   clientRequestId: text("client_request_id"),
   /** 上传状态 - pending | uploaded | failed */
   uploadStatus: text("upload_status").notNull().default("pending"),
-  /** OCR识别状态 - pending | processing | ready | failed | disabled */
-  ocrStatus: text("ocr_status").notNull().default("pending"),
-  /** OCR识别来源 - frontend | tencent | aliyun | baidu | huawei | none */
-  ocrSource: text("ocr_source").notNull().default("none"),
-  /** OCR识别置信度 - 0-100，数值越高表示识别结果越可靠 */
-  ocrConfidence: numeric("ocr_confidence", { precision: 4, scale: 2 }),
-  /** OCR识别的金额 - 原始识别结果，可能需要用户确认 */
-  ocrAmount: numeric("ocr_amount", { precision: 12, scale: 2 }),
-  /** OCR识别的日期 - 原始识别结果 */
-  ocrDate: timestamp("ocr_date", { withTimezone: true }),
-  /** 商户关键词 - OCR识别或用户输入的商户名称 */
+  /** 商户关键词 - 用户输入的商户名称 */
   merchantKeyword: text("merchant_keyword"),
   /** 票据金额 - 用户确认或修正后的最终金额 */
   receiptAmount: numeric("receipt_amount", { precision: 12, scale: 2 }),
@@ -274,7 +258,7 @@ export const batchIssues = pgTable("batch_issues", {
   issueId: uuid("issue_id").defaultRandom().primaryKey(),
   /** 所属批次ID */
   batchId: uuid("batch_id").notNull(),
-  /** 问题类型 - missing_receipt | duplicate_receipt | amount_mismatch | ocr_missing 等 */
+  /** 问题类型 - missing_receipt | duplicate_receipt | amount_mismatch 等 */
   type: text("type").notNull(),
   /** 问题严重程度 - error | warning | info */
   severity: text("severity").notNull(),
@@ -303,8 +287,10 @@ export const batchIssues = pgTable("batch_issues", {
 export const exportRecords = pgTable("export_records", {
   /** 导出记录唯一标识符 - UUID主键 */
   exportId: uuid("export_id").defaultRandom().primaryKey(),
-  /** 关联的批次ID */
-  batchId: uuid("batch_id").notNull(),
+  /** 关联的批次ID - 可为空，支持项目级导出 */
+  batchId: uuid("batch_id"),
+  /** 关联的项目ID列表 - 用于跨项目导出 */
+  projectIds: jsonb("project_ids").$type<string[]>().notNull().default([]),
   /** 发起导出的用户ID */
   userId: uuid("user_id").notNull(),
   /** 导出类型 - csv | zip | pdf */
@@ -335,29 +321,17 @@ export const exportRecords = pgTable("export_records", {
  *
  * @description
  * - 以 userId 为主键，每个用户一条记录
- * - ocrEnabled 控制是否启用OCR识别
- * - ocrFallbackEnabled 控制OCR失败时是否使用备用方案
- * - ocrProviderPreference 设置OCR服务商优先级
  * - matchRulesJson 存储票据与费用的匹配规则（日期窗口、金额容差等）
  * - exportTemplateJson 存储导出文件的格式配置
  */
 export const settings = pgTable("settings", {
   /** 用户ID - 主键 */
   userId: uuid("user_id").primaryKey(),
-  /** 是否启用OCR识别 - 全局开关 */
-  ocrEnabled: boolean("ocr_enabled").notNull().default(true),
-  /** 是否启用OCR备用方案 - OCR失败时是否尝试其他服务商 */
-  ocrFallbackEnabled: boolean("ocr_fallback_enabled").notNull().default(true),
-  /** OCR服务商优先级 - 按顺序尝试，如 ["tencent", "aliyun"] */
-  ocrProviderPreference: jsonb("ocr_provider_preference")
-    .$type<string[]>()
-    .notNull()
-    .default([]),
   /** 匹配规则配置 - 票据与费用的自动匹配规则 */
   matchRulesJson: jsonb("match_rules_json")
     .$type<Record<string, unknown>>()
     .notNull(),
-  /** 导出模板配置 - 导出文件的格式和内容设置 */
+  /** 导出模板配置 - 导出文件的格式 and 内容设置 */
   exportTemplateJson: jsonb("export_template_json")
     .$type<Record<string, unknown>>()
     .notNull(),
@@ -458,6 +432,41 @@ export const downloadLogs = pgTable("download_logs", {
   userAgent: text("user_agent"),
   /** 下载记录创建时间 */
   createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
+
+/**
+ * 后台任务表
+ * 用于替代 Redis/BullMQ 实现基于数据库的任务队列
+ */
+export const backendJobs = pgTable("backend_jobs", {
+  /** 任务唯一标识符 */
+  jobId: uuid("job_id").defaultRandom().primaryKey(),
+  /** 任务类型：batch_check | export */
+  type: text("type").notNull(),
+  /** 任务参数 - JSON 格式存储 */
+  payload: jsonb("payload").notNull(),
+  /** 任务状态：pending | processing | completed | failed */
+  status: text("status").notNull().default("pending"),
+  /** 错误信息 - 任务失败时记录 */
+  error: text("error"),
+  /** 尝试次数 - 用于失败重试 */
+  attempts: integer("attempts").notNull().default(0),
+  /** 下次重试时间 */
+  scheduledAt: timestamp("scheduled_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  /** 任务开始时间 */
+  startedAt: timestamp("started_at", { withTimezone: true }),
+  /** 任务完成时间 */
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  /** 创建时间 */
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+  /** 最后更新时间 */
+  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });

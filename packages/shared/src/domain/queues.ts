@@ -4,13 +4,11 @@
  *
  * @description
  * 系统使用消息队列（如Bull/BullMQ）处理异步任务：
- * - ocr: OCR识别队列，处理票据图片的文字识别
  * - batch_check: 批次验证队列，检查批次中的数据完整性和问题
  * - export: 导出队列，生成CSV/ZIP/PDF导出文件
  */
 export const QUEUE_NAMES = {
-  /** OCR识别队列 - 处理票据的文字识别任务 */
-  ocr: "ocr",
+
   /** 批次验证队列 - 批量检查费用和票据的数据质量 */
   batchCheck: "batch_check",
   /** 导出队列 - 生成报销报表和文件包 */
