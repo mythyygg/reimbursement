@@ -169,15 +169,9 @@ export default function BatchDetailPage() {
         method: "POST"
       });
 
-      // 改用location.href或创建<a>标签下载，避免被PWA阻止
-      const link = document.createElement('a');
-      link.href = download.signed_url;
-      link.download = ''; // 提示浏览器这是下载链接
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      // PWA环境下直接导航到下载链接
+      console.log("开始下载:", download.signed_url);
+      window.location.href = download.signed_url;
 
       setExportStatus("下载已开始");
       setTimeout(() => setExportStatus(null), 3000);

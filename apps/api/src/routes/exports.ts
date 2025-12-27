@@ -146,8 +146,13 @@ router.post("/exports/:exportId/download-url", async (c) => {
     return errorResponse(c, 410, "EXPORT_EXPIRED", "Export expired");
   }
 
+  // 生成友好的文件名
+  const date = record.createdAt.toISOString().split('T')[0];
+  const filename = `报销导出_${date}.${record.type}`;
+
   const signedUrl = await createExportDownloadUrl({
     storageKey: record.storageKey,
+    filename,
   });
   await db.insert(downloadLogs).values({
     userId,
