@@ -14,6 +14,9 @@
  * npx tsx src/scripts/test-db-performance.ts
  */
 
+// 首先加载环境变量
+import "../env.js";
+
 import { sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { projects, expenses, receipts } from "@reimbursement/shared/db";
