@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
 import SwipeAction from "../../../../components/SwipeAction";
 import { apiFetch } from "../../../../lib/api";
 import { useToast } from "../../../../components/Toast";
@@ -44,6 +43,7 @@ type ReceiptCardProps = {
   onDelete: (receiptId: string) => Promise<void>;
   expanded: boolean;
   onToggle: () => void;
+  candidates: CandidateRecord[]; // 从父组件传入，不再自己查询
 };
 
 export function ReceiptCard({
@@ -53,7 +53,8 @@ export function ReceiptCard({
   onPreview,
   onDelete,
   expanded,
-  onToggle
+  onToggle,
+  candidates: candidatesProp
 }: ReceiptCardProps) {
   const [amountInput, setAmountInput] = useState(receipt.receiptAmount || "");
   const [dateInput, setDateInput] = useState(
@@ -93,10 +94,8 @@ export function ReceiptCard({
     return () => document.removeEventListener("click", handleClickAway);
   }, []);
 
-  const { data: candidates } = useQuery({
-    queryKey: ["receipt-candidates", receipt.receiptId],
-    queryFn: () => apiFetch(`/receipts/${receipt.receiptId}/candidates`)
-  });
+  // 使用从父组件传入的candidates，而不是自己查询
+  const candidateList = candidatesProp ?? [];
 
   const saveReceiptFields = async () => {
     // Validate amount
@@ -163,7 +162,6 @@ export function ReceiptCard({
     }
   };
 
-  const candidateList = (candidates as CandidateRecord[] | undefined) ?? [];
   const manualOptions = candidateList.map((candidate) => {
     const { mainLabel, subLabel } = formatCandidateLabel(candidate);
     return {

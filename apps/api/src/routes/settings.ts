@@ -3,7 +3,6 @@ import { z } from "zod";
 import { eq } from "drizzle-orm";
 import { settings } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
-import { authMiddleware } from "../middleware/auth.js";
 import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
@@ -27,7 +26,6 @@ const settingsUpdateSchema = z.object({
   export_template: exportTemplateSchema.optional()
 });
 
-router.use("*", authMiddleware);
 
 router.get("/settings", async (c) => {
   const { userId } = c.get("auth");

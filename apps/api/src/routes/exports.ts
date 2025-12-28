@@ -3,7 +3,6 @@ import { z } from "zod";
 import { and, eq } from "drizzle-orm";
 import { batches, downloadLogs, exportRecords, backendJobs } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
-import { authMiddleware } from "../middleware/auth.js";
 import { createExportDownloadUrl } from "../services/storage.js";
 import { errorResponse, ok } from "../utils/http.js";
 
@@ -14,15 +13,18 @@ const exportCreateSchema = z.object({
   projectIds: z.array(z.string()).optional(),
 });
 
-router.use("*", authMiddleware);
 
 router.post("/batches/:batchId/exports", async (c) => {
   const startTime = Date.now();
-  console.log(`[API] 创建导出任务开始 - batchId: ${c.req.param("batchId")}`);
+  const batchId = c.req.param("batchId");
+  console.log(`[exports] [API] 创建批次导出任务开始 - batchId: ${batchId}`);
 
   const { userId } = c.get("auth");
-  const batchId = c.req.param("batchId");
+
+  const t0 = Date.now();
   const body = exportCreateSchema.safeParse(await c.req.json());
+  console.log(`[exports] 解析请求体耗时: ${Date.now() - t0}ms, 类型: ${body.success ? body.data.type : 'invalid'}`);
+
   if (!body.success) {
     return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
   }
@@ -32,7 +34,7 @@ router.post("/batches/:batchId/exports", async (c) => {
     .select()
     .from(batches)
     .where(and(eq(batches.batchId, batchId), eq(batches.userId, userId)));
-  console.log(`[API] 查询batch耗时: ${Date.now() - t1}ms`);
+  console.log(`[exports] [DB] 查询batch耗时: ${Date.now() - t1}ms`);
 
   if (!batch) {
     return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
@@ -50,11 +52,11 @@ router.post("/batches/:batchId/exports", async (c) => {
         eq(exportRecords.status, "running")
       )
     );
-  console.log(`[API] 查询现有导出耗时: ${Date.now() - t2}ms, 找到 ${existing.length} 条`);
+  console.log(`[exports] [DB] 查询现有运行中的导出耗时: ${Date.now() - t2}ms, 找到 ${existing.length} 条`);
 
   if (existing.length > 0) {
     // Deduplicate concurrent requests: reuse running export to avoid 409 / duplicate jobs.
-    console.log(`[API] 复用现有导出任务, 总耗时: ${Date.now() - startTime}ms`);
+    console.log(`[exports] [API] 复用现有导出任务, 总耗时: ${Date.now() - startTime}ms, exportId: ${existing[0].exportId}`);
     return ok(c, existing[0]);
   }
 
@@ -69,7 +71,7 @@ router.post("/batches/:batchId/exports", async (c) => {
       status: "pending",
     })
     .returning();
-  console.log(`[API] 插入导出记录耗时: ${Date.now() - t3}ms`);
+  console.log(`[exports] [DB] 插入导出记录耗时: ${Date.now() - t3}ms`);
 
   const t4 = Date.now();
   await db.insert(backendJobs).values({
@@ -77,29 +79,38 @@ router.post("/batches/:batchId/exports", async (c) => {
     payload: { exportId: record.exportId, userId },
     status: "pending",
   });
-  console.log(`[API] 插入后台任务耗时: ${Date.now() - t4}ms`);
-  console.log(`[API] 创建导出任务完成, 总耗时: ${Date.now() - startTime}ms`);
+  console.log(`[exports] [DB] 插入后台任务耗时: ${Date.now() - t4}ms`);
+  console.log(`[exports] [API] 创建批次导出任务完成, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
 
   return ok(c, record);
 });
 
 router.post("/projects/exports", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
+  console.log(`[exports] [API] 创建项目导出任务开始 - userId: ${userId}`);
+
+  const t0 = Date.now();
   const body = exportCreateSchema.safeParse(await c.req.json());
+  console.log(`[exports] 解析请求体耗时: ${Date.now() - t0}ms`);
+
   if (!body.success) {
     return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
   }
 
   const projectIds = body.data.projectIds;
+  console.log(`[exports] 请求导出 ${projectIds?.length || 0} 个项目, 类型: ${body.data.type}`);
+
   if (!projectIds || projectIds.length === 0) {
     return errorResponse(c, 400, "MISSING_PROJECTS", "At least one project must be selected");
   }
 
   // Verify all projects belong to the user
-  // This is a simplified check. In a production app, you might want to 
+  // This is a simplified check. In a production app, you might want to
   // ensure all IDs exist and are owned by the user.
   // We'll trust the projectIds for now or do a quick check.
 
+  const t1 = Date.now();
   const [record] = await db
     .insert(exportRecords)
     .values({
@@ -109,19 +120,27 @@ router.post("/projects/exports", async (c) => {
       status: "pending",
     })
     .returning();
+  console.log(`[exports] [DB] 插入导出记录耗时: ${Date.now() - t1}ms`);
 
+  const t2 = Date.now();
   await db.insert(backendJobs).values({
     type: "export",
     payload: { exportId: record.exportId, userId },
     status: "pending",
   });
+  console.log(`[exports] [DB] 插入后台任务耗时: ${Date.now() - t2}ms`);
+  console.log(`[exports] [API] 创建项目导出任务完成, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
 
   return ok(c, record);
 });
 
 router.get("/exports/:exportId", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const exportId = c.req.param("exportId");
+  console.log(`[exports] [API] 查询导出状态 - exportId: ${exportId}`);
+
+  const t1 = Date.now();
   const [record] = await db
     .select()
     .from(exportRecords)
@@ -131,18 +150,20 @@ router.get("/exports/:exportId", async (c) => {
         eq(exportRecords.userId, userId)
       )
     );
+  console.log(`[exports] [DB] 查询导出记录耗时: ${Date.now() - t1}ms`);
 
   if (!record) {
     return errorResponse(c, 404, "EXPORT_NOT_FOUND", "Export not found");
   }
 
+  console.log(`[exports] [API] 查询导出状态完成, 总耗时: ${Date.now() - startTime}ms, status: ${record.status}`);
   return ok(c, record);
 });
 
 router.post("/exports/:exportId/download-url", async (c) => {
   const startTime = Date.now();
   const exportId = c.req.param("exportId");
-  console.log(`[API] 生成下载URL开始 - exportId: ${exportId}`);
+  console.log(`[exports] [API] 生成下载URL开始 - exportId: ${exportId}`);
 
   const { userId } = c.get("auth");
 
@@ -156,26 +177,29 @@ router.post("/exports/:exportId/download-url", async (c) => {
         eq(exportRecords.userId, userId)
       )
     );
-  console.log(`[API] 查询导出记录耗时: ${Date.now() - t1}ms`);
+  console.log(`[exports] [DB] 查询导出记录耗时: ${Date.now() - t1}ms, status: ${record?.status || 'not found'}`);
 
   if (!record || !record.storageKey) {
+    console.log(`[exports] [API] 导出记录不存在或无storageKey, exportId: ${exportId}`);
     return errorResponse(c, 404, "EXPORT_NOT_FOUND", "Export not found");
   }
 
   if (record.expiresAt && record.expiresAt < new Date()) {
+    console.log(`[exports] [API] 导出文件已过期, exportId: ${exportId}, expiresAt: ${record.expiresAt}`);
     return errorResponse(c, 410, "EXPORT_EXPIRED", "Export expired");
   }
 
   // 生成友好的文件名
   const date = record.createdAt.toISOString().split('T')[0];
   const filename = `报销导出_${date}.${record.type}`;
+  console.log(`[exports] 生成文件名: ${filename}, storageKey: ${record.storageKey}`);
 
   const t2 = Date.now();
   const signedUrl = await createExportDownloadUrl({
     storageKey: record.storageKey,
     filename,
   });
-  console.log(`[API] 生成S3签名URL耗时: ${Date.now() - t2}ms`);
+  console.log(`[exports] [S3] 生成签名URL耗时: ${Date.now() - t2}ms`);
 
   const t3 = Date.now();
   await db.insert(downloadLogs).values({
@@ -185,8 +209,8 @@ router.post("/exports/:exportId/download-url", async (c) => {
     userAgent: c.req.header("user-agent"),
     ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
   });
-  console.log(`[API] 插入下载日志耗时: ${Date.now() - t3}ms`);
-  console.log(`[API] 生成下载URL完成, 总耗时: ${Date.now() - startTime}ms`);
+  console.log(`[exports] [DB] 插入下载日志耗时: ${Date.now() - t3}ms`);
+  console.log(`[exports] [API] 生成下载URL完成, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, { signed_url: signedUrl });
 });

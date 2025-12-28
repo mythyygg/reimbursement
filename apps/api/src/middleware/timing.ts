@@ -18,10 +18,10 @@ export async function timingMiddleware(c: Context, next: Next) {
 
   // 根据耗时使用不同的日志级别
   if (duration > 1000) {
-    console.warn(`[API] <-- ${method} ${path} ${status} [${duration}ms] ⚠️ SLOW`);
+    console.warn(`[API] <-- ${method} ${path} ${status} [总计: ${duration}ms] ⚠️ SLOW`);
   } else if (duration > 500) {
-    console.log(`[API] <-- ${method} ${path} ${status} [${duration}ms] ⚡`);
+    console.log(`[API] <-- ${method} ${path} ${status} [总计: ${duration}ms] ⚡`);
   } else {
-    console.log(`[API] <-- ${method} ${path} ${status} [${duration}ms]`);
+    console.log(`[API] <-- ${method} ${path} ${status} [总计: ${duration}ms]`);
   }
 }

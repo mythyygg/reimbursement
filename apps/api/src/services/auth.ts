@@ -1,20 +1,80 @@
+/**
+ * 认证服务模块
+ *
+ * 【Java 对比 - 类似 Spring Security 的认证工具类】
+ *
+ * 本模块提供完整的身份验证和授权功能，类似于：
+ * ```java
+ * @Service
+ * public class AuthenticationService {
+ *     public String hashPassword(String password) { ... }
+ *     public boolean verifyPassword(String password, String hash) { ... }
+ *     public String createAccessToken(TokenPayload payload) { ... }
+ *     public TokenPayload verifyAccessToken(String token) { ... }
+ * }
+ * ```
+ *
+ * 核心功能：
+ * 1. 【密码管理】
+ *    - hashPassword() - 使用 bcrypt 加密密码（类似 BCryptPasswordEncoder）
+ *    - verifyPassword() - 验证密码（类似 passwordEncoder.matches()）
+ *
+ * 2. 【JWT 令牌管理】
+ *    - createAccessToken() - 生成短期访问令牌（15分钟）
+ *    - createRefreshToken() - 生成长期刷新令牌（30天）
+ *    - verifyAccessToken() - 验证访问令牌
+ *    - verifyRefreshToken() - 验证刷新令牌
+ *
+ * 3. 【令牌安全存储】
+ *    - hashToken() - 对刷新令牌哈希后存储到数据库
+ *
+ * 【技术栈】
+ * - bcryptjs: 密码加密库（类似 Spring Security 的 BCryptPasswordEncoder）
+ * - jose: JWT 生成和验证库（类似 jjwt 或 auth0/java-jwt）
+ * - crypto: Node.js 内置加密模块（类似 java.security.MessageDigest）
+ *
+ * 【双令牌机制】
+ * - Access Token: 短期有效（15分钟），用于日常API请求
+ * - Refresh Token: 长期有效（30天），仅用于刷新 Access Token
+ *
+ * 这种设计提高了安全性：
+ * - Access Token 泄露影响有限（15分钟后自动失效）
+ * - Refresh Token 存储在数据库中，可以主动撤销
+ */
+
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
 import { config } from "../config";
 
 // 文本编码器，用于将字符串转换为 Uint8Array（JWT库要求）
+// 【说明】jose 库要求密钥为 Uint8Array 格式，而不是字符串
 const encoder = new TextEncoder();
 
 /**
  * JWT令牌载荷类型
+ *
+ * 【Java 对比】类似自定义的 JWT Claims 类：
+ * ```java
+ * public class TokenPayload {
+ *     private String sub;           // 用户ID (Subject)
+ *     private String sessionId;     // 会话ID
+ *     private int sessionVersion;   // 会话版本
+ * }
+ * ```
+ *
+ * 【JWT 标准字段说明】
+ * - sub: Subject（主题），通常存储用户唯一标识符
+ * - 其他标准字段（由库自动添加）：
+ *   - iat: Issued At（签发时间）
+ *   - exp: Expiration Time（过期时间）
  */
 export type TokenPayload = {
   /** 用户ID（标准JWT sub字段） */
   sub: string;
-  /** 会话ID */
+  /** 会话ID - 用于标识特定的登录会话，支持单独撤销某个设备的登录 */
   sessionId: string;
-  /** 会话版本号 - 用于批量撤销 */
+  /** 会话版本号 - 用于批量撤销，修改版本号后所有旧令牌失效 */
   sessionVersion: number;
 };
 

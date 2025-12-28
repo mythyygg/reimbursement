@@ -2,23 +2,11 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
 import BottomNav from "../../components/BottomNav";
-import SwipeAction from "../../components/SwipeAction";
+import ProjectCard from "../../components/ProjectCard";
 import { apiFetch } from "../../lib/api";
 import { useToast } from "../../components/Toast";
 import { useErrorHandler } from "../../lib/useErrorHandler";
-
-function formatDate(value?: string) {
-  if (!value) return "";
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "";
-  // 使用简单的日期格式化，避免 locale 依赖
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 export default function ProjectsPage() {
   const [search, setSearch] = useState("");
@@ -27,8 +15,6 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
   const [nameError, setNameError] = useState("");
-
-  // 多选状态
   const [isSelectMode, setIsSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showExportOptions, setShowExportOptions] = useState(false);
@@ -43,7 +29,6 @@ export default function ProjectsPage() {
   });
 
   const createProject = async () => {
-    // 前端验证
     if (!name.trim()) {
       setNameError("项目名称不能为空");
       return;
@@ -68,6 +53,20 @@ export default function ProjectsPage() {
       handleError(error, "创建项目失败");
     } finally {
       setCreating(false);
+    }
+  };
+
+  const deleteProject = async (projectId: string) => {
+    try {
+      await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
+      await refetch();
+      showSuccess("项目已删除");
+    } catch (error: any) {
+      if (error.message?.includes("PROJECT_HAS_DATA")) {
+        showToast("项目包含数据，请先删除所有费用、票据和导出", "error");
+      } else {
+        handleError(error, "删除项目失败");
+      }
     }
   };
 
@@ -102,39 +101,26 @@ export default function ProjectsPage() {
     );
   };
 
-  const deleteProject = async (projectId: string) => {
-    try {
-      await apiFetch(`/projects/${projectId}`, { method: "DELETE" });
-      await refetch();
-      showSuccess("项目已删除");
-    } catch (error: any) {
-      if (error.message?.includes("PROJECT_HAS_DATA")) {
-        showToast("项目包含数据，请先删除所有费用、票据和导出", "error");
-      } else {
-        handleError(error, "删除项目失败");
-      }
-    }
-  };
-
   const projects = (Array.isArray(data) ? data : []).filter(
     (p) => p && p.name && p.name.trim() !== ""
   );
 
+  const pinnedProjects = projects.filter((p: any) => p.pinned);
+  const recentProjects = projects.filter((p: any) => !p.pinned);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-surface-0 via-surface-1 to-surface-1 pb-24">
-      <div className="mx-auto max-w-md px-4 pt-8">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-text-primary">项目</h1>
-            <p className="text-sm text-text-secondary mt-1.5">按项目跟踪报销进度</p>
-          </div>
-          <div className="flex gap-2">
+    <div className="min-h-screen bg-surface-1 pb-24">
+      <div className="mx-auto max-w-2xl px-5 pt-6">
+        {/* 头部 */}
+        <div className="flex items-center justify-between mb-5">
+          <h1 className="text-2xl font-bold text-text-primary">项目</h1>
+          <div className="flex gap-2.5">
             {!showForm && (
               <button
-                className={`rounded-2xl px-4 py-2.5 text-sm font-semibold transition-all ${
+                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
                   isSelectMode
-                    ? "bg-primary text-white shadow-md shadow-primary/20"
-                    : "bg-surface-0 border border-border text-text-secondary hover:border-primary/30 hover:text-text-primary shadow-sm hover:shadow-md"
+                    ? "bg-surface-0 border border-border text-text-secondary"
+                    : "bg-surface-0 border border-border text-text-secondary hover:border-primary/40"
                 }`}
                 onClick={() => {
                   setIsSelectMode(!isSelectMode);
@@ -145,47 +131,62 @@ export default function ProjectsPage() {
               </button>
             )}
             <button
-              className="rounded-2xl bg-primary px-5 py-2.5 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95"
+              className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary-hover transition-all active:scale-95 shadow-sm"
               onClick={() => {
                 setShowForm((prev) => !prev);
                 if (isSelectMode) setIsSelectMode(false);
               }}
-              aria-label={showForm ? "关闭新建项目表单" : "打开新建项目表单"}
             >
               + 新建
             </button>
           </div>
         </div>
 
+        {/* 搜索框 */}
         {!isSelectMode && (
           <div className="relative mb-6">
-            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                <path
-                  d="M11 18a7 7 0 1 1 0-14 7 7 0 0 1 0 14Zm9 2-4.2-4.2"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </span>
+            <svg
+              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary"
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="11" cy="11" r="8" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
             <input
-              className="h-12 w-full rounded-2xl border border-border bg-surface-0 pl-11 pr-4 text-sm shadow-sm transition-all focus:border-primary focus:shadow-md focus:ring-4 focus:ring-primary/10 focus:outline-none"
-              placeholder="搜索项目名称或描述..."
+              className="h-11 w-full rounded-full border border-border bg-surface-0 pl-11 pr-4 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none transition-all"
+              placeholder="搜索项目名称或项目号..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              aria-label="搜索项目"
             />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-2 rounded-full transition-colors"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
           </div>
         )}
 
-        {showForm ? (
-          <div className="mb-6 rounded-3xl bg-surface-0 border border-border p-5 shadow-lg animate-scale-in">
-            <div className="flex flex-col gap-4">
+        {/* 新建表单 */}
+        {showForm && (
+          <div className="mb-6 rounded-2xl bg-surface-0 border border-border p-5 shadow-sm">
+            <div className="flex flex-col gap-3.5">
               <div>
                 <input
-                  className={`h-12 w-full rounded-2xl border px-4 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none ${
-                    nameError ? "border-danger focus:border-danger bg-danger-light" : "border-border focus:border-primary bg-surface-1"
+                  className={`h-11 w-full rounded-xl border px-4 text-sm transition-all focus:outline-none focus:border-primary ${
+                    nameError ? "border-danger bg-danger-light/50" : "border-border bg-surface-1"
                   }`}
                   placeholder="项目名称"
                   value={name}
@@ -193,25 +194,19 @@ export default function ProjectsPage() {
                     setName(event.target.value);
                     if (nameError) setNameError("");
                   }}
-                  aria-label="项目名称"
-                  aria-invalid={!!nameError}
-                  aria-describedby={nameError ? "name-error" : undefined}
                 />
-                {nameError ? (
-                  <p id="name-error" className="mt-2 text-xs text-danger font-medium">
-                    {nameError}
-                  </p>
-                ) : null}
+                {nameError && (
+                  <p className="mt-1.5 text-xs text-danger font-medium">{nameError}</p>
+                )}
               </div>
               <input
-                className="h-12 w-full rounded-2xl border border-border px-4 text-sm bg-surface-1 transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                className="h-11 w-full rounded-xl border border-border px-4 text-sm bg-surface-1 transition-all focus:outline-none focus:border-primary"
                 placeholder="项目描述（可选）"
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                aria-label="项目描述"
               />
               <button
-                className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 disabled:bg-primary/40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
+                className="h-11 w-full rounded-xl bg-primary text-sm font-bold text-white hover:bg-primary-hover active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                 onClick={createProject}
                 disabled={creating}
               >
@@ -219,114 +214,85 @@ export default function ProjectsPage() {
               </button>
             </div>
           </div>
-        ) : null}
+        )}
 
-        <div className="space-y-4">
-          {projects.length === 0 ? (
-            <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
-              <div className="text-sm text-text-secondary font-medium">暂无项目</div>
-              <div className="text-xs text-text-tertiary mt-1">点击"新建"按钮创建第一个项目</div>
-            </div>
-          ) : null}
-          {projects.map((project: any, index: number) => {
-            const isSelected = selectedIds.includes(project.projectId);
-
-            const content = (
-              <div className="flex items-start justify-between gap-4">
-                <div className="space-y-2 flex-1 min-w-0">
-                  <div className="text-base font-bold text-text-primary truncate">{project.name}</div>
-                  <div className="flex items-center gap-2.5 text-xs text-text-secondary">
-                    <span className="font-medium">{formatDate(project.createdAt)}</span>
-                    <span className="h-1 w-1 rounded-full bg-border-strong" />
-                    <span className="flex items-center gap-1.5">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                      </svg>
-                      {project.receiptCount ?? 0} 张
-                    </span>
-                  </div>
-                  {project.description ? (
-                    <div className="text-xs text-text-tertiary line-clamp-1">{project.description}</div>
-                  ) : null}
-                </div>
-                {isSelectMode ? (
-                  <div className={`mt-0.5 h-6 w-6 rounded-full border-2 flex items-center justify-center transition-all ${
-                    isSelected ? "bg-primary border-primary scale-110" : "border-border"
-                  }`}>
-                    {isSelected && (
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12" />
-                      </svg>
-                    )}
-                  </div>
-                ) : (
-                  project.pinned ? (
-                    <span className="shrink-0 rounded-full bg-primary-light px-3 py-1 text-xs font-bold text-primary">
-                      置顶
-                    </span>
-                  ) : null
-                )}
+        {/* 项目列表 */}
+        <div className="space-y-5">
+          {projects.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-surface-2 flex items-center justify-center mb-4">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" />
+                  <path d="M3 9h18M9 21V9" />
+                </svg>
               </div>
-            );
+              <p className="text-sm font-medium text-text-secondary">还没有项目</p>
+              <p className="text-xs text-text-tertiary mt-1">点击"新建"按钮创建第一个项目</p>
+            </div>
+          )}
 
-            if (isSelectMode) {
-              return (
-                <div
-                  key={project.projectId}
-                  onClick={() => toggleSelect(project.projectId)}
-                  className={`block rounded-3xl border-2 p-5 transition-all cursor-pointer ${
-                    isSelected
-                      ? "border-primary bg-primary-light/30 shadow-lg shadow-primary/10"
-                      : "border-border bg-surface-0 shadow-card hover:shadow-card-hover hover:border-primary/30"
-                  }`}
-                >
-                  {content}
-                </div>
-              );
-            }
+          {/* 置顶项目 */}
+          {pinnedProjects.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="text-primary">
+                  <path d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z" />
+                </svg>
+                <h2 className="text-sm font-bold text-text-primary">置顶项目</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {pinnedProjects.map((project: any) => (
+                  <ProjectCard
+                    key={project.projectId}
+                    project={project}
+                    isSelectMode={isSelectMode}
+                    isSelected={selectedIds.includes(project.projectId)}
+                    onToggleSelect={() => toggleSelect(project.projectId)}
+                    onDelete={() => deleteProject(project.projectId)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
 
-            return (
-              <SwipeAction
-                key={project.projectId}
-                onDelete={() => deleteProject(project.projectId)}
-              >
-                <Link
-                  href={`/projects/${project.projectId}/expenses`}
-                  className="block rounded-3xl border border-border bg-surface-0 p-5 shadow-card transition-all hover:border-primary/40 hover:-translate-y-1 hover:shadow-card-hover animate-fade-up"
-                  style={{ animationDelay: `${index * 50}ms` }}
-                >
-                  {content}
-                  {Array.isArray(project.tags) && project.tags.length > 0 ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {project.tags.slice(0, 3).map((tag: string) => (
-                        <span
-                          key={tag}
-                          className="rounded-full bg-surface-2 px-3 py-1 text-xs font-semibold text-text-secondary"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  ) : null}
-                </Link>
-              </SwipeAction>
-            );
-          })}
+          {/* 最近项目 */}
+          {recentProjects.length > 0 && (
+            <div>
+              <div className="flex items-center gap-2 mb-3">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+                <h2 className="text-sm font-bold text-text-primary">最近项目</h2>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {recentProjects.map((project: any) => (
+                  <ProjectCard
+                    key={project.projectId}
+                    project={project}
+                    isSelectMode={isSelectMode}
+                    isSelected={selectedIds.includes(project.projectId)}
+                    onToggleSelect={() => toggleSelect(project.projectId)}
+                    onDelete={() => deleteProject(project.projectId)}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
       {/* 导出操作栏 */}
       {isSelectMode && selectedIds.length > 0 && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 animate-slide-up">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2">
           <button
             onClick={() => setShowExportOptions(true)}
-            className="flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-sm font-bold text-white shadow-xl shadow-primary/30 hover:bg-primary-hover hover:shadow-2xl hover:shadow-primary/40 active:scale-95 transition-all"
+            className="flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-sm font-bold text-white shadow-xl hover:bg-primary-hover active:scale-95 transition-all"
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-              <polyline points="7 10 12 15 17 10"></polyline>
-              <line x1="12" y1="15" x2="12" y2="3"></line>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
             </svg>
             导出 {selectedIds.length} 个项目
           </button>
@@ -335,17 +301,23 @@ export default function ProjectsPage() {
 
       {/* 导出选项弹窗 */}
       {showExportOptions && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in" onClick={() => setShowExportOptions(false)}>
-          <div className="w-full max-w-md bg-surface-0 rounded-t-4xl p-6 shadow-2xl animate-slide-up" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm"
+          onClick={() => setShowExportOptions(false)}
+        >
+          <div
+            className="w-full max-w-md bg-surface-0 rounded-t-3xl p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="mb-6 flex items-center justify-between">
               <h2 className="text-xl font-bold text-text-primary">选择导出格式</h2>
               <button
                 onClick={() => setShowExportOptions(false)}
                 className="rounded-full p-2 hover:bg-surface-2 transition-colors"
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="6" x2="6" y2="18"></line>
-                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
                 </svg>
               </button>
             </div>
@@ -353,53 +325,44 @@ export default function ProjectsPage() {
               <button
                 disabled={exporting}
                 onClick={() => handleExport("csv")}
-                className="flex flex-col items-center gap-3 p-5 rounded-3xl bg-success-light hover:bg-success hover:scale-105 transition-all group disabled:opacity-50"
+                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
               >
-                <div className="h-14 w-14 rounded-2xl bg-success/20 flex items-center justify-center text-success group-hover:bg-white group-hover:text-white transition-all">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
-                    <line x1="16" y1="13" x2="8" y2="13"></line>
-                    <line x1="16" y1="17" x2="8" y2="17"></line>
-                    <polyline points="10 9 9 9 8 9"></polyline>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
                   </svg>
                 </div>
-                <span className="text-xs font-bold text-text-primary group-hover:text-success">CSV表格</span>
+                <span className="text-xs font-bold text-text-primary">CSV表格</span>
               </button>
               <button
                 disabled={exporting}
                 onClick={() => handleExport("zip")}
-                className="flex flex-col items-center gap-3 p-5 rounded-3xl bg-primary-light hover:bg-primary hover:scale-105 transition-all group disabled:opacity-50"
+                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
               >
-                <div className="h-14 w-14 rounded-2xl bg-primary/20 flex items-center justify-center text-primary group-hover:bg-white group-hover:text-white transition-all">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21.5 13v6a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-6"></path>
-                    <polyline points="7 8 12 3 17 8"></polyline>
-                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21.5 13v6a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-6" />
+                    <polyline points="7 8 12 3 17 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
                 </div>
-                <span className="text-xs font-bold text-text-primary group-hover:text-primary">ZIP压缩</span>
+                <span className="text-xs font-bold text-text-primary">ZIP压缩</span>
               </button>
               <button
                 disabled={exporting}
                 onClick={() => handleExport("pdf")}
-                className="flex flex-col items-center gap-3 p-5 rounded-3xl bg-danger-light hover:bg-danger hover:scale-105 transition-all group disabled:opacity-50"
+                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
               >
-                <div className="h-14 w-14 rounded-2xl bg-danger/20 flex items-center justify-center text-danger group-hover:bg-white group-hover:text-white transition-all">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                    <polyline points="14 2 14 8 20 8"></polyline>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                    <polyline points="14 2 14 8 20 8" />
                   </svg>
                 </div>
-                <span className="text-xs font-bold text-text-primary group-hover:text-danger">PDF文档</span>
+                <span className="text-xs font-bold text-text-primary">PDF文档</span>
               </button>
             </div>
-            <button
-              onClick={() => setShowExportOptions(false)}
-              className="mt-6 w-full py-3.5 text-sm text-text-secondary font-semibold hover:text-text-primary transition-colors"
-            >
-              取消
-            </button>
           </div>
         </div>
       )}

@@ -2,12 +2,10 @@ import { Hono } from "hono";
 import { and, desc, eq } from "drizzle-orm";
 import { batches, backendJobs, exportRecords } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
-import { authMiddleware } from "../middleware/auth.js";
 import { errorResponse, ok } from "../utils/http.js";
 
 const router = new Hono();
 
-router.use("*", authMiddleware);
 
 router.get("/projects/:projectId/batches", async (c) => {
   const { userId } = c.get("auth");

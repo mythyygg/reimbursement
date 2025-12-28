@@ -117,6 +117,29 @@ export default function ReceiptsPage() {
       return bTime - aTime;
     });
 
+  /**
+   * 批量获取所有票据的候选
+   * 优化：一次请求获取所有票据的候选，而不是n次请求
+   *
+   * staleTime 设置：
+   * - 设置为 30 秒，在这期间不会重新请求
+   * - 减少不必要的网络请求
+   */
+  const { data: candidatesData } = useQuery({
+    queryKey: ["batch-candidates", projectId, receipts.map(r => r.receiptId).sort().join(',')],
+    queryFn: async () => {
+      if (receipts.length === 0) return {};
+      const receiptIds = receipts.map(r => r.receiptId);
+      return apiFetch('/receipts/batch-candidates', {
+        method: 'POST',
+        body: JSON.stringify({ receipt_ids: receiptIds })
+      });
+    },
+    enabled: receipts.length > 0, // 只有当有票据时才请求
+    staleTime: 30000, // 30秒内不重复请求
+    refetchOnWindowFocus: false, // 窗口聚焦时不自动刷新
+  });
+
   // 刷新数据的函数（重新获取票据列表）
   const handleRefetch = async () => {
     await refetch();
@@ -154,13 +177,23 @@ export default function ReceiptsPage() {
   };
 
   /**
-   * 预览相关状态
-   * 用于在弹窗中预览票据图片或 PDF
+   * 预览相关状态 - 简化版：不再调用签名 API
    */
-  const [previewReceipt, setPreviewReceipt] = useState<ReceiptRecord | null>(null); // 要预览的票据
-  const [previewUrl, setPreviewUrl] = useState<string | null>(null);       // 预览图片的 URL
-  const [previewLoading, setPreviewLoading] = useState(false);             // 是否正在加载预览
-  const [previewError, setPreviewError] = useState<string | null>(null);   // 预览错误信息
+  const [previewReceipt, setPreviewReceipt] = useState<ReceiptRecord | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  /**
+   * 预览功能 - 简化版：直接使用已有的 fileUrl
+   */
+  const openPreview = async (receipt: ReceiptRecord) => {
+    setPreviewReceipt(receipt);
+    setPreviewUrl(receipt.fileUrl || null);
+  };
+
+  const closePreview = () => {
+    setPreviewReceipt(null);
+    setPreviewUrl(null);
+  };
 
   /**
    * 上传票据的核心函数
@@ -286,31 +319,6 @@ export default function ReceiptsPage() {
     }
   };
 
-  const openPreview = async (receipt: ReceiptRecord) => {
-    setPreviewReceipt(receipt);
-    setPreviewLoading(true);
-    setPreviewUrl(null);
-    setPreviewError(null);
-    try {
-      const download = await apiFetch<{ signed_url: string }>(
-        `/receipts/${receipt.receiptId}/download-url`,
-        { method: "POST" }
-      );
-      setPreviewUrl(download.signed_url);
-      console.log(`[Preview] Download URL: ${download.signed_url}`);
-    } catch (error) {
-      setPreviewError("预览不可用");
-    } finally {
-      setPreviewLoading(false);
-    }
-  };
-
-  const closePreview = () => {
-    setPreviewReceipt(null);
-    setPreviewUrl(null);
-    setPreviewError(null);
-  };
-
   const [expandedReceiptId, setExpandedReceiptId] = useState<string | null>(null);
 
   return (
@@ -366,6 +374,7 @@ export default function ReceiptsPage() {
                 prev === receipt.receiptId ? null : receipt.receiptId
               )
             }
+            candidates={(candidatesData as any)?.[receipt.receiptId] || []}
           />
         ))}
       </div>
@@ -374,8 +383,6 @@ export default function ReceiptsPage() {
         <ReceiptPreview
           receipt={previewReceipt}
           url={previewUrl}
-          loading={previewLoading}
-          error={previewError}
           onClose={closePreview}
         />
       ) : null}
@@ -394,17 +401,16 @@ export default function ReceiptsPage() {
   );
 }
 
+/**
+ * 预览 Modal - 简化版：去掉签名 API 调用，直接显示 fileUrl
+ */
 function ReceiptPreview({
   receipt,
   url,
-  loading,
-  error,
   onClose
 }: {
   receipt: ReceiptRecord;
   url: string | null;
-  loading: boolean;
-  error: string | null;
   onClose: () => void;
 }) {
   // Prevent body scroll when preview is open
@@ -421,6 +427,7 @@ function ReceiptPreview({
     isPdf && url
       ? `${url}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH`
       : null;
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-fade-in"
@@ -441,6 +448,7 @@ function ReceiptPreview({
           <button
             className="rounded-full p-2 hover:bg-surface-2 transition-colors"
             onClick={onClose}
+            aria-label="关闭预览"
           >
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -449,17 +457,7 @@ function ReceiptPreview({
           </button>
         </div>
         <div className="max-h-[75vh] overflow-auto bg-surface-2 p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-sm text-text-secondary font-medium">加载中...</div>
-            </div>
-          ) : null}
-          {error ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-sm text-danger font-medium">{error}</div>
-            </div>
-          ) : null}
-          {!loading && !error && url ? (
+          {url ? (
             isPdf ? (
               <iframe
                 src={pdfUrl || url}
@@ -469,7 +467,11 @@ function ReceiptPreview({
             ) : (
               <img src={url} alt="票据" className="w-full rounded-2xl shadow-lg" />
             )
-          ) : null}
+          ) : (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-sm text-text-secondary font-medium">暂无预览</div>
+            </div>
+          )}
         </div>
       </div>
     </div>

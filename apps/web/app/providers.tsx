@@ -47,7 +47,20 @@ export default function Providers({ children }: { children: ReactNode }) {
    * - 因为组件可能会重新渲染，useState 保证 client 只创建一次
    * - () => new QueryClient() 是惰性初始化，只在第一次渲染时执行
    */
-  const [client] = useState(() => new QueryClient());
+  const [client] = useState(
+    () =>
+      new QueryClient({
+        defaultOptions: {
+          queries: {
+            retry: 1, // 只重试1次，而不是默认的3次
+            staleTime: 0, // 数据立即过期
+            refetchOnWindowFocus: false, // 窗口聚焦时不自动刷新
+            refetchOnMount: true, // 组件挂载时刷新
+            refetchOnReconnect: true, // 重新连接时刷新
+          },
+        },
+      })
+  );
 
   /**
    * useEffect: React 的副作用 hook

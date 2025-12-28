@@ -8,36 +8,36 @@
 }
 
 :root {
-  /* Surface Colors - 更优雅的背景层次 */
+  /* Surface Colors - 清爽的背景层次 */
   --surface-0: 255 255 255;
-  --surface-1: 248 250 252;
-  --surface-2: 241 245 249;
-  --surface-highlight: 248 250 252;
+  --surface-1: 249 250 251;
+  --surface-2: 243 244 246;
+  --surface-highlight: 240 253 244;
 
-  /* Border Colors - 更精细的边框层次 */
-  --border: 226 232 240;
-  --border-light: 241 245 249;
-  --border-strong: 203 213 225;
+  /* Border Colors - 精细的边框层次 */
+  --border: 229 231 235;
+  --border-light: 243 244 246;
+  --border-strong: 209 213 219;
 
-  /* Text Colors - 更清晰的文本层次 */
-  --text-primary: 15 23 42;
-  --text-secondary: 100 116 139;
-  --text-tertiary: 148 163 184;
+  /* Text Colors - 清晰的文本层次 */
+  --text-primary: 17 24 39;
+  --text-secondary: 107 114 128;
+  --text-tertiary: 156 163 175;
 
-  /* Brand Colors - 保持蓝色但更鲜活 */
-  --primary: 37 99 235;
-  --primary-hover: 29 78 216;
-  --primary-light: 219 234 254;
+  /* Brand Colors - 现代绿色主题 */
+  --primary: 16 185 129;
+  --primary-hover: 5 150 105;
+  --primary-light: 209 250 229;
 
-  /* Semantic Colors - 更现代的语义色 */
-  --success: 22 163 74;
-  --success-light: 220 252 231;
+  /* Semantic Colors - 清晰的语义色 */
+  --success: 16 185 129;
+  --success-light: 209 250 229;
   --warning: 245 158 11;
   --warning-light: 254 243 199;
   --danger: 239 68 68;
   --danger-light: 254 226 226;
-  --info: 14 165 233;
-  --info-light: 224 242 254;
+  --info: 59 130 246;
+  --info-light: 219 234 254;
 }
 
 html,

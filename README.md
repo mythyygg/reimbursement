@@ -97,31 +97,40 @@ Worker (BullMQ) - 处理导出等耗时操作
 
 ## 快速开始
 
-详细的启动步骤请参考：[docs/getting_started.md](docs/getting_started.md)
+**新手？** 查看 **[5 分钟快速开始指南](./docs/guides/quick-start.md)** ⚡
 
-### 简化版启动步骤
+### 极简启动
 
 ```bash
 # 1. 安装依赖
 npm install
 
-# 2. 复制环境变量配置
-cp .env.example .env
+# 2. 配置环境变量
+cd apps/api && cp .env.example .env.local
+cd ../web && cp .env.example .env.local
 
-# 3. 启动 Docker 服务（PostgreSQL + MinIO）
-docker-compose up -d
-
-# 4. 初始化数据库
-npm run db:generate
-npm run db:migrate
-
-# 5. 启动所有服务（前端 + 后端 + Worker）
+# 3. 启动开发服务器
 npm run dev
 ```
 
-然后访问 http://localhost:3000
+然后访问 http://localhost:3001
 
-## 开发指南
+---
+
+## 📚 完整文档
+
+所有文档已整理到 **[docs/](./docs/)** 目录：
+
+- **[快速开始](./docs/guides/quick-start.md)** - 5 分钟搭建环境
+- **[部署指南](./docs/guides/deployment.md)** - 生产环境部署
+- **[架构概览](./docs/architecture/overview.md)** - 系统架构
+- **[API 文档](./docs/api/openapi/)** - RESTful API 规范
+
+**查看所有文档** → [docs/README.md](./docs/README.md)
+
+---
+
+## 🛠️ 开发指南
 
 ### 常用命令
 
@@ -172,11 +181,9 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
 
 为了帮助后端开发者理解前端代码，我已经在以下文件中添加了详细的中文注释：
 
-- [ ] `apps/web/app/layout.tsx` - Next.js 全局布局
-- [ ] `apps/web/app/projects/[projectId]/receipts/page.tsx` - 票据页面
-- [ ] `packages/shared/src/db/schema.ts` - 数据库表结构
-- [ ] `apps/api/src/routes/expenses.ts` - 支出 API
-- [ ] `apps/worker/src/jobs/export.ts` - 导出任务
+查看 **[代码注释进度](./docs/progress/code-comments-progress.md)**
+
+---
 
 ## 学习资源
 
@@ -187,11 +194,7 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
 - **TailwindCSS**: https://tailwindcss.com - CSS 工具类框架
 - **Drizzle ORM**: https://orm.drizzle.team - TypeScript ORM
 
-## 项目文档
-
-- [产品需求文档 (PRD)](docs/prd_core.md) - 详细的功能需求
-- [技术设计文档](docs/techdesign.md) - 架构设计
-- [启动指南](docs/getting_started.md) - 详细的启动步骤
+---
 
 ## 常见问题
 
@@ -201,11 +204,17 @@ A: Next.js 13+ 引入的新路由方式，使用文件系统路由。`app/` 目�
 **Q: 为什么用 Drizzle ORM 而不是 Prisma？**
 A: Drizzle 更轻量，提供更接近 SQL 的 API，对 TypeScript 类型支持更好。
 
-**Q: BullMQ 的作用是什么？**
-A: 处理后台任务，比如生成 CSV、打包 ZIP 等耗时操作。这样前端不用等待，用户体验更好。
+**更多问题？** 查看 **[docs/README.md](./docs/README.md)**
 
-**Q: MinIO 是什么？**
-A: 开源的对象存储服务，兼容 AWS S3 API。本地开发用它存储上传的票据文件。
+---
+
+## 🔗 相关链接
+
+- **[项目文档](./docs/)** - 所有文档
+- **[重构计划](./REFACTOR_PLAN.md)** - Monorepo 重构方案
+- **[贡献指南](./CONTRIBUTING.md)** - 如何贡献（待创建）
+
+---
 
 ## License
 

@@ -1,3 +1,65 @@
+/**
+ * 数据库表结构定义
+ *
+ * 【Java 对比 - Drizzle ORM vs JPA/Hibernate】
+ *
+ * 本文件使用 Drizzle ORM 定义数据库表结构，类似 JPA 的 @Entity 注解：
+ *
+ * JPA/Hibernate 风格：
+ * ```java
+ * @Entity
+ * @Table(name = "users")
+ * public class User {
+ *     @Id
+ *     @GeneratedValue(strategy = GenerationType.UUID)
+ *     private UUID userId;
+ *
+ *     @Column(unique = true, nullable = false)
+ *     private String emailOrPhone;
+ *
+ *     @Column(nullable = false)
+ *     private String passwordHash;
+ * }
+ * ```
+ *
+ * Drizzle ORM 风格（本项目）：
+ * ```typescript
+ * export const users = pgTable("users", {
+ *   userId: uuid("user_id").defaultRandom().primaryKey(),
+ *   emailOrPhone: text("email_or_phone").notNull(),
+ *   passwordHash: text("password_hash").notNull()
+ * });
+ * ```
+ *
+ * 主要区别：
+ * 1. 【定义方式】Drizzle 使用函数式定义，JPA 使用类+注解
+ * 2. 【类型安全】两者都提供编译时类型检查
+ * 3. 【关系映射】Drizzle 需要手动 JOIN，JPA 自动处理 @OneToMany/@ManyToOne
+ * 4. 【性能】Drizzle 更轻量，生成的 SQL 更可控
+ *
+ * 数据类型对照表：
+ * | Drizzle ORM        | PostgreSQL | Java/JPA           |
+ * |--------------------|------------|--------------------|
+ * | uuid()             | UUID       | UUID               |
+ * | text()             | TEXT       | String             |
+ * | integer()          | INTEGER    | Integer/int        |
+ * | numeric(12, 2)     | NUMERIC    | BigDecimal         |
+ * | boolean()          | BOOLEAN    | Boolean/boolean    |
+ * | timestamp()        | TIMESTAMP  | LocalDateTime/Date |
+ * | jsonb()            | JSONB      | 需要转换器          |
+ *
+ * 表关系设计：
+ * - users (用户) ←─ 1:N ─→ projects (项目)
+ * - projects (项目) ←─ 1:N ─→ expenses (费用)
+ * - projects (项目) ←─ 1:N ─→ receipts (票据)
+ * - expenses (费用) ←─ M:N ─→ receipts (票据) [通过 expenseReceipts 关联表]
+ *
+ * 【注意】
+ * - 本文件定义表结构（DDL），不包含数据操作（DML）
+ * - 类似 JPA 的实体类，但只定义结构，不包含业务逻辑
+ * - 所有表都由 apps/api 和 apps/worker 共享使用
+ */
+
 import {
   boolean,
   integer,
