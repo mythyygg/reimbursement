@@ -17,6 +17,9 @@ const exportCreateSchema = z.object({
 router.use("*", authMiddleware);
 
 router.post("/batches/:batchId/exports", async (c) => {
+  const startTime = Date.now();
+  console.log(`[API] 创建导出任务开始 - batchId: ${c.req.param("batchId")}`);
+
   const { userId } = c.get("auth");
   const batchId = c.req.param("batchId");
   const body = exportCreateSchema.safeParse(await c.req.json());
@@ -24,14 +27,18 @@ router.post("/batches/:batchId/exports", async (c) => {
     return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
   }
 
+  const t1 = Date.now();
   const [batch] = await db
     .select()
     .from(batches)
     .where(and(eq(batches.batchId, batchId), eq(batches.userId, userId)));
+  console.log(`[API] 查询batch耗时: ${Date.now() - t1}ms`);
+
   if (!batch) {
     return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
   }
 
+  const t2 = Date.now();
   const existing = await db
     .select()
     .from(exportRecords)
@@ -43,12 +50,15 @@ router.post("/batches/:batchId/exports", async (c) => {
         eq(exportRecords.status, "running")
       )
     );
+  console.log(`[API] 查询现有导出耗时: ${Date.now() - t2}ms, 找到 ${existing.length} 条`);
 
   if (existing.length > 0) {
     // Deduplicate concurrent requests: reuse running export to avoid 409 / duplicate jobs.
+    console.log(`[API] 复用现有导出任务, 总耗时: ${Date.now() - startTime}ms`);
     return ok(c, existing[0]);
   }
 
+  const t3 = Date.now();
   const [record] = await db
     .insert(exportRecords)
     .values({
@@ -59,12 +69,16 @@ router.post("/batches/:batchId/exports", async (c) => {
       status: "pending",
     })
     .returning();
+  console.log(`[API] 插入导出记录耗时: ${Date.now() - t3}ms`);
 
+  const t4 = Date.now();
   await db.insert(backendJobs).values({
     type: "export",
     payload: { exportId: record.exportId, userId },
     status: "pending",
   });
+  console.log(`[API] 插入后台任务耗时: ${Date.now() - t4}ms`);
+  console.log(`[API] 创建导出任务完成, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, record);
 });
@@ -126,8 +140,13 @@ router.get("/exports/:exportId", async (c) => {
 });
 
 router.post("/exports/:exportId/download-url", async (c) => {
-  const { userId } = c.get("auth");
+  const startTime = Date.now();
   const exportId = c.req.param("exportId");
+  console.log(`[API] 生成下载URL开始 - exportId: ${exportId}`);
+
+  const { userId } = c.get("auth");
+
+  const t1 = Date.now();
   const [record] = await db
     .select()
     .from(exportRecords)
@@ -137,6 +156,7 @@ router.post("/exports/:exportId/download-url", async (c) => {
         eq(exportRecords.userId, userId)
       )
     );
+  console.log(`[API] 查询导出记录耗时: ${Date.now() - t1}ms`);
 
   if (!record || !record.storageKey) {
     return errorResponse(c, 404, "EXPORT_NOT_FOUND", "Export not found");
@@ -150,10 +170,14 @@ router.post("/exports/:exportId/download-url", async (c) => {
   const date = record.createdAt.toISOString().split('T')[0];
   const filename = `报销导出_${date}.${record.type}`;
 
+  const t2 = Date.now();
   const signedUrl = await createExportDownloadUrl({
     storageKey: record.storageKey,
     filename,
   });
+  console.log(`[API] 生成S3签名URL耗时: ${Date.now() - t2}ms`);
+
+  const t3 = Date.now();
   await db.insert(downloadLogs).values({
     userId,
     fileType: "export",
@@ -161,6 +185,8 @@ router.post("/exports/:exportId/download-url", async (c) => {
     userAgent: c.req.header("user-agent"),
     ip: c.req.header("x-forwarded-for") || c.req.header("x-real-ip"),
   });
+  console.log(`[API] 插入下载日志耗时: ${Date.now() - t3}ms`);
+  console.log(`[API] 生成下载URL完成, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, { signed_url: signedUrl });
 });

@@ -88,8 +88,10 @@ export async function processExportJob(input: {
   exportId: string;
   userId: string;
 }) {
-  console.log(`[export] 开始处理导出任务: ${input.exportId}`);
+  const jobStartTime = Date.now();
+  console.log(`[export] ========== 开始处理导出任务: ${input.exportId} ==========`);
 
+  let t1 = Date.now();
   const [record] = await db
     .select()
     .from(exportRecords)
@@ -99,6 +101,7 @@ export async function processExportJob(input: {
         eq(exportRecords.userId, input.userId)
       )
     );
+  console.log(`[export] [DB] 查询导出记录耗时: ${Date.now() - t1}ms`);
 
   if (!record) {
     console.log(`[export] 导出记录不存在: ${input.exportId}`);
@@ -107,12 +110,12 @@ export async function processExportJob(input: {
 
   console.log(`[export] 导出类型: ${record.type}, 批次ID: ${record.batchId || '无'}`);
 
+  t1 = Date.now();
   await db
     .update(exportRecords)
     .set({ status: "running", updatedAt: new Date() })
     .where(eq(exportRecords.exportId, input.exportId));
-
-  console.log(`[export] 状态已更新为 running`);
+  console.log(`[export] [DB] 更新状态为running耗时: ${Date.now() - t1}ms`);
 
   try {
     const projectIds = (record.projectIds ?? []) as string[];
@@ -122,26 +125,29 @@ export async function processExportJob(input: {
 
     let batch: typeof batches.$inferSelect | undefined;
     if (isBatchExport && record.batchId) {
+      t1 = Date.now();
       [batch] = await db
         .select()
         .from(batches)
         .where(eq(batches.batchId, record.batchId));
-      console.log(`[export] 批次信息: ${batch?.name}`);
+      console.log(`[export] [DB] 查询批次信息耗时: ${Date.now() - t1}ms - ${batch?.name}`);
     }
 
+    t1 = Date.now();
     const projectRows = await db
       .select()
       .from(projects)
       .where(inArray(projects.projectId, projectIds));
-
-    console.log(`[export] 找到 ${projectRows.length} 个项目`);
+    console.log(`[export] [DB] 查询项目信息耗时: ${Date.now() - t1}ms - 找到 ${projectRows.length} 个项目`);
 
     const projectMap = new Map(projectRows.map((p) => [p.projectId, p]));
 
+    t1 = Date.now();
     const [userSettings] = await db
       .select()
       .from(settings)
       .where(eq(settings.userId, input.userId));
+    console.log(`[export] [DB] 查询用户设置耗时: ${Date.now() - t1}ms`);
 
     const template = userSettings?.exportTemplateJson ?? {
       includeMerchantKeyword: false,
@@ -179,14 +185,16 @@ export async function processExportJob(input: {
     }
 
     console.log(`[export] 开始查询费用数据...`);
+    t1 = Date.now();
 
     const expenseRows = await db
       .select()
       .from(expenses)
       .where(and(...expenseFilters));
 
-    console.log(`[export] 找到 ${expenseRows.length} 条费用记录`);
+    console.log(`[export] [DB] 查询费用记录耗时: ${Date.now() - t1}ms - 找到 ${expenseRows.length} 条`);
 
+    t1 = Date.now();
     const receiptRows = await db
       .select()
       .from(receipts)
@@ -198,7 +206,7 @@ export async function processExportJob(input: {
         )
       );
 
-    console.log(`[export] 找到 ${receiptRows.length} 张票据`);
+    console.log(`[export] [DB] 查询票据记录耗时: ${Date.now() - t1}ms - 找到 ${receiptRows.length} 张`);
 
     const receiptsByExpense = new Map<string, typeof receiptRows>();
     for (const receipt of receiptRows) {
@@ -220,6 +228,7 @@ export async function processExportJob(input: {
     csvRows.push(buildCsvHeader(template));
 
     console.log(`[export] 开始构建CSV数据...`);
+    t1 = Date.now();
 
     sortedExpenses.forEach((expense, index) => {
       const sequence = index + 1;
@@ -263,11 +272,12 @@ export async function processExportJob(input: {
       );
     });
 
-    console.log(`[export] CSV数据构建完成，共 ${entries.length} 条记录`);
+    console.log(`[export] CSV数据构建完成, 耗时: ${Date.now() - t1}ms - 共 ${entries.length} 条记录`);
 
+    t1 = Date.now();
     const csvBuffer = Buffer.from(withUtf8Bom(buildCsv(csvRows)), "utf-8");
 
-    console.log(`[export] CSV文件生成完成，大小: ${(csvBuffer.length / 1024).toFixed(2)}KB`);
+    console.log(`[export] CSV文件生成完成, 耗时: ${Date.now() - t1}ms - 大小: ${(csvBuffer.length / 1024).toFixed(2)}KB`);
 
     if (record.type === "csv") {
       console.log(`[export] 准备上传CSV文件...`);
@@ -278,18 +288,19 @@ export async function processExportJob(input: {
         "csv",
         input.userId
       );
-      console.log(`[export] CSV导出完成`);
+      console.log(`[export] CSV导出完成, 总耗时: ${Date.now() - jobStartTime}ms`);
       return;
     }
 
     if (record.type === "pdf") {
       console.log(`[export] PDF类型已废弃，改用YAML索引...`);
+      t1 = Date.now();
       const yamlBuffer = buildYamlIndex({
         batchName: batch?.name || "Items Export",
         projectLabel: projectRows.length === 1 ? projectRows[0].name ?? "-" : "Multiple Projects",
         entries,
       });
-      console.log(`[export] YAML索引生成完成，大小: ${(yamlBuffer.length / 1024).toFixed(2)}KB`);
+      console.log(`[export] YAML索引生成完成, 耗时: ${Date.now() - t1}ms - 大小: ${(yamlBuffer.length / 1024).toFixed(2)}KB`);
       await finalizeExport(
         record.exportId,
         yamlBuffer,
@@ -297,12 +308,13 @@ export async function processExportJob(input: {
         "yaml",
         input.userId
       );
-      console.log(`[export] YAML导出完成`);
+      console.log(`[export] YAML导出完成, 总耗时: ${Date.now() - jobStartTime}ms`);
       return;
     }
 
     console.log(`[export] 开始生成ZIP文件...`);
 
+    t1 = Date.now();
     const yamlBuffer = template.includeYaml
       ? buildYamlIndex({
         batchName: batch?.name || "Items Export",
@@ -312,11 +324,12 @@ export async function processExportJob(input: {
       : null;
 
     if (yamlBuffer) {
-      console.log(`[export] YAML索引生成完成，大小: ${(yamlBuffer.length / 1024).toFixed(2)}KB`);
+      console.log(`[export] YAML索引生成完成, 耗时: ${Date.now() - t1}ms - 大小: ${(yamlBuffer.length / 1024).toFixed(2)}KB`);
     }
 
+    t1 = Date.now();
     const zipBuffer = await buildZipArchive({ csvBuffer, entries, yamlBuffer });
-    console.log(`[export] ZIP文件生成完成，大小: ${(zipBuffer.length / 1024).toFixed(2)}KB`);
+    console.log(`[export] ZIP文件生成完成, 耗时: ${Date.now() - t1}ms - 大小: ${(zipBuffer.length / 1024).toFixed(2)}KB`);
 
     await finalizeExport(
       record.exportId,
@@ -325,7 +338,7 @@ export async function processExportJob(input: {
       "zip",
       input.userId
     );
-    console.log(`[export] ZIP导出完成`);
+    console.log(`[export] ========== ZIP导出完成, 总耗时: ${Date.now() - jobStartTime}ms ==========`);
   } catch (error) {
     console.error(`[export] 导出失败:`, error);
     await db
@@ -421,7 +434,8 @@ async function buildZipArchive(input: {
   entries: ExportEntry[];
   yamlBuffer: Buffer | null;
 }): Promise<Buffer> {
-  console.log(`[export] 开始构建ZIP压缩包，包含 ${input.entries.length} 个费用条目`);
+  const zipStartTime = Date.now();
+  console.log(`[export] [ZIP] 开始构建ZIP压缩包，包含 ${input.entries.length} 个费用条目`);
 
   const archive = archiver("zip", { zlib: { level: 9 } });
   const stream = new PassThrough();
@@ -432,51 +446,60 @@ async function buildZipArchive(input: {
     stream.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
 
     stream.on("end", () => {
-      console.log(`[export] ZIP压缩完成`);
+      console.log(`[export] [ZIP] ZIP压缩完成，总耗时: ${Date.now() - zipStartTime}ms`);
       resolve(Buffer.concat(chunks));
     });
 
     stream.on("error", (err) => {
-      console.error(`[export] Stream错误:`, err);
+      console.error(`[export] [ZIP] Stream错误:`, err);
       reject(err);
     });
 
     archive.on("error", (err) => {
-      console.error(`[export] archiver错误:`, err);
+      console.error(`[export] [ZIP] archiver错误:`, err);
       reject(err);
     });
   });
 
   archive.pipe(stream);
 
-  console.log(`[export] 添加CSV文件到ZIP`);
+  console.log(`[export] [ZIP] 添加CSV文件到ZIP (${(input.csvBuffer.length / 1024).toFixed(2)}KB)`);
   archive.append(input.csvBuffer, { name: "batch.csv" });
 
   if (input.yamlBuffer) {
-    console.log(`[export] 添加YAML索引到ZIP`);
+    console.log(`[export] [ZIP] 添加YAML索引到ZIP (${(input.yamlBuffer.length / 1024).toFixed(2)}KB)`);
     archive.append(input.yamlBuffer, { name: "index.yaml" });
   }
 
   let downloadedCount = 0;
+  let totalDownloadTime = 0;
   const totalReceipts = input.entries.reduce((sum, e) => sum + e.receipts.length, 0);
+  console.log(`[export] [ZIP] 开始下载 ${totalReceipts} 张票据...`);
 
   for (const entry of input.entries) {
     for (const receipt of entry.receipts) {
       try {
         downloadedCount++;
-        console.log(`[export] 下载票据 ${downloadedCount}/${totalReceipts}: ${receipt.storageKey}`);
+        const t1 = Date.now();
         const file = await downloadObject(receipt.storageKey);
+        const downloadTime = Date.now() - t1;
+        totalDownloadTime += downloadTime;
+
+        console.log(`[export] [ZIP] [${downloadedCount}/${totalReceipts}] 下载票据: ${receipt.filename} - ${(file.length / 1024).toFixed(2)}KB - 耗时: ${downloadTime}ms`);
         archive.append(file, { name: `receipts/${receipt.filename}` });
       } catch (error) {
-        console.error(`[export] 下载票据失败: ${receipt.storageKey}`, error);
+        console.error(`[export] [ZIP] 下载票据失败: ${receipt.storageKey}`, error);
         throw error;
       }
     }
   }
 
-  console.log(`[export] 所有票据已添加，开始压缩...`);
+  console.log(`[export] [ZIP] 所有票据已下载，总耗时: ${totalDownloadTime}ms，平均: ${(totalDownloadTime / totalReceipts).toFixed(0)}ms/张`);
+  console.log(`[export] [ZIP] 开始压缩...`);
+
+  const finalizeStartTime = Date.now();
   await archive.finalize();
-  console.log(`[export] finalize()完成，等待压缩结束...`);
+  console.log(`[export] [ZIP] finalize()完成，耗时: ${Date.now() - finalizeStartTime}ms，等待压缩结束...`);
 
   return resultPromise;
 }
@@ -525,12 +548,15 @@ async function finalizeExport(
 ) {
   const storageKey = `users/${userId}/exports/${exportId}.${extension}`;
 
-  console.log(`[export] 上传文件到对象存储: ${storageKey}`);
+  console.log(`[export] [S3] 准备上传文件: ${storageKey} - 大小: ${(buffer.length / 1024).toFixed(2)}KB`);
 
+  const uploadStartTime = Date.now();
   const upload = await uploadObject({ storageKey, body: buffer, contentType });
+  const uploadTime = Date.now() - uploadStartTime;
 
-  console.log(`[export] 文件上传成功，大小: ${(upload.size / 1024).toFixed(2)}KB`);
+  console.log(`[export] [S3] 文件上传成功，耗时: ${uploadTime}ms - 速度: ${((buffer.length / 1024) / (uploadTime / 1000)).toFixed(2)}KB/s`);
 
+  const dbStartTime = Date.now();
   await db
     .update(exportRecords)
     .set({
@@ -543,5 +569,5 @@ async function finalizeExport(
     })
     .where(eq(exportRecords.exportId, exportId));
 
-  console.log(`[export] 导出记录状态已更新为 done`);
+  console.log(`[export] [DB] 更新导出记录状态为done，耗时: ${Date.now() - dbStartTime}ms`);
 }
