@@ -49,6 +49,7 @@ const matchSchema = z.object({
 router.use("*", authMiddleware);
 
 router.get("/projects/:projectId/receipts", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const projectId = c.req.param("projectId");
   const matched = c.req.query("matched");
@@ -67,13 +68,14 @@ router.get("/projects/:projectId/receipts", async (c) => {
     );
   }
 
-
-
+  const t1 = Date.now();
   const data = await db
     .select()
     .from(receipts)
     .where(and(...filters));
+  console.log(`[receipts] [DB] 查询票据列表耗时: ${Date.now() - t1}ms - 返回 ${data.length} 张`);
 
+  const t2 = Date.now();
   const withSignedUrls = await Promise.all(
     data.map(async (item) => {
       if (item.storageKey) {
@@ -89,6 +91,7 @@ router.get("/projects/:projectId/receipts", async (c) => {
       return item;
     })
   );
+  console.log(`[receipts] [S3] 生成 ${data.length} 个签名URL耗时: ${Date.now() - t2}ms, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, withSignedUrls);
 });
@@ -394,22 +397,27 @@ router.patch("/receipts/:receiptId/match", async (c) => {
 });
 
 router.get("/receipts/:receiptId/candidates", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const receiptId = c.req.param("receiptId");
 
+  let t1 = Date.now();
   const [receipt] = await db
     .select()
     .from(receipts)
     .where(and(eq(receipts.receiptId, receiptId), eq(receipts.userId, userId)));
+  console.log(`[receipts] [DB] 查询票据耗时: ${Date.now() - t1}ms`);
 
   if (!receipt) {
     return errorResponse(c, 404, "RECEIPT_NOT_FOUND", "Receipt not found");
   }
 
+  t1 = Date.now();
   const [userSettings] = await db
     .select()
     .from(settings)
     .where(eq(settings.userId, userId));
+  console.log(`[receipts] [DB] 查询用户设置耗时: ${Date.now() - t1}ms`);
 
   const rules = {
     dateWindowDays: Number(userSettings?.matchRulesJson?.dateWindowDays ?? 3),
@@ -420,6 +428,7 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
   };
 
   // 候选：同项目下缺少票据的报销单，外加当前已关联的报销单（避免 matched 状态被排除）。
+  t1 = Date.now();
   const expenseRows = await db
     .select()
     .from(expenses)
@@ -429,7 +438,9 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
         eq(expenses.projectId, receipt.projectId)
       )
     );
+  console.log(`[receipts] [DB] 查询项目所有费用耗时: ${Date.now() - t1}ms - 返回 ${expenseRows.length} 条`);
 
+  t1 = Date.now();
   const candidates = getReceiptCandidates(
     {
       amount: receipt.receiptAmount
@@ -448,6 +459,7 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
     })),
     rules
   );
+  console.log(`[receipts] 计算匹配候选耗时: ${Date.now() - t1}ms - 找到 ${candidates.length} 个候选`);
 
   const expenseById = new Map(
     expenseRows.map((expense) => [expense.expenseId, expense])
@@ -457,6 +469,7 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
   // 如果票据已关联某报销单，把该报销单放入候选，避免下拉为空。
   let matchedExpense = null;
   if (receipt.matchedExpenseId) {
+    t1 = Date.now();
     const [found] = await db
       .select()
       .from(expenses)
@@ -466,6 +479,7 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
           eq(expenses.userId, userId)
         )
       );
+    console.log(`[receipts] [DB] 查询已匹配费用耗时: ${Date.now() - t1}ms`);
     matchedExpense = found ?? null;
   }
 
@@ -508,6 +522,7 @@ router.get("/receipts/:receiptId/candidates", async (c) => {
     });
   }
 
+  console.log(`[receipts] 获取候选完成, 总耗时: ${Date.now() - startTime}ms`);
   return ok(c, responseCandidates);
 });
 
