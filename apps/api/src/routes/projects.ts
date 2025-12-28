@@ -26,6 +26,7 @@ const projectUpdateSchema = z.object({
 router.use("*", authMiddleware);
 
 router.get("/", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const search = c.req.query("search");
   const pinned = c.req.query("pinned");
@@ -64,6 +65,7 @@ router.get("/", async (c) => {
     .groupBy(receipts.projectId)
     .as("receipt_counts");
 
+  const t1 = Date.now();
   const data = await db
     .select({
       projectId: projects.projectId,
@@ -85,6 +87,8 @@ router.get("/", async (c) => {
     .where(and(...filters, sql`nullif(${projects.name}, '') is not null`))
     .orderBy(desc(projects.pinned), desc(projects.updatedAt));
 
+  console.log(`[projects] [DB] 查询项目列表耗时: ${Date.now() - t1}ms - 返回 ${data.length} 条, 总耗时: ${Date.now() - startTime}ms`);
+
   return ok(c, data);
 });
 
@@ -95,6 +99,7 @@ router.post("/", async (c) => {
     return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
   }
 
+  const t1 = Date.now();
   const [project] = await db
     .insert(projects)
     .values({
@@ -105,6 +110,8 @@ router.post("/", async (c) => {
       tags: body.data.tags ?? [],
     })
     .returning();
+
+  console.log(`[projects] [DB] 创建项目耗时: ${Date.now() - t1}ms`);
 
   return ok(c, project);
 });
@@ -150,34 +157,43 @@ router.post(":projectId/archive", async (c) => {
 });
 
 router.delete(":projectId", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const projectId = c.req.param("projectId");
 
   // 检查项目是否存在
+  let t1 = Date.now();
   const [project] = await db
     .select()
     .from(projects)
     .where(and(eq(projects.projectId, projectId), eq(projects.userId, userId)));
+  console.log(`[projects] [DB] 查询项目耗时: ${Date.now() - t1}ms`);
 
   if (!project) {
     return errorResponse(c, 404, "PROJECT_NOT_FOUND", "Project not found");
   }
 
   // 检查项目下是否有数据
+  t1 = Date.now();
   const [expenseCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(expenses)
     .where(eq(expenses.projectId, projectId));
+  console.log(`[projects] [DB] 查询费用数量耗时: ${Date.now() - t1}ms - ${expenseCount?.count ?? 0} 条`);
 
+  t1 = Date.now();
   const [receiptCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(receipts)
     .where(and(eq(receipts.projectId, projectId), isNull(receipts.deletedAt)));
+  console.log(`[projects] [DB] 查询票据数量耗时: ${Date.now() - t1}ms - ${receiptCount?.count ?? 0} 张`);
 
+  t1 = Date.now();
   const [batchCount] = await db
     .select({ count: sql<number>`count(*)` })
     .from(batches)
     .where(eq(batches.projectId, projectId));
+  console.log(`[projects] [DB] 查询导出数量耗时: ${Date.now() - t1}ms - ${batchCount?.count ?? 0} 个`);
 
   const hasData =
     (expenseCount?.count ?? 0) > 0 ||
@@ -194,7 +210,9 @@ router.delete(":projectId", async (c) => {
   }
 
   // 删除项目
+  t1 = Date.now();
   await db.delete(projects).where(eq(projects.projectId, projectId));
+  console.log(`[projects] [DB] 删除项目耗时: ${Date.now() - t1}ms, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, { success: true });
 });

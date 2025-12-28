@@ -132,6 +132,7 @@ router.use("*", authMiddleware);
  * ]
  */
 router.get("/projects/:projectId/expenses", async (c) => {
+  const startTime = Date.now();
   const { userId } = c.get("auth");
   const projectId = c.req.param("projectId");
   const status = c.req.query("status");
@@ -158,11 +159,14 @@ router.get("/projects/:projectId/expenses", async (c) => {
     filters.push(lte(expenses.date, new Date(dateTo)));
   }
 
+  const t1 = Date.now();
   const data = await db
     .select()
     .from(expenses)
     .where(and(...filters))
     .orderBy(expenses.date, expenses.createdAt);
+
+  console.log(`[expenses] [DB] 查询费用列表耗时: ${Date.now() - t1}ms - 返回 ${data.length} 条, 总耗时: ${Date.now() - startTime}ms`);
 
   return ok(c, data);
 });
