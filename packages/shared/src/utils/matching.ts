@@ -1,5 +1,5 @@
-import { daysBetween, parseDate } from "./date";
-import type { MatchRuleConfig, ReceiptCandidate } from "../domain/types";
+import { daysBetween, parseDate } from "./date.js";
+import type { MatchRuleConfig, ReceiptCandidate } from "../domain/types.js";
 
 /**
  * 用于匹配的费用数据结构

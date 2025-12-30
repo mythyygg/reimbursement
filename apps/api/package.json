@@ -4,10 +4,14 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build:shared": "tsc -p ../../packages/shared/tsconfig.build.json",
+    "predev": "npm run build:shared",
     "dev": "tsx watch src/server.ts",
+    "prebuild": "npm run build:shared",
     "build": "tsc",
     "start": "node dist/server.js",
-    "test": "tsx --test tests/*.test.ts",
+    "pretest": "npm run build:shared",
+    "test": "node --test --import tsx tests/*.test.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts"
   },

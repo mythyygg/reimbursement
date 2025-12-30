@@ -1,4 +1,4 @@
-import { formatDate, parseDate } from "./date";
+import { formatDate, parseDate } from "./date.js";
 
 /**
  * 导出文件命名所需的输入参数

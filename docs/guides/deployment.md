@@ -29,17 +29,36 @@ reimbursement/
 
 ---
 
+## 🌐 域名配置
+
+你当前使用的生产域名：
+
+- Web（Vercel）：`https://finance-m.caicaizi.xyz`
+- API（Clawcloud）：`https://finance-i.caicaizi.xyz`
+
+DNS 配置（常见做法）：
+
+- `finance-m.caicaizi.xyz`：CNAME → `cname.vercel-dns.com`
+- `finance-i.caicaizi.xyz`：按 Clawcloud 的域名绑定指引（通常也是 CNAME 到平台提供的域名）
+
+---
+
 ## 🧰 环境变量配置
 
 ### apps/web（Vercel）
-只需要 2 个变量：
+必需变量：
 
 | 变量名 | 示例值 | 说明 |
 | --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE` | `https://api.yourdomain.com/api/v1` | API 基础 URL（含 /api/v1） |
-| `NEXT_PUBLIC_APP_URL` | `https://your-vercel-domain.vercel.app` | Web 地址 |
+| `NEXT_PUBLIC_API_BASE` | `https://finance-i.caicaizi.xyz/api/v1` | API 基础 URL（含 `/api/v1`） |
 
 > 注意：`NEXT_PUBLIC_API_BASE` 必须是 API 域名，不再使用 Vercel rewrites。
+
+可选变量（当前代码不依赖，可不配）：
+
+| 变量名 | 示例值 | 说明 |
+| --- | --- | --- |
+| `NEXT_PUBLIC_APP_URL` | `https://finance-m.caicaizi.xyz` | Web 自身地址（文档/未来功能可能用到） |
 
 ### apps/api（Clawcloud）
 必需变量：
@@ -54,7 +73,7 @@ reimbursement/
 | `S3_ACCESS_KEY` | `xxx` | R2 Access Key |
 | `S3_SECRET_KEY` | `xxx` | R2 Secret Key |
 | `S3_BUCKET` | `reimbursement` | Bucket 名称 |
-| `CORS_ALLOWED_ORIGINS` | `https://your-vercel-domain.vercel.app` | 允许的前端域名（逗号分隔） |
+| `CORS_ALLOWED_ORIGINS` | `https://finance-m.caicaizi.xyz` | 允许的前端域名（逗号分隔） |
 | `START_WORKER` | `true` | 开启内置 worker |
 
 可选变量：
@@ -71,6 +90,22 @@ reimbursement/
 | `UPLOAD_ALLOWED_EXTENSIONS` | `jpg,jpeg,png,pdf` | 允许的文件扩展名 |
 | `LOG_LEVEL` | `info` | 日志级别（debug/info/warn/error） |
 | `PORT` | `8787` | API 端口 |
+
+---
+
+## ✅ CI（GitHub Actions）
+
+本仓库已内置 CI：`.github/workflows/ci.yml`，在每次 Push / PR 时自动运行：
+
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
+
+建议你在 GitHub 开启分支保护（Branch protection），把 `CI` 设为必需检查，这样主分支永远保持可部署状态。
+
+> CI 只负责质量门禁，不直接负责部署；部署由 Vercel/Clawcloud 的 Git 集成触发更简单。
+>
+> 分支保护里通常会看到类似 `CI / build` 的检查项（workflow 名称 + job 名称）。
 
 ---
 
@@ -94,6 +129,12 @@ reimbursement/
 
 下面以「从 Git 仓库自动构建 + 常驻运行」为例（界面文案可能略有差异，但需要配置项基本一致）。
 
+#### 3.0 连接仓库与自动部署（强烈建议）
+
+1. 确保项目托管在 GitHub（或 Clawcloud 支持的 Git 提供方）
+2. 在 Clawcloud 授权访问你的仓库（最小权限即可）
+3. 打开 “Auto deploy / 自动部署”：当 `main` 有新提交时自动触发构建与发布
+
 #### 3.1 创建服务
 
 1. 在 Clawcloud 控制台新建一个 **应用/服务**（Node.js/Container 均可）
@@ -103,7 +144,7 @@ reimbursement/
 
 #### 3.2 配置构建与启动
 
-有两种配置方式，任选其一：
+有三种配置方式，任选其一：
 
 > 依赖安装建议优先用 `npm ci`（更稳定、复现性更好）。如果平台不支持再用 `npm install`。  
 > 如果你在构建阶段遇到 “找不到 tsc/tsx” 之类报错，通常是平台在安装依赖时省略了 devDependencies：请在平台中开启“安装 devDependencies”，或设置 `NPM_CONFIG_PRODUCTION=false`。
@@ -120,7 +161,7 @@ reimbursement/
   ```
 - **Start Command**
   ```bash
-  node apps/api/dist/server.js
+  npm --workspace apps/api run start
   ```
 
 **方式 B：工作目录设为 `apps/api`**
@@ -135,8 +176,15 @@ reimbursement/
   ```
 - **Start Command**
   ```bash
-  node dist/server.js
+  npm run start
   ```
+
+**方式 C：Docker（如果 Clawcloud 支持 Dockerfile/容器部署，推荐）**
+
+- Dockerfile：`apps/api/Dockerfile`
+- Build Context：仓库根目录（`reimbursement/`）
+- 暴露端口：`8787`（或按平台注入的 `PORT`）
+- 启动命令：Dockerfile 已内置（无需额外填 Start Command）
 
 #### 3.2.1 Clawcloud 配置项对照（你应该能在控制台找到这些字段）
 
@@ -155,7 +203,7 @@ reimbursement/
 
 - 端口：本项目读取 `PORT`（未设置时默认 `8787`）。如果 Clawcloud 会自动注入 `PORT`（常见做法），不要手动覆盖；否则设置 `PORT=8787` 并把服务的“容器端口/内部端口”设为 `8787`。
 - 健康检查（如平台支持）：Path 设为 `/health`，期望返回 `{"status":"ok"}`。
-- 实例数：建议先保持 1 个实例；后续需要扩容时再调整（后台任务使用数据库锁避免重复处理）。
+- 实例数：建议先保持 1 个实例；后续需要扩容时再调整（worker 使用 `FOR UPDATE SKIP LOCKED` 抢占任务，允许多实例但仍建议先从 1 开始）。
 
 #### 3.4 配置环境变量（Clawcloud）
 
@@ -163,10 +211,10 @@ reimbursement/
 
 - `NODE_ENV=production`
 - `START_WORKER=true`（启动内置 worker 轮询，处理导出/批次检查等后台任务）
-- `CORS_ALLOWED_ORIGINS=https://<你的 Vercel 域名>`（生产环境必须配置）
+- `CORS_ALLOWED_ORIGINS=https://finance-m.caicaizi.xyz`（生产环境必须配置）
 
 > `CORS_ALLOWED_ORIGINS` 支持逗号分隔多个来源，例如同时支持自定义域名与 Vercel 域名：  
-> `https://yourdomain.com,https://your-vercel-domain.vercel.app`
+> `https://finance-m.caicaizi.xyz,https://finance-m.vercel.app`
 
 最小可用配置（可直接对照 `apps/api/.env.example` 填写）：
 
@@ -193,8 +241,9 @@ reimbursement/
 1. 导入仓库到 Vercel
 2. 设置环境变量：
    - `NEXT_PUBLIC_API_BASE`
-   - `NEXT_PUBLIC_APP_URL`
 3. 部署完成后记录 Vercel 域名
+
+> Vercel 的 Web 部署是 Serverless 形态（按请求/按需扩缩容）；你的 API 在 Clawcloud 常驻进程运行，所以后台任务不会因为“函数执行结束”而被中断。
 
 ### 5) 配置域名（可选）
 
@@ -220,16 +269,39 @@ npm run db:push
 
 ```bash
 # Web
-https://your-vercel-domain.vercel.app
+https://finance-m.caicaizi.xyz
 
 # API 健康检查
-curl -v https://api.yourdomain.com/health
+curl -v https://finance-i.caicaizi.xyz/health
 
 # 登录接口
-curl -X POST https://api.yourdomain.com/api/v1/auth/login \
+curl -X POST https://finance-i.caicaizi.xyz/api/v1/auth/login \
   -H "Content-Type: application/json" \
   -d '{"email":"test@example.com","password":"password"}'
 ```
+
+---
+
+## 🌍 跨域（CORS）与认证（Token / Cookie）
+
+### CORS（当前项目必需）
+
+- API 必须配置 `CORS_ALLOWED_ORIGINS=https://finance-m.caicaizi.xyz`（不能是 `*`）
+- 若你同时需要 Vercel 预览域名，再把它也加进去（逗号分隔）
+- 如果你看到浏览器报错 `CORS policy`，优先检查：
+  - `NEXT_PUBLIC_API_BASE` 是否指向 `https://finance-i.caicaizi.xyz/api/v1`
+  - `CORS_ALLOWED_ORIGINS` 是否包含 `https://finance-m.caicaizi.xyz`
+
+### Cookie（可选：仅当你将来把登录改为 HttpOnly Cookie 才需要）
+
+当前项目登录返回 `access_token` / `refresh_token`（由前端保存并在请求中携带），**不依赖 Cookie**。
+
+如果你将来改为 Cookie（更安全，避免把 token 放在浏览器可读存储中），同主域（`*.caicaizi.xyz`）可以这样配置：
+
+- Cookie：`Secure` + `HttpOnly` + `SameSite=Lax`（同站点子域通常可用）
+- 如需跨子域共享 Cookie：设置 `Domain=.caicaizi.xyz`
+- 前端 `fetch`：需要 `credentials: "include"`
+- API CORS：需要 `Access-Control-Allow-Credentials: true`，且 `Access-Control-Allow-Origin` 必须是具体域名（不能 `*`）
 
 ---
 
@@ -256,7 +328,7 @@ curl -X POST https://api.yourdomain.com/api/v1/auth/login \
 确认：
 
 - `START_WORKER=true`
-- Clawcloud 使用 `node apps/api/dist/server.js` 启动
+- Clawcloud 使用 `npm --workspace apps/api run start`（或 `npm run start`）启动
 
 ### 3) 上传失败
 
@@ -268,3 +340,38 @@ curl -X POST https://api.yourdomain.com/api/v1/auth/login \
 ---
 
 如果你把 Clawcloud 的服务创建页面截图（或把可选项标题发我），我可以把上面的步骤进一步对齐到你看到的具体字段名称。
+
+---
+
+## 🧾 完整环境变量清单
+
+以 `apps/api/.env.example` 与 `apps/web/.env.example` 为准（建议直接对照填写）。
+
+### Web（Vercel / apps/web）
+
+- `NEXT_PUBLIC_API_BASE`（必需）
+- `NEXT_PUBLIC_APP_URL`（可选）
+
+### API（Clawcloud / apps/api）
+
+- `DATABASE_URL`（必需）
+- `JWT_ACCESS_SECRET`（必需）
+- `JWT_REFRESH_SECRET`（必需）
+- `JWT_ACCESS_TTL`（可选，默认 `15m`）
+- `JWT_REFRESH_TTL`（可选，默认 `30d`）
+- `S3_ENDPOINT`（必需）
+- `S3_REGION`（必需，R2 用 `auto`）
+- `S3_ACCESS_KEY`（必需）
+- `S3_SECRET_KEY`（必需）
+- `S3_BUCKET`（必需）
+- `S3_PUBLIC_BASE_URL`（可选）
+- `CORS_ALLOWED_ORIGINS`（生产必需）
+- `START_WORKER`（生产建议 `true`）
+- `PORT`（可选，默认 `8787`）
+- `LOG_LEVEL`（可选，默认 `info`）
+- `AUTH_RATE_LIMIT_WINDOW_MS`（可选，默认 `60000`）
+- `AUTH_RATE_LIMIT_MAX`（可选，默认 `10`）
+- `UPLOAD_MAX_BYTES`（可选，默认 `10485760`）
+- `UPLOAD_ALLOWED_MIME_TYPES`（可选）
+- `UPLOAD_ALLOWED_EXTENSIONS`（可选）
+- `NODE_ENV`（建议生产设为 `production`）

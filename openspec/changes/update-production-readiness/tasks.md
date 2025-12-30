@@ -18,4 +18,4 @@
 ## 4. Deployment and Configuration
 - [x] 4.1 Add env validation for web and api+worker; update env examples.
 - [x] 4.2 Update deployment docs with the supported API+worker runtime (Clawcloud) and required env vars.
-- [ ] 4.3 Validate: run lint/typecheck/tests and smoke-test the API/worker locally.
+- [x] 4.3 Validate: run lint/typecheck/tests and smoke-test the API/worker locally.
