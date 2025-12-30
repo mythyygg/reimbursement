@@ -3,8 +3,9 @@
 ## 项目概述
 
 这是一个帮助你管理项目报销的工具，主要功能包括：
+
 - 📝 记录垫付支出（金额、日期、备注等）
-- 📎 收纳票据（截图、文件、PDF等）
+- 📎 收纳票据（截图、文件、PDF 等）
 - 🔗 智能匹配支出和票据
 - 📦 批量导出报销包（CSV + ZIP）
 
@@ -19,9 +20,8 @@
 ```
 reimbursement/
 ├── apps/                    # 应用层
-│   ├── api/                # 后端 API 服务
-│   ├── web/                # 前端 Web 应用 (Next.js)
-│   └── worker/             # 后台任务处理器
+│   ├── api/                # 后端 API 服务（含内置 worker 循环）
+│   └── web/                # 前端 Web 应用 (Next.js)
 ├── packages/               # 共享代码
 │   └── shared/             # 数据库 schema、类型定义、工具函数
 └── docs/                   # 文档
@@ -30,6 +30,7 @@ reimbursement/
 ### 技术栈
 
 #### 前端 (apps/web)
+
 - **Next.js 15**: React 框架，用于构建 Web 应用
   - 采用 App Router（新版路由方式）
   - 支持服务端渲染 (SSR) 和客户端渲染 (CSR)
@@ -38,16 +39,19 @@ reimbursement/
 - **Shadcn/ui**: 基于 Radix UI 的组件库
 
 #### 后端 (apps/api)
+
 - **Hono**: 轻量级 Web 框架（类似 Express）
 - **Drizzle ORM**: 数据库操作工具（类似 TypeORM/Prisma）
 - **PostgreSQL**: 关系型数据库
 - **MinIO**: 对象存储（兼容 AWS S3 API）
 
-#### Worker (apps/worker)
-- **BullMQ**: 任务队列系统（基于 Redis）
-- 处理耗时任务：批次检查、导出 CSV/ZIP 等
+#### 后台任务（内置于 apps/api）
+
+- 复用数据库表 backendJobs 轮询，处理批次检查、导出 CSV/ZIP 等耗时任务
+- 通过环境变量 `START_WORKER=true` 控制是否在 API 进程中启动循环
 
 #### 共享代码 (packages/shared)
+
 - 数据库表结构定义 (Drizzle schema)
 - TypeScript 类型定义
 - 业务逻辑工具函数
@@ -71,26 +75,31 @@ Worker (BullMQ) - 处理导出等耗时操作
 ## 核心概念（业务逻辑）
 
 ### 1. 项目 (Project)
+
 - 每个报销项目是一个独立的单元
 - 包含多个支出记录和票据
 
 ### 2. 支出 (Expense)
+
 - 记录每一笔垫付的钱
 - 必填：金额、日期
 - 可选：类别、备注
 - 状态：缺票 / 已匹配 / 不需要票
 
 ### 3. 票据 (Receipt)
+
 - 上传的截图或文件（发票、收据等）
 - 支持 OCR 识别金额和日期
 - 可以与支出记录关联
 
 ### 4. 匹配逻辑
+
 - 系统会智能推荐票据和支出的匹配关系
 - 根据金额、日期、类别等信息计算相似度
 - **必须人工确认**才会真正绑定
 
 ### 5. 批次导出 (Batch Export)
+
 - 选择日期范围内的支出
 - 生成 CSV 清单 + ZIP 压缩包（包含所有票据）
 - 可以直接提交给财务部门
@@ -141,8 +150,8 @@ npm run dev:web
 # 只启动后端 API
 npm run dev:api
 
-# 只启动 Worker
-npm run dev:worker
+# 启动 API 并在同进程运行 Worker
+START_WORKER=true npm run dev:api
 
 # 数据库迁移
 npm run db:generate    # 生成迁移文件
@@ -154,11 +163,13 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
 ### 目录说明
 
 #### apps/api/
+
 - `src/routes/`: API 路由定义（类似 Express 的 router）
 - `src/config.ts`: 配置文件（数据库连接、S3 等）
 - `drizzle/`: 数据库迁移文件
 
 #### apps/web/
+
 - `app/`: Next.js 页面和路由（使用 App Router）
   - `layout.tsx`: 全局布局
   - `page.tsx`: 首页
@@ -167,12 +178,13 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
 - `components/`: React 组件
 - `lib/`: 工具函数和 API 客户端
 
-#### apps/worker/
-- `src/jobs/`: 后台任务定义
-  - `batch-check.ts`: 批次检查任务
-  - `export.ts`: 导出任务
+#### apps/api/worker/
+
+- `jobs/`: 后台任务定义（批次检查、导出）
+- `services/`: 任务使用的存储等服务
 
 #### packages/shared/
+
 - `src/db/schema.ts`: 数据库表结构定义（Drizzle ORM）
 - `src/domain/`: 业务领域模型和类型
 - `src/utils/`: 工具函数（如匹配算法）

@@ -1,12 +1,22 @@
 import { and, eq, gte, inArray, isNull, lte } from "drizzle-orm";
-import { batchIssues, batches, expenses, receipts } from "@reimbursement/shared/db";
-import { db } from "../db/client";
+import {
+  batchIssues,
+  batches,
+  expenses,
+  receipts,
+} from "@reimbursement/shared/db";
+import { db } from "../../db/client.js";
 
-export async function processBatchCheckJob(input: { batchId: string; userId: string }) {
+export async function processBatchCheckJob(input: {
+  batchId: string;
+  userId: string;
+}) {
   const [batch] = await db
     .select()
     .from(batches)
-    .where(and(eq(batches.batchId, input.batchId), eq(batches.userId, input.userId)));
+    .where(
+      and(eq(batches.batchId, input.batchId), eq(batches.userId, input.userId))
+    );
 
   if (!batch) {
     return;
@@ -19,7 +29,10 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
     categories?: string[];
   };
 
-  const expenseFilters = [eq(expenses.userId, input.userId), eq(expenses.projectId, batch.projectId)];
+  const expenseFilters = [
+    eq(expenses.userId, input.userId),
+    eq(expenses.projectId, batch.projectId),
+  ];
 
   if (filter.statuses && filter.statuses.length > 0) {
     expenseFilters.push(inArray(expenses.status, filter.statuses));
@@ -34,7 +47,10 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
     expenseFilters.push(lte(expenses.date, new Date(filter.dateTo)));
   }
 
-  const expenseRows = await db.select().from(expenses).where(and(...expenseFilters));
+  const expenseRows = await db
+    .select()
+    .from(expenses)
+    .where(and(...expenseFilters));
 
   const receiptRows = await db
     .select()
@@ -57,7 +73,13 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
     receiptsByExpense.set(receipt.matchedExpenseId, list);
   }
 
-  const issues: Array<{ type: string; severity: string; expenseId?: string; receiptId?: string; message: string }> = [];
+  const issues: Array<{
+    type: string;
+    severity: string;
+    expenseId?: string;
+    receiptId?: string;
+    message: string;
+  }> = [];
 
   for (const expense of expenseRows) {
     const linked = receiptsByExpense.get(expense.expenseId) ?? [];
@@ -66,7 +88,7 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
         type: "missing_receipt",
         severity: "warning",
         expenseId: expense.expenseId,
-        message: "Missing receipt"
+        message: "Missing receipt",
       });
     }
 
@@ -80,22 +102,25 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
             severity: "warning",
             expenseId: expense.expenseId,
             receiptId: receipt.receiptId,
-            message: "Receipt amount mismatch"
+            message: "Receipt amount mismatch",
           });
         }
       }
-
-
     }
   }
 
-  const eligibleExpenseIds = new Set(expenseRows.map((expense) => expense.expenseId));
+  const eligibleExpenseIds = new Set(
+    expenseRows.map((expense) => expense.expenseId)
+  );
   const duplicateMap = new Map<string, typeof receiptRows>();
   for (const receipt of receiptRows) {
     if (!receipt.hash) {
       continue;
     }
-    if (!receipt.matchedExpenseId || !eligibleExpenseIds.has(receipt.matchedExpenseId)) {
+    if (
+      !receipt.matchedExpenseId ||
+      !eligibleExpenseIds.has(receipt.matchedExpenseId)
+    ) {
       continue;
     }
     const list = duplicateMap.get(receipt.hash) ?? [];
@@ -113,7 +138,7 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
         severity: "warning",
         expenseId: receipt.matchedExpenseId ?? undefined,
         receiptId: receipt.receiptId,
-        message: `Duplicate receipt hash ${hash}`
+        message: `Duplicate receipt hash ${hash}`,
       });
     }
   }
@@ -128,15 +153,19 @@ export async function processBatchCheckJob(input: { batchId: string; userId: str
         severity: issue.severity,
         expenseId: issue.expenseId,
         receiptId: issue.receiptId,
-        message: issue.message
+        message: issue.message,
       }))
     );
   }
 
   const summary = {
-    missing_receipt: issues.filter((issue) => issue.type === "missing_receipt").length,
-    duplicate_receipt: issues.filter((issue) => issue.type === "duplicate_receipt").length,
-    amount_mismatch: issues.filter((issue) => issue.type === "amount_mismatch").length,
+    missing_receipt: issues.filter((issue) => issue.type === "missing_receipt")
+      .length,
+    duplicate_receipt: issues.filter(
+      (issue) => issue.type === "duplicate_receipt"
+    ).length,
+    amount_mismatch: issues.filter((issue) => issue.type === "amount_mismatch")
+      .length,
   };
 
   await db
