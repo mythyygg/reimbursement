@@ -309,13 +309,6 @@ components:
         - batch_id
         - type
         - status
-    Settings:
-      type: object
-      properties:
-        match_rules:
-          type: object
-        export_template:
-          type: object
     ProjectList:
       type: object
       properties:

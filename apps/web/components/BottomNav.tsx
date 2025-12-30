@@ -53,25 +53,6 @@ const tabs = [
       </svg>
     ),
   },
-  {
-    href: "/settings",
-    label: "设置",
-    icon: (active: boolean) => (
-      <svg
-        width="22"
-        height="22"
-        viewBox="0 0 24 24"
-        fill={active ? "currentColor" : "none"}
-        stroke="currentColor"
-        strokeWidth={active ? "0" : "2"}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        <circle cx="12" cy="12" r="3" />
-        <path d="M12 1v6m0 6v6M5.64 5.64l4.24 4.24m4.24 4.24l4.24 4.24M1 12h6m6 0h6M5.64 18.36l4.24-4.24m4.24-4.24l4.24-4.24" />
-      </svg>
-    ),
-  },
 ];
 
 export default function BottomNav() {
@@ -116,4 +97,3 @@ export default function BottomNav() {
     </nav>
   );
 }
-

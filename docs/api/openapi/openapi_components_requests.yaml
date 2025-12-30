@@ -179,18 +179,3 @@ components:
             - pdf
       required:
         - type
-    SettingsUpdateRequest:
-      type: object
-      properties:
-        ocr_enabled:
-          type: boolean
-        ocr_fallback_enabled:
-          type: boolean
-        ocr_provider_preference:
-          type: array
-          items:
-            type: string
-        match_rules:
-          type: object
-        export_template:
-          type: object

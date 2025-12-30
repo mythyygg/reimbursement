@@ -47,7 +47,6 @@
  *    - /api/v1/receipts - 票据管理
  *    - /api/v1/batches - 批次管理
  *    - /api/v1/exports - 导出管理
- *    - /api/v1/settings - 用户设置
  */
 
 import "./types.js";  // 【重要】扩展 Hono 上下文类型，添加自定义变量类型
@@ -62,7 +61,6 @@ import expenseRoutes from "./routes/expenses.js";
 import receiptRoutes from "./routes/receipts.js";
 import batchRoutes from "./routes/batches.js";
 import exportRoutes from "./routes/exports.js";
-import settingsRoutes from "./routes/settings.js";
 
 // 创建 Hono 应用实例
 // 【Java 对比】类似：SpringApplication app = new SpringApplication(ApiApplication.class);
@@ -212,7 +210,6 @@ app.use("/api/v1/*", authMiddleware);
  * - /api/v1/receipts - 票据管理
  * - /api/v1/batches - 批次管理
  * - /api/v1/exports - 导出管理
- * - /api/v1/settings - 用户设置
  *
  * 【路由参数说明】
  * - projectRoutes 挂载到 /api/v1/projects
@@ -228,7 +225,6 @@ app.route("/api/v1", expenseRoutes);
 app.route("/api/v1", receiptRoutes);
 app.route("/api/v1", batchRoutes);
 app.route("/api/v1", exportRoutes);
-app.route("/api/v1", settingsRoutes);
 
 /**
  * 404 处理器

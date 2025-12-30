@@ -82,7 +82,7 @@ export default function ProjectsPage() {
           projectIds: selectedIds
         })
       });
-      showToast("导出任务已提交，请稍后在设置中查看导出历史", "info");
+      showToast("导出任务已提交，请稍后在导出记录中查看", "info");
       setIsSelectMode(false);
       setSelectedIds([]);
       setShowExportOptions(false);
