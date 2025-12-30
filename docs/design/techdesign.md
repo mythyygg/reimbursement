@@ -492,8 +492,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 ### 4.7 设置
 
-- `GET /settings`
-- `PATCH /settings`
 
 ---
 
