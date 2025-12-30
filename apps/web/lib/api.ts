@@ -4,14 +4,13 @@ import {
   getRefreshToken,
   setTokens,
 } from "./auth";
-
-const apiBase = process.env.NEXT_PUBLIC_API_BASE ?? "";
+import { env } from "./env";
 
 export async function apiFetch<T>(
   input: string,
   init?: RequestInit
 ): Promise<T> {
-  const response = await fetchWithAuth(`${apiBase}${input}`, init);
+  const response = await fetchWithAuth(`${env.apiBase}${input}`, init);
   if (response.ok) {
     const payload = await response.json();
     return payload.data as T;
@@ -20,7 +19,7 @@ export async function apiFetch<T>(
   if (response.status === 401) {
     const refreshed = await refreshSession();
     if (refreshed) {
-      const retry = await fetchWithAuth(`${apiBase}${input}`, init);
+      const retry = await fetchWithAuth(`${env.apiBase}${input}`, init);
       if (retry.ok) {
         const payload = await retry.json();
         return payload.data as T;
@@ -57,7 +56,7 @@ async function refreshSession(): Promise<boolean> {
     return false;
   }
 
-  const response = await fetch(`${apiBase}/auth/refresh`, {
+  const response = await fetch(`${env.apiBase}/auth/refresh`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify({ refresh_token: refreshToken }),

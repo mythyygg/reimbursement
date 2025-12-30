@@ -72,11 +72,12 @@
 
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
-import { and, eq } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { batches, downloadLogs, exportRecords, backendJobs } from "@reimbursement/shared/db";
+import { and, eq, inArray } from "drizzle-orm"; // Drizzle ORM 查询构建器
+import { batches, downloadLogs, exportRecords, backendJobs, projects } from "@reimbursement/shared/db";
 import { db } from "../db/client.js";
 import { createExportDownloadUrl } from "../services/storage.js";
 import { errorResponse, ok } from "../utils/http.js";
+import { getMissingProjectIds } from "../utils/ownership.js";
 
 const router = new Hono();
 
@@ -308,8 +309,7 @@ router.post("/batches/:batchId/exports", async (c) => {
  * - 项目导出可以跨多个项目
  *
  * 【权限验证】
- * - 当前简化实现：信任客户端传入的 projectIds
- * - 生产环境建议：查询数据库验证所有项目属于当前用户
+ * - 查询数据库验证所有项目属于当前用户
  *
  * 【错误响应】
  * - 400 INVALID_INPUT: 请求体验证失败
@@ -337,12 +337,21 @@ router.post("/projects/exports", async (c) => {
     return errorResponse(c, 400, "MISSING_PROJECTS", "At least one project must be selected");
   }
 
-  // 【权限验证】（简化版本）
-  // 当前实现信任客户端传入的 projectIds
-  // 生产环境建议：
-  // 1. 查询数据库验证所有项目存在
-  // 2. 验证所有项目属于当前用户
-  // 3. 使用事务确保一致性
+  const uniqueProjectIds = [...new Set(projectIds)];
+  const tOwnership = Date.now();
+  const ownedProjects = await db
+    .select({ projectId: projects.projectId })
+    .from(projects)
+    .where(and(eq(projects.userId, userId), inArray(projects.projectId, uniqueProjectIds)));
+  console.log(`[exports] [DB] 查询项目归属耗时: ${Date.now() - tOwnership}ms`);
+
+  const missingProjectIds = getMissingProjectIds(
+    uniqueProjectIds,
+    ownedProjects.map((project) => project.projectId)
+  );
+  if (missingProjectIds.length > 0) {
+    return errorResponse(c, 403, "PROJECT_FORBIDDEN", "Project access denied");
+  }
 
   // 创建导出记录
   const t1 = Date.now();
@@ -350,7 +359,7 @@ router.post("/projects/exports", async (c) => {
     .insert(exportRecords)
     .values({
       userId,
-      projectIds,
+      projectIds: uniqueProjectIds,
       type: body.data.type,
       status: "pending",
     })

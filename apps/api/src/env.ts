@@ -15,7 +15,7 @@ import { config } from "dotenv";
  * 【文件位置】
  * - apps/api/.env - API 应用的环境变量
  * - apps/web/.env - Web 应用的环境变量（Next.js 自动加载）
- * - apps/worker/.env - Worker 应用的环境变量
+ * - apps/api/.env - API + 内置 Worker 的环境变量
  *
  * 【加载优先级】（从高到低）
  * 1. .env.{NODE_ENV}.local - 环境特定的本地配置（如 .env.development.local）

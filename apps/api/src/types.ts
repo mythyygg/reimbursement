@@ -13,5 +13,7 @@ declare module "hono" {
   interface ContextVariableMap {
     /** 认证上下文 - 包含当前用户ID、会话ID等认证信息 */
     auth: AuthContext;
+    /** 请求ID - 用于追踪日志 */
+    requestId: string;
   }
 }

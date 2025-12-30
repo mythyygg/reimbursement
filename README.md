@@ -178,7 +178,7 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
 - `components/`: React 组件
 - `lib/`: 工具函数和 API 客户端
 
-#### apps/api/worker/
+#### apps/api/src/worker/
 
 - `jobs/`: 后台任务定义（批次检查、导出）
 - `services/`: 任务使用的存储等服务

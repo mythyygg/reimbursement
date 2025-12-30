@@ -101,6 +101,41 @@ export type AppConfig = {
    * 例如：https://s3-cf.caicaizi.xyz
    */
   s3PublicBaseUrl: string;
+
+  /**
+   * CORS 允许的来源列表（生产环境必填）
+   */
+  corsAllowedOrigins: string[];
+
+  /**
+   * 认证限流窗口（毫秒）
+   */
+  authRateLimitWindowMs: number;
+
+  /**
+   * 认证限流最大请求数（每窗口）
+   */
+  authRateLimitMax: number;
+
+  /**
+   * 上传最大文件大小（字节）
+   */
+  uploadMaxBytes: number;
+
+  /**
+   * 允许的上传 MIME 类型
+   */
+  uploadAllowedMimeTypes: string[];
+
+  /**
+   * 允许的上传扩展名
+   */
+  uploadAllowedExtensions: string[];
+
+  /**
+   * 日志级别
+   */
+  logLevel: "debug" | "info" | "warn" | "error";
 };
 
 /**
@@ -165,6 +200,41 @@ function parseDuration(input: string): number {
   };
 
   return value * map[unit];
+}
+
+/**
+ * 解析逗号分隔列表
+ */
+function parseList(input: string): string[] {
+  return input
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+/**
+ * 解析数字配置
+ */
+function parseNumber(name: string, value: string, min?: number): number {
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    throw new Error(`${name} must be a valid number`);
+  }
+  if (min !== undefined && parsed < min) {
+    throw new Error(`${name} must be >= ${min}`);
+  }
+  return parsed;
+}
+
+/**
+ * 解析日志级别
+ */
+function parseLogLevel(value: string): AppConfig["logLevel"] {
+  const normalized = value.trim().toLowerCase();
+  if (normalized === "debug" || normalized === "info" || normalized === "warn" || normalized === "error") {
+    return normalized;
+  }
+  throw new Error("LOG_LEVEL must be one of: debug, info, warn, error");
 }
 
 /**
@@ -249,6 +319,13 @@ function getEnv(name: string, fallback?: string): string {
  * - S3_SECRET_KEY: S3密钥密码（必需）
  * - S3_BUCKET: S3存储桶名称（必需）
  * - S3_PUBLIC_BASE_URL: S3公开URL基础路径，默认空字符串
+ * - CORS_ALLOWED_ORIGINS: 允许的前端域名列表（生产环境必需）
+ * - AUTH_RATE_LIMIT_WINDOW_MS: 认证限流窗口（毫秒）
+ * - AUTH_RATE_LIMIT_MAX: 认证限流最大次数
+ * - UPLOAD_MAX_BYTES: 上传最大文件大小（字节）
+ * - UPLOAD_ALLOWED_MIME_TYPES: 允许的上传 MIME 类型列表
+ * - UPLOAD_ALLOWED_EXTENSIONS: 允许的上传扩展名列表
+ * - LOG_LEVEL: 日志级别（debug/info/warn/error）
  *
  * 使用方式：
  * ```typescript
@@ -279,5 +356,42 @@ export const config: AppConfig = {
   // S3 公开访问 URL（通过 CDN）
   // || 逻辑或运算符：如果环境变量为空字符串，使用默认值 ""
   // 【Java 对比】类似三元运算符：process.env.S3_PUBLIC_BASE_URL != null ? process.env.S3_PUBLIC_BASE_URL : ""
-  s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL || ""
+  s3PublicBaseUrl: process.env.S3_PUBLIC_BASE_URL || "",
+
+  // CORS 允许来源（生产环境强制校验）
+  corsAllowedOrigins: (() => {
+    const origins = parseList(process.env.CORS_ALLOWED_ORIGINS ?? "");
+    if (process.env.NODE_ENV === "production" && origins.length === 0) {
+      throw new Error("CORS_ALLOWED_ORIGINS is required in production");
+    }
+    return origins;
+  })(),
+
+  // 认证限流配置
+  authRateLimitWindowMs: parseNumber(
+    "AUTH_RATE_LIMIT_WINDOW_MS",
+    getEnv("AUTH_RATE_LIMIT_WINDOW_MS", "60000"),
+    1000
+  ),
+  authRateLimitMax: parseNumber(
+    "AUTH_RATE_LIMIT_MAX",
+    getEnv("AUTH_RATE_LIMIT_MAX", "10"),
+    1
+  ),
+
+  // 上传限制
+  uploadMaxBytes: parseNumber(
+    "UPLOAD_MAX_BYTES",
+    getEnv("UPLOAD_MAX_BYTES", String(10 * 1024 * 1024)),
+    1
+  ),
+  uploadAllowedMimeTypes: parseList(
+    getEnv("UPLOAD_ALLOWED_MIME_TYPES", "image/jpeg,image/png,application/pdf")
+  ).map((entry) => entry.toLowerCase()),
+  uploadAllowedExtensions: parseList(
+    getEnv("UPLOAD_ALLOWED_EXTENSIONS", "jpg,jpeg,png,pdf")
+  ).map((entry) => entry.toLowerCase()),
+
+  // 日志级别
+  logLevel: parseLogLevel(getEnv("LOG_LEVEL", "info"))
 };

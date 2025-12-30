@@ -53,7 +53,10 @@ import "./types.js";  // 【重要】扩展 Hono 上下文类型，添加自定�
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { cors } from "hono/cors";
+import { config } from "./config.js";
 import { timingMiddleware } from "./middleware/timing.js";
+import { requestIdMiddleware } from "./middleware/request-id.js";
+import { securityHeadersMiddleware, applySecurityHeaders } from "./middleware/security-headers.js";
 import { authMiddleware } from "./middleware/auth.js";
 import authRoutes from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
@@ -61,13 +64,24 @@ import expenseRoutes from "./routes/expenses.js";
 import receiptRoutes from "./routes/receipts.js";
 import batchRoutes from "./routes/batches.js";
 import exportRoutes from "./routes/exports.js";
+import { logError } from "./utils/logger.js";
 
 // 创建 Hono 应用实例
 // 【Java 对比】类似：SpringApplication app = new SpringApplication(ApiApplication.class);
 const app = new Hono();
 
 /**
- * 全局中间件 #1：CORS（跨域资源共享）
+ * 全局中间件 #1：请求ID
+ */
+app.use("*", requestIdMiddleware);
+
+/**
+ * 全局中间件 #2：安全响应头
+ */
+app.use("*", securityHeadersMiddleware);
+
+/**
+ * 全局中间件 #3：CORS（跨域资源共享）
  *
  * 【Java 对比】类似 Spring 的 CorsConfiguration：
  * ```java
@@ -83,10 +97,29 @@ const app = new Hono();
  * 作用：允许前端（运行在不同域名/端口）访问后端 API
  * 例如：前端在 localhost:3001，后端在 localhost:8787
  */
-app.use("*", cors());
+const isProduction = process.env.NODE_ENV === "production";
+const corsOptions = isProduction
+  ? {
+      origin: (origin: string | undefined) => {
+        if (!origin) {
+          return undefined;
+        }
+        return config.corsAllowedOrigins.includes(origin) ? origin : undefined;
+      },
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization"],
+      maxAge: 86400,
+    }
+  : {
+      origin: (origin: string | undefined) => origin ?? "*",
+      allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowHeaders: ["Content-Type", "Authorization"],
+    };
+
+app.use("*", cors(corsOptions));
 
 /**
- * 全局中间件 #2：性能计时
+ * 全局中间件 #4：性能计时
  *
  * 【Java 对比】类似 Spring 的 HandlerInterceptor：
  * ```java
@@ -137,9 +170,15 @@ app.onError((err, c) => {
   const status = err instanceof HTTPException ? err.status : 500;
 
   // 记录错误日志（生产环境应使用日志服务）
-  console.error("Unhandled error", err);
+  logError("request.error", err, {
+    requestId: c.get("requestId"),
+    method: c.req.method,
+    path: c.req.path,
+    status,
+  });
 
   // 返回统一格式的错误响应
+  applySecurityHeaders(c);
   return c.json(
     {
       error: {
@@ -241,9 +280,13 @@ app.route("/api/v1", exportRoutes);
  *
  * 作用：处理所有未匹配到的路由请求
  */
-app.notFound((c) =>
-  c.json({ error: { code: "NOT_FOUND", message: "Not found" } }, 404)
-);
+app.notFound((c) => {
+  applySecurityHeaders(c);
+  return c.json(
+    { error: { code: "NOT_FOUND", message: "Not found" } },
+    404
+  );
+});
 
 /**
  * 导出应用实例

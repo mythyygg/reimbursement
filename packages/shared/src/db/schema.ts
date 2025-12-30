@@ -57,7 +57,7 @@
  * 【注意】
  * - 本文件定义表结构（DDL），不包含数据操作（DML）
  * - 类似 JPA 的实体类，但只定义结构，不包含业务逻辑
- * - 所有表都由 apps/api 和 apps/worker 共享使用
+ * - 所有表都由 apps/api（含内置 worker）共享使用
  */
 
 import {

@@ -106,6 +106,30 @@ const uploadUrlSchema = z.object({
   file_size: z.number().positive(),
 });
 
+function normalizeExtension(input: string) {
+  return input.trim().toLowerCase().replace(/^\./, "");
+}
+
+function validateUploadRequest(input: {
+  fileExt: string;
+  contentType: string;
+  fileSize: number;
+}) {
+  if (input.fileSize > config.uploadMaxBytes) {
+    return { code: "UPLOAD_TOO_LARGE", status: 413, message: "File too large" };
+  }
+
+  if (!config.uploadAllowedMimeTypes.includes(input.contentType)) {
+    return { code: "UNSUPPORTED_MEDIA_TYPE", status: 415, message: "Unsupported content type" };
+  }
+
+  if (!config.uploadAllowedExtensions.includes(input.fileExt)) {
+    return { code: "UNSUPPORTED_MEDIA_TYPE", status: 415, message: "Unsupported file extension" };
+  }
+
+  return null;
+}
+
 /**
  * 完成上传请求验证规则
  *
@@ -436,6 +460,18 @@ router.post("/receipts/:receiptId/upload-url", async (c) => {
     return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
   }
 
+  const fileExt = normalizeExtension(body.data.file_ext);
+  const contentType = body.data.content_type.trim().toLowerCase();
+  const fileSize = body.data.file_size;
+  const validationError = validateUploadRequest({
+    fileExt,
+    contentType,
+    fileSize,
+  });
+  if (validationError) {
+    return errorResponse(c, validationError.status, validationError.code, validationError.message);
+  }
+
   // 查询票据记录（验证权限）
   const [receipt] = await db
     .select()
@@ -451,16 +487,16 @@ router.post("/receipts/:receiptId/upload-url", async (c) => {
     userId,
     projectId: receipt.projectId,
     receiptId,
-    extension: body.data.file_ext,
-    contentType: body.data.content_type,
+    extension: fileExt,
+    contentType,
   });
 
   // 更新票据记录
   await db
     .update(receipts)
     .set({
-      fileExt: body.data.file_ext,
-      fileSize: body.data.file_size,
+      fileExt,
+      fileSize,
       storageKey: upload.storageKey,
       uploadStatus: "pending", // 仍然是pending，等待前端上传完成
       updatedAt: new Date(),
@@ -474,8 +510,8 @@ router.post("/receipts/:receiptId/upload-url", async (c) => {
     signedUrl: upload.signedUrl,
     expireAt: new Date(Date.now() + 15 * 60 * 1000), // 15分钟后过期
     storageKey: upload.storageKey,
-    contentType: body.data.content_type,
-    maxSize: body.data.file_size,
+    contentType,
+    maxSize: fileSize,
     status: "created",
   });
 

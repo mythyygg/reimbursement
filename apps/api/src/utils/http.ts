@@ -38,7 +38,7 @@ export function errorResponse(
         message
       }
     },
-    status as 400 | 401 | 403 | 404 | 409 | 500
+    status as 400 | 401 | 403 | 404 | 409 | 413 | 415 | 429 | 500
   );
 }
 

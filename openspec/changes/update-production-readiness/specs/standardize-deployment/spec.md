@@ -10,12 +10,12 @@ Each runtime (web, api, worker) SHALL validate required environment variables at
 Each runtime SHALL provide an .env.example and documentation listing required variables and startup commands.
 
 #### Scenario: New developer setup
-- **WHEN** a developer follows the setup documentation for the worker
+- **WHEN** a developer follows the setup documentation for the API+worker runtime
 - **THEN** an .env.example and the docs MUST describe required variables and the start command
 
 ### Requirement: Production deployment baseline
-The project SHALL document a supported production deployment path for web/api and the worker.
+The project SHALL document a supported production deployment path for the web app and the API+worker runtime.
 
 #### Scenario: Production setup
 - **WHEN** an operator reads the deployment guide
-- **THEN** it MUST describe how to deploy web/api and the worker separately and how to run migrations
+- **THEN** it MUST describe how to deploy the web app on Vercel and the API+worker runtime on Clawcloud, and how to run migrations

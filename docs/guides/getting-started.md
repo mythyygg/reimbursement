@@ -22,7 +22,6 @@ npm install
 cp .env.example .env
 # 如果你习惯将 .env 放到子包，也可以顺手复制：
 # cp .env.example apps/api/.env
-# cp .env.example apps/worker/.env
 ```
 
 当前 API 与迁移脚本会自动加载“工作区 .env + 仓库根 .env”（后者兜底），所以将 `.env` 放在根目录即可，无需每次 `export`。
@@ -50,7 +49,7 @@ npm --workspace apps/api run db:generate
 npm --workspace apps/api run db:migrate
 ```
 
-5. 启动前后端与 Worker
+5. 启动前后端与 Worker（内置于 API）
 
 ```bash
 npm run dev
@@ -58,7 +57,7 @@ npm run dev
 
 - Web（Next.js）默认在 `http://localhost:3000`（若 3000 被占用会提示使用 3001）
 - API 在 `http://localhost:8787`
-- Worker 同步启动，处理批次检查/导出任务
+- Worker 同步启动（通过 `START_WORKER=true`），处理批次检查/导出任务
 
 6. 打开登录页并注册账号
 
@@ -75,7 +74,7 @@ npm --workspace packages/shared run test
 
 - 单独运行前端：`npm run dev:web`
 - 单独运行 API：`npm run dev:api`
-- 单独运行 Worker：`npm run dev:worker`
+- 单独运行 API + Worker：`npm run dev:api:worker`
 - 关闭基础设施：`docker-compose down`（不删除数据卷）；如需清空数据，加上 `-v`
 
 ## 常见问题

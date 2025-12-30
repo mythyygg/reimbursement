@@ -1,7 +1,7 @@
 ## Context
-- The repo includes a Next.js web app, a Hono API, and a long-running worker that polls the database for jobs.
+- The repo includes a Next.js web app and a Hono API that now hosts worker job processing in-process.
 - Current CORS is permissive, export creation has a known ownership TODO, and there is no CI quality gate.
-- Deployment docs favor Vercel but do not define a supported runtime for the worker.
+- Deployment docs favor Vercel but do not define a supported runtime for the API+worker process.
 
 ## Goals / Non-Goals
 - Goals:
@@ -13,7 +13,7 @@
   - Full compliance programs (SOC2/ISO), unless requested later.
 
 ## Decisions
-- Deployment baseline: Use Vercel for web+api (serverless) and a long-running Node host (Railway/Render) for the worker. This matches existing docs and the worker polling model.
+- Deployment baseline: Use Vercel for the web app and Clawcloud for the API+worker process. This matches the in-process worker model.
 - Security baseline: Enforce production CORS allowlist, add rate limits on auth endpoints, verify export ownership, add security headers, and validate upload size/type.
 - Observability baseline: Adopt structured JSON logs with request IDs and secret redaction; log worker job lifecycle events.
 - Quality baseline: Add root scripts and CI for lint/typecheck/test; add minimal automated tests for auth and export authorization.
@@ -29,5 +29,4 @@
 - Roll out CI gating for main after the initial test suite passes.
 
 ## Open Questions
-- Confirm the preferred worker hosting platform (default: Railway or Render).
-- Decide the minimum breadth of automated tests beyond the baseline.
+- Confirm the minimum breadth of automated tests beyond the baseline.

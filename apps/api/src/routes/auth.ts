@@ -62,6 +62,7 @@ import {
 } from "../services/auth";
 import { config } from "../config";
 import { authMiddleware, clearSessionCache, clearAllSessionCache } from "../middleware/auth";
+import { rateLimit } from "../middleware/rate-limit.js";
 import { errorResponse, ok } from "../utils/http";
 
 /**
@@ -72,6 +73,16 @@ import { errorResponse, ok } from "../utils/http";
  * - 这个路由器会被 index.ts 挂载到 /api/v1/auth
  */
 const router = new Hono();
+
+const authRateLimit = rateLimit({
+  windowMs: config.authRateLimitWindowMs,
+  max: config.authRateLimitMax,
+  keyPrefix: "auth",
+});
+
+router.use("/password/register", authRateLimit);
+router.use("/password/login", authRateLimit);
+router.use("/refresh", authRateLimit);
 
 /**
  * 注册请求验证规则

@@ -1,8 +1,9 @@
 import { and, eq, lt, or } from "drizzle-orm";
 import { backendJobs } from "@reimbursement/shared/db";
 import { db } from "./db/client.js";
-import { processBatchCheckJob } from "./worker/jobs/batch-check";
-import { processExportJob } from "./worker/jobs/export";
+import { processBatchCheckJob } from "./worker/jobs/batch-check.js";
+import { processExportJob } from "./worker/jobs/export.js";
+import { logError, logInfo } from "./utils/logger.js";
 
 const POLLING_INTERVAL = 5000; // 5 seconds
 const MAX_ATTEMPTS = 3;
@@ -29,7 +30,13 @@ async function pollJobs() {
       return;
     }
 
-    console.log(`[worker] Processing job ${job.jobId} (${job.type})`);
+    const attempt = job.attempts + 1;
+    const jobStartTime = Date.now();
+    logInfo("worker.job.start", {
+      jobId: job.jobId,
+      type: job.type,
+      attempt,
+    });
 
     await db
       .update(backendJobs)
@@ -61,9 +68,19 @@ async function pollJobs() {
         })
         .where(eq(backendJobs.jobId, job.jobId));
 
-      console.log(`[worker] Job ${job.jobId} completed`);
+      logInfo("worker.job.completed", {
+        jobId: job.jobId,
+        type: job.type,
+        attempt,
+        durationMs: Date.now() - jobStartTime,
+      });
     } catch (error: any) {
-      console.error(`[worker] Job ${job.jobId} failed:`, error);
+      logError("worker.job.failed", error, {
+        jobId: job.jobId,
+        type: job.type,
+        attempt,
+        durationMs: Date.now() - jobStartTime,
+      });
 
       const nextRetry = new Date(Date.now() + 60000); // Retry in 1 minute
       await db
@@ -77,12 +94,12 @@ async function pollJobs() {
         .where(eq(backendJobs.jobId, job.jobId));
     }
   } catch (err) {
-    console.error("[worker] Polling error:", err);
+    logError("worker.polling.error", err);
   }
 }
 
 export function startWorkerLoop() {
-  console.log("Worker started (in-process)");
+  logInfo("worker.started", { mode: "in-process" });
 
   const loop = async () => {
     await pollJobs();
