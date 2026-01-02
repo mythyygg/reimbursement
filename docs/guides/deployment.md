@@ -1,262 +1,112 @@
-# 报销系统部署指南（Vercel Web + Clawcloud API+Worker）
+# 报销系统部署指南 (Vercel + Clawcloud)
 
-本指南按当前项目结构更新：
-
-- **apps/web**：部署到 Vercel（静态 + SSR）
-- **apps/api**：部署到 Clawcloud（常驻 Node 进程，内置 worker 轮询）
+本指南针对 **前端 (Vercel)** + **后端 (Clawcloud)** 的部署组合，提供详细的操作步骤与最佳实践。
 
 ---
 
 ## 📋 项目架构
 
-```
-reimbursement/
-├── apps/
-│   ├── api/        # Hono API + 内置 worker
-│   └── web/        # Next.js Web
-└── packages/
-    └── shared/     # 共享类型、schema、工具函数
-```
+- **前端 (Web)**: Next.js -> Vercel (静态 + SSR)
+- **后端 (API)**: Hono -> Clawcloud (推荐 Docker 容器化部署)
+- **数据库**: PostgreSQL (Supabase/Neon)
+- **对象存储**: Cloudflare R2
+- **CI/CD**: GitHub Actions (自动检查) + Vercel/Clawcloud (自动部署)
 
 ---
 
-## ✅ 推荐部署组合
+## 🌐 生产环境信息
 
-- **Web**: Vercel（免费层足够）
-- **API + Worker**: Clawcloud（常驻进程，支持后台任务）
-- **数据库**: Supabase 或 Neon（免费 PostgreSQL）
-- **对象存储**: Cloudflare R2（免费存储）
+你当前使用的生产域名（示例）：
 
----
-
-## 🌐 域名配置
-
-你当前使用的生产域名：
-
-- Web（Vercel）：`https://finance-m.caicaizi.xyz`
-- API（Clawcloud）：`https://finance-i.caicaizi.xyz`
-
-DNS 配置（常见做法）：
-
-- `finance-m.caicaizi.xyz`：CNAME → `cname.vercel-dns.com`
-- `finance-i.caicaizi.xyz`：按 Clawcloud 的域名绑定指引（通常也是 CNAME 到平台提供的域名）
+- **Web (Vercel)**: `https://finance-m.caicaizi.xyz`
+- **API (Clawcloud)**: `https://finance-i.caicaizi.xyz`
 
 ---
 
-## 🧰 环境变量配置
+## 1. 准备工作：环境变量
 
-### apps/web（Vercel）
-必需变量：
+在开始部署前，请准备好以下关键凭证。
 
-| 变量名 | 示例值 | 说明 |
-| --- | --- | --- |
-| `NEXT_PUBLIC_API_BASE` | `https://finance-i.caicaizi.xyz/api/v1` | API 基础 URL（含 `/api/v1`） |
+### 后端变量 (API - Clawcloud)
 
-> 注意：`NEXT_PUBLIC_API_BASE` 必须是 API 域名，不再使用 Vercel rewrites。
+| 变量名                 | 说明                 | 示例/备注                                                      |
+| :--------------------- | :------------------- | :------------------------------------------------------------- |
+| `DATABASE_URL`         | 数据库连接串         | 建议开启连接池模式 (`?sslmode=require`)                        |
+| `JWT_ACCESS_SECRET`    | Token 签名密钥       | 随机生成的长字符串 (32 位以上)                                 |
+| `JWT_REFRESH_SECRET`   | 刷新 Token 密钥      | 随机生成的长字符串                                             |
+| `S3_ENDPOINT`          | R2/S3 接口地址       | `https://<accountid>.r2.cloudflarestorage.com`                 |
+| `S3_ACCESS_KEY`        | R2 Access Key ID     |                                                                |
+| `S3_SECRET_KEY`        | R2 Secret Access Key |                                                                |
+| `S3_BUCKET`            | 存储桶名称           | e.g. `reimbursement`                                           |
+| `S3_REGION`            | 区域                 | R2 填 `auto`                                                   |
+| `CORS_ALLOWED_ORIGINS` | 允许的前端域名       | 生产环境必需。例如 `https://finance-m.caicaizi.xyz` (逗号分隔) |
+| `START_WORKER`         | 启动后台任务         | 填 `true`                                                      |
+| `NODE_ENV`             | 环境                 | 填 `production`                                                |
 
-可选变量（当前代码不依赖，可不配）：
+### 前端变量 (Web - Vercel)
 
-| 变量名 | 示例值 | 说明 |
-| --- | --- | --- |
-| `NEXT_PUBLIC_APP_URL` | `https://finance-m.caicaizi.xyz` | Web 自身地址（文档/未来功能可能用到） |
-
-### apps/api（Clawcloud）
-必需变量：
-
-| 变量名 | 示例值 | 说明 |
-| --- | --- | --- |
-| `DATABASE_URL` | `postgresql://user:pass@host/db?sslmode=require` | PostgreSQL 连接串 |
-| `JWT_ACCESS_SECRET` | `随机32位以上密钥` | 访问令牌密钥 |
-| `JWT_REFRESH_SECRET` | `随机32位以上密钥` | 刷新令牌密钥 |
-| `S3_ENDPOINT` | `https://xxx.r2.cloudflarestorage.com` | R2 Endpoint |
-| `S3_REGION` | `auto` | R2 区域 |
-| `S3_ACCESS_KEY` | `xxx` | R2 Access Key |
-| `S3_SECRET_KEY` | `xxx` | R2 Secret Key |
-| `S3_BUCKET` | `reimbursement` | Bucket 名称 |
-| `CORS_ALLOWED_ORIGINS` | `https://finance-m.caicaizi.xyz` | 允许的前端域名（逗号分隔） |
-| `START_WORKER` | `true` | 开启内置 worker |
-
-可选变量：
-
-| 变量名 | 默认值 | 说明 |
-| --- | --- | --- |
-| `JWT_ACCESS_TTL` | `900` | 访问令牌有效期（秒） |
-| `JWT_REFRESH_TTL` | `2592000` | 刷新令牌有效期（秒） |
-| `S3_PUBLIC_BASE_URL` | `""` | R2 公网域名（可选） |
-| `AUTH_RATE_LIMIT_WINDOW_MS` | `60000` | 认证限流窗口（毫秒） |
-| `AUTH_RATE_LIMIT_MAX` | `10` | 认证限流最大次数 |
-| `UPLOAD_MAX_BYTES` | `10485760` | 上传最大字节数 |
-| `UPLOAD_ALLOWED_MIME_TYPES` | `image/jpeg,image/png,application/pdf` | 允许的 MIME 类型 |
-| `UPLOAD_ALLOWED_EXTENSIONS` | `jpg,jpeg,png,pdf` | 允许的文件扩展名 |
-| `LOG_LEVEL` | `info` | 日志级别（debug/info/warn/error） |
-| `PORT` | `8787` | API 端口 |
+| 变量名                 | 说明     | 示例                                                     |
+| :--------------------- | :------- | :------------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE` | API 地址 | `https://finance-i.caicaizi.xyz/api/v1` (需带 `/api/v1`) |
 
 ---
 
-## ✅ CI（GitHub Actions）
+## 2. 后端部署 (Clawcloud)
 
-本仓库已内置 CI：`.github/workflows/ci.yml`，在每次 Push / PR 时自动运行：
+推荐使用 **Docker** 方式部署，完美支持 Monorepo 依赖结构。
 
-- `npm run lint`
-- `npm run typecheck`
-- `npm run test`
+### 步骤 2.1：新建服务
 
-建议你在 GitHub 开启分支保护（Branch protection），把 `CI` 设为必需检查，这样主分支永远保持可部署状态。
+1. 登录 Clawcloud 控制台，创建 **Application** (Service)。
+2. 连接 GitHub 仓库 `reimbursement`，分支 `main`。
 
-> CI 只负责质量门禁，不直接负责部署；部署由 Vercel/Clawcloud 的 Git 集成触发更简单。
->
-> 分支保护里通常会看到类似 `CI / build` 的检查项（workflow 名称 + job 名称）。
+### 步骤 2.2：构建配置 (Docker)
+
+- **Deploy Mode**: `Docker`
+- **Dockerfile Path**: `apps/api/Dockerfile`
+- **Context Directory**: `/` (根目录，**关键点**：否则无法读取 shared 包)
+- **Exposed Port**: `8787`
+
+### 步骤 2.3：填入环境变量
+
+将上方准备的 "后端变量" 全部填入 Clawcloud 配置页。
+
+### 步骤 2.4：部署与验证
+
+- 部署完成后，访问 `/health` 端点（如 `https://finance-i.caicaizi.xyz/health`）。
+- 期望返回：`{"status":"ok"}`。
+- 查看日志确认 `worker.started` 出现（如果开启了 worker）。
 
 ---
 
-## 🚀 部署步骤
+## 3. 前端部署 (Vercel)
 
-### 1) 准备数据库（Supabase/Neon）
+### 步骤 3.1：导入项目
 
-创建 PostgreSQL，并拿到 `DATABASE_URL`（建议开启 `sslmode=require`）。
+1. Vercel Dashboard -> Add New Project -> 导入 `reimbursement`。
+2. **Framework Preset**: `Next.js`。
+3. **Root Directory**: 保持默认 `./` (由根目录 `vercel.json` 控制构建)。
 
-### 2) 准备对象存储（Cloudflare R2）
+### 步骤 3.2：环境变量
 
-创建 Bucket 并获取以下变量：
+- 添加 `NEXT_PUBLIC_API_BASE` -> `https://finance-i.caicaizi.xyz/api/v1`
 
-- `S3_ENDPOINT`
-- `S3_ACCESS_KEY`
-- `S3_SECRET_KEY`
-- `S3_BUCKET`
-- （可选）`S3_PUBLIC_BASE_URL`
+### 步骤 3.3：部署
 
-### 3) 部署 API + Worker 到 Clawcloud
+- 点击 Deploy。
+- 部署成功后，绑定自定义域名（如 `finance-m.caicaizi.xyz`）。
 
-下面以「从 Git 仓库自动构建 + 常驻运行」为例（界面文案可能略有差异，但需要配置项基本一致）。
+---
 
-#### 3.0 连接仓库与自动部署（强烈建议）
+## 4. 后续配置与联调
 
-1. 确保项目托管在 GitHub（或 Clawcloud 支持的 Git 提供方）
-2. 在 Clawcloud 授权访问你的仓库（最小权限即可）
-3. 打开 “Auto deploy / 自动部署”：当 `main` 有新提交时自动触发构建与发布
+### 4.1 更新 CORS
 
-#### 3.1 创建服务
+前端域名确定后（如 `finance-m.caicaizi.xyz`），**务必**回到 Clawcloud 更新 `CORS_ALLOWED_ORIGINS`，否则前端会报跨域错误。
 
-1. 在 Clawcloud 控制台新建一个 **应用/服务**（Node.js/Container 均可）
-2. 绑定你的 Git 仓库（GitHub/GitLab）
-3. 选择分支（通常是 `main`）
-4. 运行时选择 Node.js（建议 Node 20）
+### 4.2 数据库迁移
 
-#### 3.2 配置构建与启动
-
-有三种配置方式，任选其一：
-
-> 依赖安装建议优先用 `npm ci`（更稳定、复现性更好）。如果平台不支持再用 `npm install`。  
-> 如果你在构建阶段遇到 “找不到 tsc/tsx” 之类报错，通常是平台在安装依赖时省略了 devDependencies：请在平台中开启“安装 devDependencies”，或设置 `NPM_CONFIG_PRODUCTION=false`。
-
-**方式 A（推荐）：工作目录为仓库根目录**
-
-- **Install Command**
-  ```bash
-  npm ci
-  ```
-- **Build Command**
-  ```bash
-  npm --workspace apps/api run build
-  ```
-- **Start Command**
-  ```bash
-  npm --workspace apps/api run start
-  ```
-
-**方式 B：工作目录设为 `apps/api`**
-
-- **Install Command**
-  ```bash
-  npm ci
-  ```
-- **Build Command**
-  ```bash
-  npm run build
-  ```
-- **Start Command**
-  ```bash
-  npm run start
-  ```
-
-**方式 C：Docker（如果 Clawcloud 支持 Dockerfile/容器部署，推荐）**
-
-- Dockerfile：`apps/api/Dockerfile`
-- Build Context：仓库根目录（`reimbursement/`）
-- 暴露端口：`8787`（或按平台注入的 `PORT`）
-- 启动命令：Dockerfile 已内置（无需额外填 Start Command）
-
-#### 3.2.1 Clawcloud 配置项对照（你应该能在控制台找到这些字段）
-
-- **Repository / Source**：选择你的代码仓库
-- **Branch**：`main`
-- **Working Directory（可选）**：不设置（用方式 A）或设置为 `apps/api`（用方式 B）
-- **Install Command**：`npm ci`（或 `npm install`）
-- **Build Command**：见上方方式 A/B
-- **Start Command**：见上方方式 A/B
-- **Environment Variables**：按本项目变量表配置（至少含 `DATABASE_URL`、JWT、S3、`START_WORKER`、`CORS_ALLOWED_ORIGINS`）
-- **Port / Container Port**：`8787`（如果平台强制指定内部端口）
-- **Health Check Path（可选）**：`/health`
-- **Instances / Replicas**：建议 `1` 起步
-
-#### 3.3 配置端口与健康检查
-
-- 端口：本项目读取 `PORT`（未设置时默认 `8787`）。如果 Clawcloud 会自动注入 `PORT`（常见做法），不要手动覆盖；否则设置 `PORT=8787` 并把服务的“容器端口/内部端口”设为 `8787`。
-- 健康检查（如平台支持）：Path 设为 `/health`，期望返回 `{"status":"ok"}`。
-- 实例数：建议先保持 1 个实例；后续需要扩容时再调整（worker 使用 `FOR UPDATE SKIP LOCKED` 抢占任务，允许多实例但仍建议先从 1 开始）。
-
-#### 3.4 配置环境变量（Clawcloud）
-
-在 Clawcloud 的环境变量设置中添加本项目需要的变量（参考上方表格）。强烈建议额外设置：
-
-- `NODE_ENV=production`
-- `START_WORKER=true`（启动内置 worker 轮询，处理导出/批次检查等后台任务）
-- `CORS_ALLOWED_ORIGINS=https://finance-m.caicaizi.xyz`（生产环境必须配置）
-
-> `CORS_ALLOWED_ORIGINS` 支持逗号分隔多个来源，例如同时支持自定义域名与 Vercel 域名：  
-> `https://finance-m.caicaizi.xyz,https://finance-m.vercel.app`
-
-最小可用配置（可直接对照 `apps/api/.env.example` 填写）：
-
-- `DATABASE_URL=...`
-- `JWT_ACCESS_SECRET=...`
-- `JWT_REFRESH_SECRET=...`
-- `S3_ENDPOINT=...`
-- `S3_REGION=auto`
-- `S3_ACCESS_KEY=...`
-- `S3_SECRET_KEY=...`
-- `S3_BUCKET=...`
-- `CORS_ALLOWED_ORIGINS=...`
-- `START_WORKER=true`
-- `NODE_ENV=production`
-
-#### 3.5 发布与观察
-
-1. 触发一次部署（首次创建服务通常会自动部署）
-2. 在 Clawcloud 查看构建日志，确认 `tsc` 构建成功
-3. 在运行日志中确认出现 `API running on http://localhost:<PORT>`，以及（当 `START_WORKER=true`）出现 `worker.started`
-
-### 4) 部署 Web 到 Vercel
-
-1. 导入仓库到 Vercel
-2. 设置环境变量：
-   - `NEXT_PUBLIC_API_BASE`
-3. 部署完成后记录 Vercel 域名
-
-> Vercel 的 Web 部署是 Serverless 形态（按请求/按需扩缩容）；你的 API 在 Clawcloud 常驻进程运行，所以后台任务不会因为“函数执行结束”而被中断。
-
-### 5) 配置域名（可选）
-
-如果你有自定义域名：
-
-- Web：CNAME 指向 `cname.vercel-dns.com`
-- API：CNAME 指向 Clawcloud 提供的域名
-
-然后把 `NEXT_PUBLIC_API_BASE` 和 `CORS_ALLOWED_ORIGINS` 更新为你的自定义域名。
-
-### 6) 数据库迁移
-
-部署前/后均可执行一次迁移：
+部署后数据库可能为空，需在本地执行迁移推送到生产库：
 
 ```bash
 export DATABASE_URL="你的生产数据库连接串"
@@ -265,113 +115,31 @@ npm run db:push
 
 ---
 
-## ✅ 部署验证
+## 5. CI/CD (GitHub Actions)
 
-```bash
-# Web
-https://finance-m.caicaizi.xyz
+仓库内置了 `.github/workflows/ci.yml`，在 Push/PR 时自动运行：
 
-# API 健康检查
-curl -v https://finance-i.caicaizi.xyz/health
+- `npm run lint`
+- `npm run typecheck`
+- `npm run test`
 
-# 登录接口
-curl -X POST https://finance-i.caicaizi.xyz/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"email":"test@example.com","password":"password"}'
-```
+建议在 GitHub 开启分支保护，强制要求 CI 通过才能合并代码。
 
 ---
 
-## 🌍 跨域（CORS）与认证（Token / Cookie）
+## 6. 常见问题 (FAQ)
 
-### CORS（当前项目必需）
+### Q: API 404 或 CORS 错误？
 
-- API 必须配置 `CORS_ALLOWED_ORIGINS=https://finance-m.caicaizi.xyz`（不能是 `*`）
-- 若你同时需要 Vercel 预览域名，再把它也加进去（逗号分隔）
-- 如果你看到浏览器报错 `CORS policy`，优先检查：
-  - `NEXT_PUBLIC_API_BASE` 是否指向 `https://finance-i.caicaizi.xyz/api/v1`
-  - `CORS_ALLOWED_ORIGINS` 是否包含 `https://finance-m.caicaizi.xyz`
+- 检查 `NEXT_PUBLIC_API_BASE` 是否包含 `/api/v1` 后缀。
+- 检查 Clawcloud 的 `CORS_ALLOWED_ORIGINS` 是否完全匹配前端域名（https, 无末尾斜杠）。
 
-### Cookie（可选：仅当你将来把登录改为 HttpOnly Cookie 才需要）
+### Q: 部署失败，找不到模块？
 
-当前项目登录返回 `access_token` / `refresh_token`（由前端保存并在请求中携带），**不依赖 Cookie**。
+- 确认 Clawcloud 的 Build Context 设为了根目录 `/`。
+- 确认 Dockerfile 里的 `COPY` 路径正确（本项目已配置好）。
 
-如果你将来改为 Cookie（更安全，避免把 token 放在浏览器可读存储中），同主域（`*.caicaizi.xyz`）可以这样配置：
+### Q: 上传文件失败？
 
-- Cookie：`Secure` + `HttpOnly` + `SameSite=Lax`（同站点子域通常可用）
-- 如需跨子域共享 Cookie：设置 `Domain=.caicaizi.xyz`
-- 前端 `fetch`：需要 `credentials: "include"`
-- API CORS：需要 `Access-Control-Allow-Credentials: true`，且 `Access-Control-Allow-Origin` 必须是具体域名（不能 `*`）
-
----
-
-## 🔒 安全与配置建议
-
-- **CORS**：生产环境必须配置 `CORS_ALLOWED_ORIGINS`，不要用 `*`
-- **JWT 密钥**：至少 32 位随机字符串，且 access/refresh 不同
-- **上传限制**：按实际需求调整 `UPLOAD_MAX_BYTES` 与 MIME/扩展名白名单
-- **日志级别**：生产建议 `info`，排查问题时临时调为 `debug`
-
----
-
-## 🧯 常见问题
-
-### 1) API 404 或跨域错误
-
-检查：
-
-- `NEXT_PUBLIC_API_BASE` 是否指向正确的 API 域名
-- `CORS_ALLOWED_ORIGINS` 是否包含 Web 域名
-
-### 2) worker 没有运行
-
-确认：
-
-- `START_WORKER=true`
-- Clawcloud 使用 `npm --workspace apps/api run start`（或 `npm run start`）启动
-
-### 3) 上传失败
-
-检查：
-
-- R2 凭证是否正确
-- `UPLOAD_ALLOWED_MIME_TYPES` / `UPLOAD_ALLOWED_EXTENSIONS` 是否包含对应类型
-
----
-
-如果你把 Clawcloud 的服务创建页面截图（或把可选项标题发我），我可以把上面的步骤进一步对齐到你看到的具体字段名称。
-
----
-
-## 🧾 完整环境变量清单
-
-以 `apps/api/.env.example` 与 `apps/web/.env.example` 为准（建议直接对照填写）。
-
-### Web（Vercel / apps/web）
-
-- `NEXT_PUBLIC_API_BASE`（必需）
-- `NEXT_PUBLIC_APP_URL`（可选）
-
-### API（Clawcloud / apps/api）
-
-- `DATABASE_URL`（必需）
-- `JWT_ACCESS_SECRET`（必需）
-- `JWT_REFRESH_SECRET`（必需）
-- `JWT_ACCESS_TTL`（可选，默认 `15m`）
-- `JWT_REFRESH_TTL`（可选，默认 `30d`）
-- `S3_ENDPOINT`（必需）
-- `S3_REGION`（必需，R2 用 `auto`）
-- `S3_ACCESS_KEY`（必需）
-- `S3_SECRET_KEY`（必需）
-- `S3_BUCKET`（必需）
-- `S3_PUBLIC_BASE_URL`（可选）
-- `CORS_ALLOWED_ORIGINS`（生产必需）
-- `START_WORKER`（生产建议 `true`）
-- `PORT`（可选，默认 `8787`）
-- `LOG_LEVEL`（可选，默认 `info`）
-- `AUTH_RATE_LIMIT_WINDOW_MS`（可选，默认 `60000`）
-- `AUTH_RATE_LIMIT_MAX`（可选，默认 `10`）
-- `UPLOAD_MAX_BYTES`（可选，默认 `10485760`）
-- `UPLOAD_ALLOWED_MIME_TYPES`（可选）
-- `UPLOAD_ALLOWED_EXTENSIONS`（可选）
-- `NODE_ENV`（建议生产设为 `production`）
+- 检查 R2 相关的 S3 变量是否正确。
+- 检查 `UPLOAD_ALLOWED_EXTENSIONS` 限制。

@@ -1,14 +1,29 @@
 # syntax=docker/dockerfile:1
 
-FROM node:20-slim AS deps
+# 1. Install all dependencies (including dev) for building
+FROM node:24-slim AS deps
 WORKDIR /app
 
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
 RUN npm ci
 
+# 2. Re-install only production dependencies
+# We need a separate stage because pruning 'deps' is complex in monorepos
+FROM node:24-slim AS prod-deps
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+COPY apps/api/package.json apps/api/package.json
+COPY apps/web/package.json apps/web/package.json
+COPY packages/shared/package.json packages/shared/package.json
+
+RUN npm ci --omit=dev
+
+# 3. Build the application
 FROM deps AS build
 WORKDIR /app
 
@@ -22,19 +37,25 @@ COPY packages/shared/src packages/shared/src
 
 RUN npm --workspace apps/api run build
 
-FROM node:20-slim AS runner
+# 4. Final Production Image
+FROM node:24-slim AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
-COPY package.json package-lock.json ./
+# Only copy necessary package files for runtime checks (not for install)
+COPY package.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY packages/shared/package.json packages/shared/package.json
 
-RUN npm ci --omit=dev
+# Copy production dependencies from prod-deps stage
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 
+# Copy built application
 COPY --from=build /app/apps/api/dist apps/api/dist
+COPY apps/api/drizzle apps/api/drizzle
 COPY --from=build /app/packages/shared/dist packages/shared/dist
 
 EXPOSE 8787
 
-CMD ["npm", "--workspace", "apps/api", "run", "start"]
+CMD ["node", "apps/api/dist/server.js"]

@@ -69,12 +69,61 @@ function emit(level: LogLevel, message: string, payload?: LogPayload) {
 }
 
 function serializeError(error: unknown): LogPayload {
-  if (error instanceof Error) {
-    return {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
+  const serializeCause = (cause: unknown, depth: number): unknown => {
+    if (!cause || depth <= 0) {
+      return undefined;
+    }
+    if (cause instanceof Error) {
+      return serializeErrorWithDepth(cause, depth - 1);
+    }
+    return cause;
+  };
+
+  const serializeErrorWithDepth = (entryError: Error, depth: number): LogPayload => {
+    const anyError = entryError as Error & Record<string, unknown>;
+    const payload: LogPayload = {
+      name: entryError.name,
+      message: entryError.message,
+      stack: entryError.stack,
     };
+
+    // Preserve useful metadata from libraries (e.g., pg, drizzle) without risking circular refs.
+    const pgKeys = [
+      "code",
+      "detail",
+      "hint",
+      "position",
+      "where",
+      "schema",
+      "table",
+      "column",
+      "dataType",
+      "constraint",
+      "severity",
+      "file",
+      "line",
+      "routine",
+    ] as const;
+
+    for (const key of pgKeys) {
+      const value = anyError[key];
+      if (typeof value === "string" || typeof value === "number") {
+        payload[key] = value;
+      }
+    }
+
+    if ("cause" in anyError) {
+      const cause = serializeCause(anyError.cause, depth);
+      if (cause !== undefined) {
+        payload.cause = cause;
+      }
+    }
+
+    return payload;
+  };
+
+  if (error instanceof Error) {
+    return serializeErrorWithDepth(error, 3);
   }
   return { error };
 }

@@ -209,7 +209,7 @@ export default function ReceiptsPage() {
    * - 预签名 URL：临时有效的上传地址，安全可控
    * - 离线支持：断网时缓存到本地队列
    */
-  const onUpload = async (files: FileList | null) => {
+  const onUpload = async (files: FileList | null, receiptName: string, receiptAmount: string) => {
     if (!files || files.length === 0) {
       return;
     }
@@ -223,7 +223,9 @@ export default function ReceiptsPage() {
         setUploadProgress({ current: i + 1, total: files.length });
 
         const clientRequestId = generateClientRequestId();
-        const ticketName = clientRequestId;
+        // 多文件时，第一个文件使用用户输入的名称和金额，后续文件使用文件名
+        const ticketName = i === 0 ? receiptName : file.name.replace(/\.[^/.]+$/, "");
+        const ticketAmount = i === 0 ? receiptAmount : "";
 
         console.log(`[Upload] Starting upload for file: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
         const totalStart = Date.now();
@@ -297,10 +299,18 @@ export default function ReceiptsPage() {
           body: JSON.stringify({ hash: clientRequestId })
         });
 
+        // 更新票据名称和金额
+        const patchData: Record<string, string> = {};
         if (ticketName) {
+          patchData.merchant_keyword = ticketName;
+        }
+        if (ticketAmount) {
+          patchData.receipt_amount = ticketAmount;
+        }
+        if (Object.keys(patchData).length > 0) {
           await apiFetch(`/receipts/${receipt.receiptId}`, {
             method: "PATCH",
-            body: JSON.stringify({ merchant_keyword: ticketName })
+            body: JSON.stringify(patchData)
           });
         }
         console.log(`[Upload] Stage 4: Completion & Patch took ${Date.now() - s4Start}ms`);
@@ -321,6 +331,9 @@ export default function ReceiptsPage() {
 
   const [expandedReceiptId, setExpandedReceiptId] = useState<string | null>(null);
 
+  // 上传弹窗状态
+  const [uploadModalOpen, setUploadModalOpen] = useState(false);
+
   return (
     <div className="pb-24 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
       <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-border bg-white p-5 shadow-card">
@@ -331,25 +344,20 @@ export default function ReceiptsPage() {
               已导入 <span className="font-bold text-primary">{receipts.length}</span> 张 · 支持 JPG / PNG / PDF 格式
             </div>
           </div>
-          <label className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white cursor-pointer shadow-md transition-all ${
-            uploading ? "bg-primary/40 cursor-not-allowed" : "bg-primary hover:bg-primary-hover hover:shadow-lg shadow-primary/25 hover:shadow-primary/30 active:scale-95"
-          }`}>
+          <button
+            className={`inline-flex items-center gap-2 rounded-2xl px-5 py-3 text-sm font-bold text-white shadow-md transition-all ${
+              uploading ? "bg-primary/40 cursor-not-allowed" : "bg-primary hover:bg-primary-hover hover:shadow-lg shadow-primary/25 hover:shadow-primary/30 active:scale-95"
+            }`}
+            onClick={() => setUploadModalOpen(true)}
+            disabled={uploading}
+          >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
               <polyline points="17 8 12 3 7 8"></polyline>
               <line x1="12" y1="3" x2="12" y2="15"></line>
             </svg>
             {uploading ? `上传中 ${uploadProgress.current}/${uploadProgress.total}` : "上传票据"}
-            <input
-              type="file"
-              multiple
-              accept="image/*,.pdf"
-              className="hidden"
-              onChange={(event) => onUpload(event.target.files)}
-              disabled={uploading}
-              aria-label="上传票据文件"
-            />
-          </label>
+          </button>
         </div>
       </div>
 
@@ -394,6 +402,15 @@ export default function ReceiptsPage() {
         danger
         onConfirm={() => deleteConfirm && handleDelete(deleteConfirm)}
         onCancel={() => setDeleteConfirm(null)}
+      />
+
+      <UploadReceiptModal
+        open={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onUpload={(files, name, amount) => {
+          setUploadModalOpen(false);
+          onUpload(files, name, amount);
+        }}
       />
 
       <BottomNav />
@@ -472,6 +489,160 @@ function ReceiptPreview({
               <div className="text-sm text-text-secondary font-medium">暂无预览</div>
             </div>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * 上传票据弹窗
+ *
+ * 用于输入票据名称、金额和选择上传文件
+ */
+function UploadReceiptModal({
+  open,
+  onClose,
+  onUpload
+}: {
+  open: boolean;
+  onClose: () => void;
+  onUpload: (files: FileList, name: string, amount: string) => void;
+}) {
+  const [name, setName] = useState("");
+  const [amount, setAmount] = useState("");
+  const [files, setFiles] = useState<FileList | null>(null);
+
+  // 重置表单
+  const resetForm = () => {
+    setName("");
+    setAmount("");
+    setFiles(null);
+  };
+
+  // 关闭时重置
+  const handleClose = () => {
+    resetForm();
+    onClose();
+  };
+
+  // 提交上传
+  const handleSubmit = () => {
+    if (!files || files.length === 0) {
+      return;
+    }
+    const receiptName = name.trim() || files[0].name.replace(/\.[^/.]+$/, "");
+    onUpload(files, receiptName, amount.trim());
+    resetForm();
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[90] flex items-end bg-black/40 animate-fade-in"
+      onClick={handleClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="upload-dialog-title"
+    >
+      <div
+        className="w-full rounded-t-3xl bg-surface-0 p-5 shadow-2xl animate-fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 id="upload-dialog-title" className="text-base font-semibold text-text-primary mb-4">
+          上传票据
+        </h2>
+
+        {/* 票据名称输入 */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            票据名称
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="输入票据名称（可选）"
+            className="w-full h-11 px-4 rounded-xl border border-border bg-white text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+          />
+        </div>
+
+        {/* 金额输入 */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            金额
+          </label>
+          <div className="relative">
+            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-sm text-text-secondary">¥</span>
+            <input
+              type="number"
+              inputMode="decimal"
+              step="0.01"
+              min="0"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              placeholder="输入金额（可选）"
+              className="w-full h-11 pl-8 pr-4 rounded-xl border border-border bg-white text-sm text-text-primary placeholder:text-text-tertiary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+            />
+          </div>
+        </div>
+
+        {/* 文件选择区域 */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-text-secondary mb-2">
+            选择文件
+          </label>
+          <label className="flex flex-col items-center justify-center h-32 rounded-xl border-2 border-dashed border-border bg-surface-1 cursor-pointer hover:border-primary hover:bg-primary/5 transition-all">
+            {files && files.length > 0 ? (
+              <div className="text-center px-4">
+                <div className="text-sm font-medium text-text-primary">
+                  已选择 {files.length} 个文件
+                </div>
+                <div className="text-xs text-text-secondary mt-1 truncate max-w-full">
+                  {Array.from(files).map(f => f.name).join(", ")}
+                </div>
+              </div>
+            ) : (
+              <>
+                <svg viewBox="0 0 24 24" className="h-8 w-8 text-text-tertiary mb-2" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="17 8 12 3 7 8"></polyline>
+                  <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                <div className="text-sm text-text-secondary">点击选择文件</div>
+                <div className="text-xs text-text-tertiary mt-1">支持 JPG / PNG / PDF</div>
+              </>
+            )}
+            <input
+              type="file"
+              multiple
+              accept="image/*,.pdf"
+              className="hidden"
+              onChange={(e) => setFiles(e.target.files)}
+            />
+          </label>
+        </div>
+
+        {/* 按钮组 */}
+        <div className="flex gap-3">
+          <button
+            className="h-11 flex-1 rounded-xl bg-surface-1 text-sm font-medium text-text-primary hover:bg-surface-2 transition-colors"
+            onClick={handleClose}
+          >
+            取消
+          </button>
+          <button
+            className={`h-11 flex-1 rounded-xl text-sm font-medium text-white transition-colors ${
+              files && files.length > 0
+                ? "bg-primary hover:bg-primary-hover"
+                : "bg-primary/40 cursor-not-allowed"
+            }`}
+            onClick={handleSubmit}
+            disabled={!files || files.length === 0}
+          >
+            确认上传
+          </button>
         </div>
       </div>
     </div>

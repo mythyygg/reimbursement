@@ -10,21 +10,41 @@ const MAX_ATTEMPTS = 3;
 
 async function pollJobs() {
   try {
-    const [job] = await db
-      .select()
-      .from(backendJobs)
-      .where(
-        and(
-          or(
-            eq(backendJobs.status, "pending"),
-            eq(backendJobs.status, "failed")
-          ),
-          lt(backendJobs.attempts, MAX_ATTEMPTS),
-          lt(backendJobs.scheduledAt, new Date())
+    const job = await db.transaction(async (tx) => {
+      const now = new Date();
+      const [nextJob] = await tx
+        .select()
+        .from(backendJobs)
+        .where(
+          and(
+            or(
+              eq(backendJobs.status, "pending"),
+              eq(backendJobs.status, "failed")
+            ),
+            lt(backendJobs.attempts, MAX_ATTEMPTS),
+            lt(backendJobs.scheduledAt, now)
+          )
         )
-      )
-      .limit(1)
-      .for("update", { skipLocked: true });
+        .orderBy(backendJobs.scheduledAt)
+        .limit(1)
+        .for("update", { skipLocked: true });
+
+      if (!nextJob) {
+        return undefined;
+      }
+
+      await tx
+        .update(backendJobs)
+        .set({
+          status: "processing",
+          startedAt: now,
+          attempts: nextJob.attempts + 1,
+          updatedAt: now,
+        })
+        .where(eq(backendJobs.jobId, nextJob.jobId));
+
+      return nextJob;
+    });
 
     if (!job) {
       return;
@@ -38,16 +58,6 @@ async function pollJobs() {
       attempt,
     });
 
-    await db
-      .update(backendJobs)
-      .set({
-        status: "processing",
-        startedAt: new Date(),
-        attempts: job.attempts + 1,
-        updatedAt: new Date(),
-      })
-      .where(eq(backendJobs.jobId, job.jobId));
-
     try {
       if (job.type === "batch_check") {
         await processBatchCheckJob(
@@ -57,6 +67,8 @@ async function pollJobs() {
         await processExportJob(
           job.payload as { exportId: string; userId: string }
         );
+      } else {
+        throw new Error(`Unknown job type: ${job.type}`);
       }
 
       await db

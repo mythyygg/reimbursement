@@ -12,6 +12,7 @@
     "start": "node dist/server.js",
     "pretest": "npm run build:shared",
     "test": "node --test --import tsx tests/*.test.ts",
+    "db:check": "tsx src/scripts/check-db-connection.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx src/db/migrate.ts"
   },

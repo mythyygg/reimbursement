@@ -1,36 +1,6 @@
 /**
  * 导出管理路由模块
  *
- * 【Java 对比 - 类似 Spring MVC Controller + 异步任务】
- *
- * 本文件等同于 Spring 的异步任务控制器：
- * ```java
- * @RestController
- * @RequestMapping("/api/v1")
- * @PreAuthorize("isAuthenticated()")
- * public class ExportController {
- *     @Autowired
- *     private ExportService exportService;
- *
- *     @Autowired
- *     private AsyncTaskExecutor taskExecutor;
- *
- *     @Autowired
- *     private S3Service s3Service;
- *
- *     @PostMapping("/batches/{batchId}/exports")
- *     public ResponseEntity<?> createBatchExport(
- *         @PathVariable String batchId,
- *         @RequestBody ExportDto dto
- *     ) { ... }
- *
- *     @GetMapping("/exports/{exportId}")
- *     public ResponseEntity<?> getExportStatus(
- *         @PathVariable String exportId
- *     ) { ... }
- * }
- * ```
- *
  * 【核心功能】
  * 1. 导出任务管理：
  *    - 创建批次导出（基于 batch）
@@ -46,9 +16,7 @@
  *    - 轮询查询任务状态
  *
  * 3. 支持的导出格式：
- *    - CSV: 表格数据
- *    - ZIP: 打包的文件集合
- *    - PDF: PDF 文档
+ *    - HTML: 自包含的报销报告，包含费用清单和票据缩略图
  *
  * 【异步任务流程】
  * 1. API 接收请求 → 创建 exportRecord (status=pending)
@@ -58,16 +26,6 @@
  * 5. Worker 上传文件到 S3 → 更新 storageKey
  * 6. 前端轮询查询状态 → status=completed 时显示下载按钮
  * 7. 用户点击下载 → 获取预签名URL → 从S3下载
- *
- * 【防重复机制】
- * - 检查是否存在相同的运行中导出（batchId + type + status=running）
- * - 如果存在，直接返回已有记录（避免重复任务）
- * - 类似接口幂等性，但针对异步任务
- *
- * 【文件过期机制】
- * - exportRecords.expiresAt: 导出文件过期时间
- * - 过期后无法下载（返回 410 Gone）
- * - Worker 定期清理过期文件
  */
 
 import { Hono } from "hono";
@@ -84,99 +42,26 @@ const router = new Hono();
 /**
  * 创建导出请求验证规则
  *
- * 【Zod 验证】类似 Java Bean Validation：
- * ```java
- * public class ExportCreateDto {
- *     @NotNull
- *     @Pattern(regexp = "csv|zip|pdf")
- *     private String type;
- *
- *     private List<String> projectIds;  // 可选
- * }
- * ```
- *
  * 【验证规则】
- * - type: 必填，枚举值（csv/zip/pdf）
+ * - type: 可选，默认为 html（只支持 html 格式）
  * - projectIds: 可选，字符串数组
  */
 const exportCreateSchema = z.object({
-  type: z.enum(["csv", "zip", "pdf"]),
+  type: z.enum(["html"]).optional().default("html"),
   projectIds: z.array(z.string()).optional(),
 });
 
 /**
  * POST /api/v1/batches/:batchId/exports - 创建批次导出
  *
- * 【Java 对比】类似：
- * ```java
- * @PostMapping("/batches/{batchId}/exports")
- * public ResponseEntity<?> createBatchExport(
- *     @PathVariable String batchId,
- *     @Valid @RequestBody ExportCreateDto dto,
- *     Authentication auth
- * ) {
- *     String userId = ((JwtPayload) auth.getPrincipal()).getSub();
- *
- *     // 验证批次存在
- *     Batch batch = batchRepository.findById(batchId)
- *         .orElseThrow(() -> new NotFoundException("Batch not found"));
- *
- *     if (!batch.getUserId().equals(userId)) {
- *         throw new ForbiddenException();
- *     }
- *
- *     // 防重复：检查是否有运行中的导出
- *     Optional<ExportRecord> existing = exportRecordRepository
- *         .findByBatchIdAndTypeAndStatus(batchId, dto.getType(), "running");
- *
- *     if (existing.isPresent()) {
- *         return ResponseEntity.ok(existing.get());
- *     }
- *
- *     // 创建导出记录
- *     ExportRecord record = new ExportRecord();
- *     record.setBatchId(batchId);
- *     record.setUserId(userId);
- *     record.setProjectIds(Arrays.asList(batch.getProjectId()));
- *     record.setType(dto.getType());
- *     record.setStatus("pending");
- *     exportRecordRepository.save(record);
- *
- *     // 创建后台任务
- *     BackendJob job = new BackendJob();
- *     job.setType("export");
- *     job.setPayload(Map.of("exportId", record.getExportId(), "userId", userId));
- *     job.setStatus("pending");
- *     backendJobRepository.save(job);
- *
- *     return ResponseEntity.ok(record);
- * }
- * ```
- *
  * 【处理流程】
- * 1. 验证请求体
- * 2. 查询批次记录（验证存在性和权限）
- * 3. 检查是否有运行中的相同导出（防重复）
- * 4. 创建导出记录（status=pending）
- * 5. 创建后台任务（Worker 会处理）
- * 6. 返回导出记录
- *
- * 【防重复机制】
- * - 查询条件：batchId + type + status=running
- * - 如果存在运行中的导出，直接返回（避免重复任务）
- * - 避免用户重复点击导出按钮
- *
- * 【批次导出特点】
- * - 基于批次（batch）创建导出
- * - 自动填充 projectIds（从 batch.projectId）
- * - 一个批次对应一个项目
- *
- * 【性能日志】
- * - 记录每个步骤的耗时
- * - 便于排查慢接口问题
+ * 1. 查询批次记录（验证存在性和权限）
+ * 2. 检查是否有运行中的导出（防重复）
+ * 3. 创建导出记录（status=pending, type=html）
+ * 4. 创建后台任务（Worker 会处理）
+ * 5. 返回导出记录
  *
  * 【错误响应】
- * - 400 INVALID_INPUT: 请求体验证失败
  * - 404 BATCH_NOT_FOUND: 批次不存在或无权限
  */
 router.post("/batches/:batchId/exports", async (c) => {
@@ -185,15 +70,6 @@ router.post("/batches/:batchId/exports", async (c) => {
   console.log(`[exports] [API] 创建批次导出任务开始 - batchId: ${batchId}`);
 
   const { userId } = c.get("auth");
-
-  // 验证请求体
-  const t0 = Date.now();
-  const body = exportCreateSchema.safeParse(await c.req.json());
-  console.log(`[exports] 解析请求体耗时: ${Date.now() - t0}ms, 类型: ${body.success ? body.data.type : 'invalid'}`);
-
-  if (!body.success) {
-    return errorResponse(c, 400, "INVALID_INPUT", "Invalid input");
-  }
 
   // 查询批次记录（验证存在性和权限）
   const t1 = Date.now();
@@ -207,8 +83,7 @@ router.post("/batches/:batchId/exports", async (c) => {
     return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
   }
 
-  // 【防重复检查】查询是否有运行中的相同导出
-  // 避免用户重复点击导出按钮导致重复任务
+  // 【防重复检查】查询是否有运行中或等待中的导出
   const t2 = Date.now();
   const existing = await db
     .select()
@@ -217,11 +92,10 @@ router.post("/batches/:batchId/exports", async (c) => {
       and(
         eq(exportRecords.batchId, batchId),
         eq(exportRecords.userId, userId),
-        eq(exportRecords.type, body.data.type),
-        eq(exportRecords.status, "running")
+        inArray(exportRecords.status, ["pending", "running"])
       )
     );
-  console.log(`[exports] [DB] 查询现有运行中的导出耗时: ${Date.now() - t2}ms, 找到 ${existing.length} 条`);
+  console.log(`[exports] [DB] 查询现有导出耗时: ${Date.now() - t2}ms, 找到 ${existing.length} 条`);
 
   if (existing.length > 0) {
     // 复用运行中的导出任务（幂等性）
@@ -236,9 +110,9 @@ router.post("/batches/:batchId/exports", async (c) => {
     .values({
       batchId,
       userId,
-      projectIds: [batch.projectId], // 自动填充项目ID
-      type: body.data.type,
-      status: "pending", // 初始状态：等待处理
+      projectIds: [batch.projectId],
+      type: "html",
+      status: "pending",
     })
     .returning();
   console.log(`[exports] [DB] 插入导出记录耗时: ${Date.now() - t3}ms`);
