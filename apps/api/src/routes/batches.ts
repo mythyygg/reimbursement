@@ -63,7 +63,7 @@
 
 import { Hono } from "hono";
 import { and, desc, eq } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { batches, backendJobs, exportRecords } from "@reimbursement/shared/db";
+import { batches, backendJobs, exportRecords } from "../db/index.js";
 import { db } from "../db/client.js";
 import { errorResponse, ok } from "../utils/http.js";
 

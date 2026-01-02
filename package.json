@@ -2,8 +2,7 @@
   "name": "reimbursement",
   "private": true,
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/*"
   ],
   "scripts": {
     "dev:web": "npm --workspace apps/web run dev",
@@ -11,9 +10,9 @@
     "dev:api:worker": "START_WORKER=true npm --workspace apps/api run dev",
     "dev": "concurrently -k -n web,api \"npm:dev:web\" \"npm:dev:api:worker\"",
     "build": "npm --workspace apps/web run build",
-    "lint": "npm --workspace apps/web run lint && tsc -p apps/api/tsconfig.json --noEmit && tsc -p packages/shared/tsconfig.json --noEmit",
-    "typecheck": "tsc -p apps/web/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit && tsc -p packages/shared/tsconfig.json --noEmit",
-    "test": "npm --workspace packages/shared run test && npm --workspace apps/api run test",
+    "lint": "npm --workspace apps/web run lint && tsc -p apps/api/tsconfig.json --noEmit",
+    "typecheck": "tsc -p apps/web/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit",
+    "test": "npm --workspace apps/api run test",
     "db:generate": "drizzle-kit generate --config=apps/api/drizzle.config.ts",
     "db:migrate": "drizzle-kit migrate --config=apps/api/drizzle.config.ts",
     "db:push": "drizzle-kit push --config=apps/api/drizzle.config.ts",

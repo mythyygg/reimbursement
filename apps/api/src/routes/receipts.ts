@@ -68,8 +68,8 @@ import {
   settings,
   uploadSessions,
   downloadLogs,
-} from "@reimbursement/shared/db";
-import { getReceiptCandidates } from "@reimbursement/shared/utils";
+} from "../db/index.js";
+import { getReceiptCandidates } from "../utils/index.js";
 import { db } from "../db/client.js";
 import {
   createReceiptUploadUrl,

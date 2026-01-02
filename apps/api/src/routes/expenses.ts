@@ -68,8 +68,8 @@ import {
   expenses,
   receipts,
   settings,
-} from "@reimbursement/shared/db";
-import { daysBetween, parseDate } from "@reimbursement/shared/utils";
+} from "../db/index.js";
+import { daysBetween, parseDate } from "../utils/index.js";
 import { db } from "../db/client.js";
 import { errorResponse, ok } from "../utils/http.js";
 

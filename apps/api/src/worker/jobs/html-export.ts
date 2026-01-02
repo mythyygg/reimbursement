@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import { formatAmount, formatDate } from "@reimbursement/shared/utils";
+import { formatAmount, formatDate } from "../../utils/index.js";
 import { downloadObject } from "../services/storage.js";
 
 type ReceiptData = {

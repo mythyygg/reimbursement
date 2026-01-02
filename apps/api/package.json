@@ -4,13 +4,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "build:shared": "tsc -p ../../packages/shared/tsconfig.build.json",
-    "predev": "npm run build:shared",
     "dev": "tsx watch src/server.ts",
-    "prebuild": "npm run build:shared",
     "build": "tsc",
     "start": "node dist/server.js",
-    "pretest": "npm run build:shared",
     "test": "node --test --import tsx tests/*.test.ts",
     "db:check": "tsx src/scripts/check-db-connection.ts",
     "db:generate": "drizzle-kit generate",
@@ -20,7 +16,7 @@
     "@aws-sdk/client-s3": "3.958.0",
     "@aws-sdk/s3-request-presigner": "3.958.0",
     "@hono/node-server": "1.19.7",
-    "@reimbursement/shared": "0.1.0",
+
     "bcryptjs": "3.0.3",
     "dotenv": "17.2.3",
     "drizzle-orm": "0.45.1",

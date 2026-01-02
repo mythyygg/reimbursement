@@ -31,7 +31,7 @@
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
 import { and, eq, inArray } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { batches, downloadLogs, exportRecords, backendJobs, projects } from "@reimbursement/shared/db";
+import { batches, downloadLogs, exportRecords, backendJobs, projects } from "../db/index.js";
 import { db } from "../db/client.js";
 import { createExportDownloadUrl } from "../services/storage.js";
 import { errorResponse, ok } from "../utils/http.js";

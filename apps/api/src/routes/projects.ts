@@ -47,7 +47,7 @@
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
 import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { projects, receipts, expenses, batches } from "@reimbursement/shared/db";
+import { projects, receipts, expenses, batches } from "../db/index.js";
 import { db } from "../db/client.js";
 import { errorResponse, ok } from "../utils/http.js";
 

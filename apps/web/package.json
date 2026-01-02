@@ -10,7 +10,6 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@reimbursement/shared": "0.1.0",
     "@tanstack/react-query": "latest",
     "clsx": "latest",
     "dexie": "latest",

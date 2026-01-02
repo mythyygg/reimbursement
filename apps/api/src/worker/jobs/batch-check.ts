@@ -4,7 +4,7 @@ import {
   batches,
   expenses,
   receipts,
-} from "@reimbursement/shared/db";
+} from "../../db/index.js";
 import { db } from "../../db/client.js";
 
 export async function processBatchCheckJob(input: {

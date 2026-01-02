@@ -1,5 +1,5 @@
 import { and, eq, lt, or } from "drizzle-orm";
-import { backendJobs } from "@reimbursement/shared/db";
+import { backendJobs } from "./db/index.js";
 import { db } from "./db/client.js";
 import { processBatchCheckJob } from "./worker/jobs/batch-check.js";
 import { processExportJob } from "./worker/jobs/export.js";

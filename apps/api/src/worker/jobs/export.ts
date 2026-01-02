@@ -6,8 +6,8 @@ import {
   projects,
   receipts,
   settings,
-} from "@reimbursement/shared/db";
-import { buildReceiptFilename } from "@reimbursement/shared/utils";
+} from "../../db/index.js";
+import { buildReceiptFilename } from "../../utils/index.js";
 import { db } from "../../db/client.js";
 import { uploadObject } from "../services/storage.js";
 import { buildHtmlExport } from "./html-export.js";

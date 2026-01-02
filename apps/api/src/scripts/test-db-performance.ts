@@ -19,7 +19,7 @@ import "../env.js";
 
 import { sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { projects, expenses, receipts } from "@reimbursement/shared/db";
+import { projects, expenses, receipts } from "../db/index.js";
 import { and, eq, desc, isNull } from "drizzle-orm";
 
 interface TestResult {

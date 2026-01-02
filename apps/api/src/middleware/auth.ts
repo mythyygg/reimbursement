@@ -51,8 +51,8 @@
 
 import { createMiddleware } from "hono/factory";
 import { eq } from "drizzle-orm";
-import { authSessions, users } from "@reimbursement/shared/db";
-import { db } from "../db/client";
+import { authSessions, users } from "../db/index.js";
+import { db } from "../db/client.js";
 import { verifyAccessToken } from "../services/auth";
 import { errorResponse } from "../utils/http";
 
