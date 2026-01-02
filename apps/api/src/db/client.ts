@@ -42,7 +42,7 @@
 
 import { Pool } from "pg";
 import { drizzle } from "drizzle-orm/node-postgres";
-import * as schema from "@reimbursement/shared/db";
+import * as schema from "./index.js";
 
 /**
  * 获取数据库连接字符串
