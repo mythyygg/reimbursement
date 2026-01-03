@@ -1,6 +1,7 @@
 {
   "name": "reimbursement",
   "private": true,
+  "packageManager": "npm@11.6.2",
   "workspaces": [
     "apps/*"
   ],
@@ -13,21 +14,15 @@
     "lint": "npm --workspace apps/web run lint && tsc -p apps/api/tsconfig.json --noEmit",
     "typecheck": "tsc -p apps/web/tsconfig.json --noEmit && tsc -p apps/api/tsconfig.json --noEmit",
     "test": "npm --workspace apps/api run test",
-    "db:generate": "drizzle-kit generate --config=apps/api/drizzle.config.ts",
-    "db:migrate": "drizzle-kit migrate --config=apps/api/drizzle.config.ts",
-    "db:push": "drizzle-kit push --config=apps/api/drizzle.config.ts",
-    "db:studio": "drizzle-kit studio --config=apps/api/drizzle.config.ts"
+    "db:generate": "npm --workspace apps/api run db:generate",
+    "db:migrate": "npm --workspace apps/api run db:migrate:kit",
+    "db:push": "npm --workspace apps/api run db:push",
+    "db:studio": "npm --workspace apps/api run db:studio"
   },
   "devDependencies": {
-    "@types/pg": "^8.16.0",
     "browserslist": "4.28.1",
     "caniuse-lite": "1.0.30001761",
     "concurrently": "9.2.1",
-    "tsx": "4.21.0",
     "typescript": "5.9.3"
-  },
-  "dependencies": {
-    "drizzle-kit": "0.31.8",
-    "drizzle-orm": "^0.45.1"
   }
 }
