@@ -19,7 +19,8 @@
     "zustand": "latest",
     "@alloc/quick-lru": "^5.2.0",
     "object-hash": "^3.0.0",
-    "dlv": "^1.1.3"
+    "dlv": "^1.1.3",
+    "postcss-selector-parser": "^6.0.15"
   },
   "devDependencies": {
     "@types/node": "latest",
