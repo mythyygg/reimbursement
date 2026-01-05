@@ -53,8 +53,8 @@ import { createMiddleware } from "hono/factory";
 import { eq } from "drizzle-orm";
 import { authSessions, users } from "../db/index.js";
 import { db } from "../db/client.js";
-import { verifyAccessToken } from "../services/auth";
-import { errorResponse } from "../utils/http";
+import { verifyAccessToken } from "../services/auth.js";
+import { errorResponse } from "../utils/http.js";
 
 /**
  * 认证上下文类型
@@ -161,7 +161,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     let session: typeof authSessions.$inferSelect;
     let user: typeof users.$inferSelect;
 
-    if (cached && (now - cached.cachedAt < CACHE_TTL)) {
+    if (cached && now - cached.cachedAt < CACHE_TTL) {
       // 缓存命中且未过期
       session = cached.session;
       user = cached.user;
@@ -188,7 +188,9 @@ export const authMiddleware = createMiddleware(async (c, next) => {
 
       // 更新缓存
       sessionCache.set(sessionId, { session, user, cachedAt: now });
-      console.log(`[AUTH] [Cache] 缓存已更新，当前缓存大小: ${sessionCache.size}`);
+      console.log(
+        `[AUTH] [Cache] 缓存已更新，当前缓存大小: ${sessionCache.size}`
+      );
     }
 
     // 4. 检查会话是否被撤销
@@ -210,7 +212,7 @@ export const authMiddleware = createMiddleware(async (c, next) => {
     c.set("auth", {
       userId,
       sessionId,
-      sessionVersion: payload.sessionVersion
+      sessionVersion: payload.sessionVersion,
     } satisfies AuthContext);
 
     console.log(`[AUTH] 总耗时: ${Date.now() - authStartTime}ms`);

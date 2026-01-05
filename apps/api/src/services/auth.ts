@@ -45,7 +45,7 @@
 import bcrypt from "bcryptjs";
 import crypto from "node:crypto";
 import { SignJWT, jwtVerify } from "jose";
-import { config } from "../config";
+import { config } from "../config.js";
 
 // 文本编码器，用于将字符串转换为 Uint8Array（JWT库要求）
 // 【说明】jose 库要求密钥为 Uint8Array 格式，而不是字符串
@@ -115,7 +115,10 @@ export async function hashPassword(value: string): Promise<string> {
  *   // 密码正确，允许登录
  * }
  */
-export async function verifyPassword(value: string, hash: string): Promise<boolean> {
+export async function verifyPassword(
+  value: string,
+  hash: string
+): Promise<boolean> {
   return bcrypt.compare(value, hash);
 }
 
@@ -139,7 +142,9 @@ export async function verifyPassword(value: string, hash: string): Promise<boole
  * })
  * // 前端将此token添加到请求头: Authorization: Bearer {accessToken}
  */
-export async function createAccessToken(payload: TokenPayload): Promise<string> {
+export async function createAccessToken(
+  payload: TokenPayload
+): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
@@ -169,7 +174,9 @@ export async function createAccessToken(payload: TokenPayload): Promise<string> 
  * })
  * // 前端保存到安全存储，在访问令牌过期时用于刷新
  */
-export async function createRefreshToken(payload: TokenPayload): Promise<string> {
+export async function createRefreshToken(
+  payload: TokenPayload
+): Promise<string> {
   return new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setSubject(payload.sub)
@@ -197,7 +204,10 @@ export async function createRefreshToken(payload: TokenPayload): Promise<string>
  * }
  */
 export async function verifyAccessToken(token: string): Promise<TokenPayload> {
-  const { payload } = await jwtVerify(token, encoder.encode(config.jwtAccessSecret));
+  const { payload } = await jwtVerify(
+    token,
+    encoder.encode(config.jwtAccessSecret)
+  );
   return payload as TokenPayload;
 }
 
@@ -221,7 +231,10 @@ export async function verifyAccessToken(token: string): Promise<TokenPayload> {
  * }
  */
 export async function verifyRefreshToken(token: string): Promise<TokenPayload> {
-  const { payload } = await jwtVerify(token, encoder.encode(config.jwtRefreshSecret));
+  const { payload } = await jwtVerify(
+    token,
+    encoder.encode(config.jwtRefreshSecret)
+  );
   return payload as TokenPayload;
 }
 

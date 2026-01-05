@@ -51,7 +51,7 @@ import { z } from "zod"; // Zod 验证库，类似 Java Bean Validation
 import crypto from "node:crypto"; // Node.js 内置加密模块，生成随机 UUID
 import { and, eq, isNull, sql } from "drizzle-orm"; // Drizzle ORM 查询构建器
 import { authSessions, users } from "../db/index.js";
-import { db } from "../db/client";
+import { db } from "../db/client.js";
 import {
   createAccessToken,
   createRefreshToken,
@@ -59,11 +59,15 @@ import {
   hashToken,
   verifyPassword,
   verifyRefreshToken,
-} from "../services/auth";
-import { config } from "../config";
-import { authMiddleware, clearSessionCache, clearAllSessionCache } from "../middleware/auth";
+} from "../services/auth.js";
+import { config } from "../config.js";
+import {
+  authMiddleware,
+  clearSessionCache,
+  clearAllSessionCache,
+} from "../middleware/auth.js";
 import { rateLimit } from "../middleware/rate-limit.js";
-import { errorResponse, ok } from "../utils/http";
+import { errorResponse, ok } from "../utils/http.js";
 
 /**
  * 创建 Hono 子路由器

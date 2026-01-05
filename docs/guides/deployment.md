@@ -18,8 +18,8 @@
 
 你当前使用的生产域名（示例）：
 
-- **Web (Vercel)**: `https://finance-m.caicaizi.xyz`
-- **API (Clawcloud)**: `https://finance-i.caicaizi.xyz`
+- **Web (Vercel)**: `https://m-reimburse.caicaizi.xyz.xyz`
+- **API (Clawcloud)**: `https://i-reimburse.caicaizi.xyz`
 
 ---
 
@@ -29,25 +29,25 @@
 
 ### 后端变量 (API - Clawcloud)
 
-| 变量名                 | 说明                 | 示例/备注                                                      |
-| :--------------------- | :------------------- | :------------------------------------------------------------- |
-| `DATABASE_URL`         | 数据库连接串         | 建议开启连接池模式 (`?sslmode=require`)                        |
-| `JWT_ACCESS_SECRET`    | Token 签名密钥       | 随机生成的长字符串 (32 位以上)                                 |
-| `JWT_REFRESH_SECRET`   | 刷新 Token 密钥      | 随机生成的长字符串                                             |
-| `S3_ENDPOINT`          | R2/S3 接口地址       | `https://<accountid>.r2.cloudflarestorage.com`                 |
-| `S3_ACCESS_KEY`        | R2 Access Key ID     |                                                                |
-| `S3_SECRET_KEY`        | R2 Secret Access Key |                                                                |
-| `S3_BUCKET`            | 存储桶名称           | e.g. `reimbursement`                                           |
-| `S3_REGION`            | 区域                 | R2 填 `auto`                                                   |
-| `CORS_ALLOWED_ORIGINS` | 允许的前端域名       | 生产环境必需。例如 `https://finance-m.caicaizi.xyz` (逗号分隔) |
-| `START_WORKER`         | 启动后台任务         | 填 `true`                                                      |
-| `NODE_ENV`             | 环境                 | 填 `production`                                                |
+| 变量名                 | 说明                 | 示例/备注                                                            |
+| :--------------------- | :------------------- | :------------------------------------------------------------------- |
+| `DATABASE_URL`         | 数据库连接串         | 建议开启连接池模式 (`?sslmode=require`)                              |
+| `JWT_ACCESS_SECRET`    | Token 签名密钥       | 随机生成的长字符串 (32 位以上)                                       |
+| `JWT_REFRESH_SECRET`   | 刷新 Token 密钥      | 随机生成的长字符串                                                   |
+| `S3_ENDPOINT`          | R2/S3 接口地址       | `https://<accountid>.r2.cloudflarestorage.com`                       |
+| `S3_ACCESS_KEY`        | R2 Access Key ID     |                                                                      |
+| `S3_SECRET_KEY`        | R2 Secret Access Key |                                                                      |
+| `S3_BUCKET`            | 存储桶名称           | e.g. `reimbursement`                                                 |
+| `S3_REGION`            | 区域                 | R2 填 `auto`                                                         |
+| `CORS_ALLOWED_ORIGINS` | 允许的前端域名       | 生产环境必需。例如 `https://m-reimburse.caicaizi.xyz.xyz` (逗号分隔) |
+| `START_WORKER`         | 启动后台任务         | 填 `true`                                                            |
+| `NODE_ENV`             | 环境                 | 填 `production`                                                      |
 
 ### 前端变量 (Web - Vercel)
 
-| 变量名                 | 说明     | 示例                                                     |
-| :--------------------- | :------- | :------------------------------------------------------- |
-| `NEXT_PUBLIC_API_BASE` | API 地址 | `https://finance-i.caicaizi.xyz/api/v1` (需带 `/api/v1`) |
+| 变量名                 | 说明     | 示例                                                       |
+| :--------------------- | :------- | :--------------------------------------------------------- |
+| `NEXT_PUBLIC_API_BASE` | API 地址 | `https://i-reimburse.caicaizi.xyz/api/v1` (需带 `/api/v1`) |
 
 ---
 
@@ -73,7 +73,7 @@
 
 ### 步骤 2.4：部署与验证
 
-- 部署完成后，访问 `/health` 端点（如 `https://finance-i.caicaizi.xyz/health`）。
+- 部署完成后，访问 `/health` 端点（如 `https://i-reimburse.caicaizi.xyz/health`）。
 - 期望返回：`{"status":"ok"}`。
 - 查看日志确认 `worker.started` 出现（如果开启了 worker）。
 
@@ -89,12 +89,12 @@
 
 ### 步骤 3.2：环境变量
 
-- 添加 `NEXT_PUBLIC_API_BASE` -> `https://finance-i.caicaizi.xyz/api/v1`
+- 添加 `NEXT_PUBLIC_API_BASE` -> `https://i-reimburse.caicaizi.xyz/api/v1`
 
 ### 步骤 3.3：部署
 
 - 点击 Deploy。
-- 部署成功后，绑定自定义域名（如 `finance-m.caicaizi.xyz`）。
+- 部署成功后，绑定自定义域名（如 `m-reimburse.caicaizi.xyz.xyz`）。
 
 ---
 
@@ -102,7 +102,7 @@
 
 ### 4.1 更新 CORS
 
-前端域名确定后（如 `finance-m.caicaizi.xyz`），**务必**回到 Clawcloud 更新 `CORS_ALLOWED_ORIGINS`，否则前端会报跨域错误。
+前端域名确定后（如 `m-reimburse.caicaizi.xyz.xyz`），**务必**回到 Clawcloud 更新 `CORS_ALLOWED_ORIGINS`，否则前端会报跨域错误。
 
 ### 4.2 数据库迁移
 
