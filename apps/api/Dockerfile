@@ -43,7 +43,6 @@ COPY apps/api/package.json apps/api/package.json
 
 # Copy production dependencies from prod-deps stage
 COPY --from=prod-deps /app/node_modules ./node_modules
-COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 
 # Copy built application
 COPY --from=build /app/apps/api/dist apps/api/dist
