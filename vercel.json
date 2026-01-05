@@ -5,7 +5,7 @@
   "outputDirectory": "apps/web/.next",
   "framework": "nextjs",
   "env": {
-    "NEXT_PUBLIC_API_BASE": "@api-base-url",
-    "NEXT_PUBLIC_APP_URL": "@app-url"
+    "NEXT_PUBLIC_API_BASE": "https://i-reimburse.caicaizi.xyz",
+    "NEXT_PUBLIC_APP_URL": "https://m-reimburse.caicaizi.xyz"
   }
 }
