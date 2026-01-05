@@ -7,7 +7,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-COPY packages/shared/package.json packages/shared/package.json
 
 RUN npm ci
 
@@ -19,7 +18,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY apps/api/package.json apps/api/package.json
 COPY apps/web/package.json apps/web/package.json
-COPY packages/shared/package.json packages/shared/package.json
 
 RUN npm ci --omit=dev
 
@@ -29,11 +27,8 @@ WORKDIR /app
 
 COPY tsconfig.base.json ./
 COPY apps/api/tsconfig.json apps/api/tsconfig.json
-COPY packages/shared/tsconfig.json packages/shared/tsconfig.json
-COPY packages/shared/tsconfig.build.json packages/shared/tsconfig.build.json
 
 COPY apps/api/src apps/api/src
-COPY packages/shared/src packages/shared/src
 
 RUN npm --workspace apps/api run build
 
@@ -45,7 +40,6 @@ ENV NODE_ENV=production
 # Only copy necessary package files for runtime checks (not for install)
 COPY package.json ./
 COPY apps/api/package.json apps/api/package.json
-COPY packages/shared/package.json packages/shared/package.json
 
 # Copy production dependencies from prod-deps stage
 COPY --from=prod-deps /app/node_modules ./node_modules
@@ -54,7 +48,6 @@ COPY --from=prod-deps /app/apps/api/node_modules ./apps/api/node_modules
 # Copy built application
 COPY --from=build /app/apps/api/dist apps/api/dist
 COPY apps/api/drizzle apps/api/drizzle
-COPY --from=build /app/packages/shared/dist packages/shared/dist
 
 EXPOSE 8787
 
