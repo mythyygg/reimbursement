@@ -16,7 +16,8 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "zustand": "latest"
+    "zustand": "latest",
+    "@alloc/quick-lru": "^5.2.0"
   },
   "devDependencies": {
     "@types/node": "latest",
