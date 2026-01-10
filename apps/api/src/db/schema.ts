@@ -367,7 +367,7 @@ export const uploadSessions = pgTable("upload_sessions", {
  * 审计文件下载操作
  *
  * @description
- * - 记录所有文件下载行为（导出文件、票据图片等）
+ * - 记录所有文件下载行为（票据图片等）
  * - 用于安全审计、使用统计和问题排查
  * - 记录下载者的IP和User-Agent，便于追踪异常访问
  */
@@ -376,9 +376,9 @@ export const downloadLogs = pgTable("download_logs", {
   downloadId: uuid("download_id").defaultRandom().primaryKey(),
   /** 下载用户ID */
   userId: uuid("user_id").notNull(),
-  /** 文件类型 - export(导出文件) | receipt(票据图片) | batch(批次文件) */
+  /** 文件类型 - receipt(票据图片) */
   fileType: text("file_type").notNull(),
-  /** 文件ID - 根据 fileType 关联到不同表（exportId、receiptId等） */
+  /** 文件ID - 根据 fileType 关联到不同表（receiptId等） */
   fileId: uuid("file_id").notNull(),
   /** 下载者IP地址 - 用于安全审计 */
   ip: text("ip"),
@@ -386,41 +386,6 @@ export const downloadLogs = pgTable("download_logs", {
   userAgent: text("user_agent"),
   /** 下载记录创建时间 */
   createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-/**
- * 后台任务表
- * 用于替代 Redis/BullMQ 实现基于数据库的任务队列
- */
-export const backendJobs = pgTable("backend_jobs", {
-  /** 任务唯一标识符 */
-  jobId: uuid("job_id").defaultRandom().primaryKey(),
-  /** 任务类型：batch_check | export */
-  type: text("type").notNull(),
-  /** 任务参数 - JSON 格式存储 */
-  payload: jsonb("payload").notNull(),
-  /** 任务状态：pending | processing | completed | failed */
-  status: text("status").notNull().default("pending"),
-  /** 错误信息 - 任务失败时记录 */
-  error: text("error"),
-  /** 尝试次数 - 用于失败重试 */
-  attempts: integer("attempts").notNull().default(0),
-  /** 下次重试时间 */
-  scheduledAt: timestamp("scheduled_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  /** 任务开始时间 */
-  startedAt: timestamp("started_at", { withTimezone: true }),
-  /** 任务完成时间 */
-  completedAt: timestamp("completed_at", { withTimezone: true }),
-  /** 创建时间 */
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  /** 最后更新时间 */
-  updatedAt: timestamp("updated_at", { withTimezone: true })
     .defaultNow()
     .notNull(),
 });

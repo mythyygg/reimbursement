@@ -36,16 +36,6 @@ export type MatchConfidence =
 
 
 /**
- * 排序方向枚举
- * 定义列表排序的方向
- */
-export type SortDirection =
-  /** 升序 - 从小到大、从旧到新 */
-  | "asc"
-  /** 降序 - 从大到小、从新到旧 */
-  | "desc";
-
-/**
  * 票据候选匹配结果
  * 表示一张票据可能匹配的费用记录
  */

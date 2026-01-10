@@ -328,60 +328,6 @@ paths:
             application/json:
               schema:
                 $ref: ./openapi_components_core.yaml#/components/schemas/DownloadUrlResponse
-  /projects/{project_id}/batches:
-    get:
-      summary: List batches
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
-        - $ref: ./openapi_components_core.yaml#/components/parameters/cursor
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/BatchList
-    post:
-      summary: Create batch
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/project_id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./openapi_components_requests.yaml#/components/schemas/BatchCreateRequest
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
-  /batches/{batch_id}:
-    get:
-      summary: Get batch
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
-  /batches/{batch_id}/check:
-    post:
-      summary: Recheck batch issues
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/Batch
 components:
   securitySchemes:
     bearerAuth:
