@@ -9,7 +9,7 @@
 ```
 reimbursement/                    # 根目录（类似 Maven 多模块项目）
 ├── apps/                         # 应用模块目录
-│   ├── api/                      # 后端 API（类似 Spring Boot，含内置 worker）
+│   ├── api/                      # 后端 API（类似 Spring Boot）
 │   └── web/                      # 前端 Web（类似 JSP/Thymeleaf，但更现代）
 ├── packages/                     # 共享代码包
 │   └── shared/                   # 共享类型和工具（类似公共 common 包）
@@ -30,7 +30,6 @@ reimbursement/                    # 根目录（类似 Maven 多模块项目）
 | PostgreSQL | PostgreSQL | 数据库（一样！） |
 | POJO | TypeScript Interface | 数据对象定义 |
 | Spring Security | JWT + 中间件 | 认证授权 |
-| Scheduled Tasks | Worker | 定时任务 |
 | JSP/Thymeleaf | React/Next.js | 前端视图 |
 
 ---
@@ -187,19 +186,6 @@ apps/web/
    app/projects/page.tsx  →  访问 /projects
    app/login/page.tsx     →  访问 /login
    ```
-
-### 🔷 apps/api/src/worker - 后台任务（内置）
-
-**类比：Spring Batch / Quartz 定时任务**
-
-```
-apps/api/
-├── src/
-│   ├── worker.ts          # 任务调度器（类似 @Scheduled）
-│   ├── worker/            # 具体任务实现
-│   │   ├── jobs/          # Job 处理器
-│   │   └── services/      # 任务使用的服务
-```
 
 ### 🔷 packages/shared - 共享代码
 

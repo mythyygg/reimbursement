@@ -121,32 +121,6 @@ const data = await db
   ));
 ```
 
-### 5. Worker 后台任务 (apps/worker)
-
-#### apps/worker/src/jobs/export.ts
-- **功能**: 导出任务处理器
-- **注释重点**:
-  - 为什么需要 Worker（避免 API 阻塞）
-  - 导出流程（CSV + ZIP）
-  - Node.js Stream 的使用
-  - 对象存储操作
-
-**关键概念**:
-```typescript
-// Worker 在后台异步处理耗时任务
-export async function processExportJob(input: {
-  exportId: string;
-  userId: string;
-}) {
-  // 1. 查询数据
-  // 2. 生成 CSV
-  // 3. 下载票据文件
-  // 4. 打包 ZIP
-  // 5. 上传到对象存储
-  // 6. 更新状态
-}
-```
-
 ## 前端技术栈速查
 
 ### React 核心概念

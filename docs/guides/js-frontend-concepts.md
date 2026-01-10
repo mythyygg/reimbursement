@@ -144,7 +144,6 @@ future.thenAccept(user -> System.out.println(user.getName()));
 <modules>
     <module>apps/api</module>
     <module>apps/web</module>
-    <module>apps/worker</module>
 </modules>
 ```
 

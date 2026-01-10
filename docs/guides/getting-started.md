@@ -51,7 +51,7 @@ npm --workspace apps/api run db:generate
 npm --workspace apps/api run db:migrate
 ```
 
-5. 启动前后端与 Worker（内置于 API）
+5. 启动前后端
 
 ```bash
 npm run dev
@@ -59,7 +59,6 @@ npm run dev
 
 - Web（Next.js）默认在 `http://localhost:3000`（若 3000 被占用会提示使用 3001）
 - API 在 `http://localhost:8787`
-- Worker 同步启动（通过 `START_WORKER=true`），处理批次检查/导出任务
 
 6. 打开登录页并注册账号
 
@@ -76,7 +75,6 @@ npm --workspace packages/shared run test
 
 - 单独运行前端：`npm run dev:web`
 - 单独运行 API：`npm run dev:api`
-- 单独运行 API + Worker：`npm run dev:api:worker`
 - 关闭基础设施：`docker-compose down`（不删除数据卷）；如需清空数据，加上 `-v`
 
 ## 常见问题

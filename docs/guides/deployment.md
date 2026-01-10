@@ -68,7 +68,7 @@
 当前 API 入口是 Node 服务器 (`apps/api/dist/server.js`)，默认跑在长驻进程。要部署到 Vercel，需要先做适配：
 
 1) **改入口**：将 `@hono/node-server` 改为 `hono/vercel`（或 `hono/adapter/vercel`），导出 handler；可拆分为 `api/` 目录函数。  
-2) **移除内置循环**：仓库已无 worker，保持无后台循环即可。  
+2) **移除内置循环**：仓库已无后台循环，保持无后台任务即可。  
 3) **连接池/冷启动**：使用无状态连接（Neon 自带）或 PgBouncer。  
 4) **配置环境变量**：在 Vercel 项目中填入与表格一致的变量。  
 5) **构建设置**：确保构建产物为 Vercel Functions；如需可提供单独 `vercel.json`/打包脚本。
@@ -100,24 +100,24 @@ export const DELETE = handle(app);
 
 > 若使用 Node Serverless 而非 Edge，可将 `runtime` 去掉，并在入口导出 `default = handle(app);`。
 
-### 2.B Cloudflare Workers / Pages Functions
+### 2.B Cloudflare Pages Functions
 
 同样需要 Edge 适配后再部署：
 
-1) **改入口**：使用 `hono/adapter/cloudflare`（或 `hono/cloudflare-workers`），`server.ts` 导出 `fetch`。  
-2) **环境绑定**：将变量映射到 Workers Env；对象存储用 R2 bindings，Postgres 可用 Cloudflare D1（需迁移 schema）或通过 Tunnels 连接外部 PG。  
-3) **后台任务**：仓库已无 worker，保持无后台循环即可。  
-4) **构建命令**：生成 Worker bundle（如 `wrangler deploy`），精简依赖以满足配额。
+1) **改入口**：使用 `hono/adapter/cloudflare`，`server.ts` 导出 `fetch`。  
+2) **环境绑定**：将变量映射到 Cloudflare Env；对象存储用 R2 bindings，Postgres 可用 Cloudflare D1（需迁移 schema）或通过 Tunnels 连接外部 PG。  
+3) **后台任务**：仓库已无后台循环，保持无后台任务即可。  
+4) **构建命令**：生成 Cloudflare bundle（如 `wrangler deploy`），精简依赖以满足配额。
 
 > 备注：当前仓库未含 Cloudflare 入口/配置，部署前需按上面改造。
 
-#### 示例：Cloudflare Worker 入口与 wrangler 配置（需自行新增文件）
+#### 示例：Cloudflare Pages Functions 入口与 wrangler 配置（需自行新增文件）
 
 `apps/api/src/cloudflare.ts`：
 
 ```ts
 import app from "./index";
-import { handle } from "hono/cloudflare-workers";
+import { handle } from "hono/adapter/cloudflare";
 
 export default {
   fetch: handle(app),
