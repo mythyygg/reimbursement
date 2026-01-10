@@ -42,23 +42,6 @@ export async function createReceiptUploadUrl(input: {
   return { signedUrl, storageKey, publicUrl };
 }
 
-export async function createExportDownloadUrl(input: {
-  storageKey: string;
-  filename?: string;
-}): Promise<string> {
-  // 使用提供的文件名或从storageKey提取
-  const filename =
-    input.filename || input.storageKey.split("/").pop() || "export";
-
-  const command = new GetObjectCommand({
-    Bucket: config.s3Bucket,
-    Key: input.storageKey,
-    // 强制浏览器下载而不是打开文件
-    ResponseContentDisposition: `attachment; filename="${filename}"`,
-  });
-  return getSignedUrl(s3, command, { expiresIn: 900 });
-}
-
 export async function createReceiptDownloadUrl(input: {
   storageKey: string;
 }): Promise<string> {
