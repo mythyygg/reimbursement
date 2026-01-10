@@ -69,11 +69,36 @@
 
 1) **改入口**：将 `@hono/node-server` 改为 `hono/vercel`（或 `hono/adapter/vercel`），导出 handler；可拆分为 `api/` 目录函数。  
 2) **移除内置循环**：仓库已无 worker，保持无后台循环即可。  
-3) **连接池/冷启动**：使用无状态连接（Neon/Supabase 自带）或 PgBouncer。  
+3) **连接池/冷启动**：使用无状态连接（Neon 自带）或 PgBouncer。  
 4) **配置环境变量**：在 Vercel 项目中填入与表格一致的变量。  
 5) **构建设置**：确保构建产物为 Vercel Functions；如需可提供单独 `vercel.json`/打包脚本。
 
 > 备注：仓库当前未包含 Vercel 后端入口代码，如需要可按以上步骤补充后再部署。
+
+#### 示例：Vercel Edge 入口（需自行新增文件）
+
+在 `apps/api/src/vercel.ts`（或任意新入口）中：
+
+```ts
+// apps/api/src/vercel.ts
+import app from "./index";
+import { handle } from "hono/vercel";
+
+export const runtime = "edge";
+
+export const GET = handle(app);
+export const POST = handle(app);
+export const PUT = handle(app);
+export const PATCH = handle(app);
+export const DELETE = handle(app);
+```
+
+并在 Vercel 创建独立项目指向 `apps/api`：
+- Build Command: `npm --workspace apps/api run build`（如需 Edge 专用构建，可改为 bundler 步骤）
+- Output / Functions: 自动由 `api/` 路由生成；若使用上方入口，可在根创建 `api/[[...route]]/route.ts` 代理至 `vercel.ts`。
+- Env: 填写表格中的后端变量。
+
+> 若使用 Node Serverless 而非 Edge，可将 `runtime` 去掉，并在入口导出 `default = handle(app);`。
 
 ### 2.B Cloudflare Workers / Pages Functions
 
@@ -85,6 +110,50 @@
 4) **构建命令**：生成 Worker bundle（如 `wrangler deploy`），精简依赖以满足配额。
 
 > 备注：当前仓库未含 Cloudflare 入口/配置，部署前需按上面改造。
+
+#### 示例：Cloudflare Worker 入口与 wrangler 配置（需自行新增文件）
+
+`apps/api/src/cloudflare.ts`：
+
+```ts
+import app from "./index";
+import { handle } from "hono/cloudflare-workers";
+
+export default {
+  fetch: handle(app),
+};
+```
+
+`apps/api/wrangler.toml`（示例，按需调整）：
+
+```toml
+name = "reimbursement-api"
+main = "dist/cloudflare.js"          # 构建产物路径，请与打包工具保持一致
+compatibility_date = "2024-12-01"
+
+[vars]
+NODE_ENV = "production"
+DATABASE_URL = "..."
+JWT_ACCESS_SECRET = "..."
+JWT_REFRESH_SECRET = "..."
+S3_ENDPOINT = "..."
+S3_REGION = "auto"
+S3_ACCESS_KEY = "..."
+S3_SECRET_KEY = "..."
+S3_BUCKET = "..."
+S3_PUBLIC_BASE_URL = ""
+CORS_ALLOWED_ORIGINS = "https://m-reimburse.example.com"
+AUTH_RATE_LIMIT_WINDOW_MS = "60000"
+AUTH_RATE_LIMIT_MAX = "10"
+UPLOAD_MAX_BYTES = "10485760"
+UPLOAD_ALLOWED_MIME_TYPES = "image/jpeg,image/png,application/pdf"
+UPLOAD_ALLOWED_EXTENSIONS = "jpg,jpeg,png,pdf"
+LOG_LEVEL = "info"
+```
+
+构建发布思路：
+- 使用 `esbuild/tsup/rolldown` 将 `apps/api/src/cloudflare.ts` 打包为 `dist/cloudflare.js`（Worker 兼容）。
+- 部署命令：`cd apps/api && wrangler deploy`。
 
 ### 2.C Docker（自托管备选，任意云/VPS）
 
