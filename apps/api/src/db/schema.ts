@@ -272,110 +272,6 @@ export const expenseReceipts = pgTable(
   })
 );
 
-/**
- * 批次表
- * 用于保存一组费用/票据的筛选条件，便于批量验证和导出
- *
- * @description
- * - 批次是一个已保存的筛选视图，可以重复使用
- * - filterJson 存储筛选条件（日期范围、类别、状态等）
- * - issueSummaryJson 存储验证过程中发现的问题统计
- * - 用于支持导出前的数据验证和问题修复流程
- */
-export const batches = pgTable("batches", {
-  /** 批次唯一标识符 - UUID主键 */
-  batchId: uuid("batch_id").defaultRandom().primaryKey(),
-  /** 所属用户ID */
-  userId: uuid("user_id").notNull(),
-  /** 所属项目ID */
-  projectId: uuid("project_id").notNull(),
-  /** 批次名称 - 用户自定义的批次名称 */
-  name: text("name").notNull(),
-  /** 筛选条件JSON - 存储日期范围、类别、状态等筛选参数 */
-  filterJson: jsonb("filter_json").$type<Record<string, unknown>>().notNull(),
-  /** 问题摘要JSON - 存储验证过程中发现的各类问题统计 */
-  issueSummaryJson:
-    jsonb("issue_summary_json").$type<Record<string, unknown>>(),
-  /** 批次创建时间 */
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  /** 批次最后更新时间 */
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-/**
- * 批次问题表
- * 记录批次验证过程中发现的具体问题
- *
- * @description
- * - 问题类型包括：缺少票据、重复票据、金额不匹配、OCR识别失败等
- * - severity 标记问题严重程度（如error、warning）
- * - 关联具体的费用或票据记录，方便定位和修复
- */
-export const batchIssues = pgTable("batch_issues", {
-  /** 问题唯一标识符 - UUID主键 */
-  issueId: uuid("issue_id").defaultRandom().primaryKey(),
-  /** 所属批次ID */
-  batchId: uuid("batch_id").notNull(),
-  /** 问题类型 - missing_receipt | duplicate_receipt | amount_mismatch 等 */
-  type: text("type").notNull(),
-  /** 问题严重程度 - error | warning | info */
-  severity: text("severity").notNull(),
-  /** 关联的费用ID - 如果问题涉及费用记录 */
-  expenseId: uuid("expense_id"),
-  /** 关联的票据ID - 如果问题涉及票据记录 */
-  receiptId: uuid("receipt_id"),
-  /** 问题描述信息 */
-  message: text("message").notNull(),
-  /** 问题记录创建时间 */
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
-
-/**
- * 导出记录表
- * 跟踪生成的导出文件及其生命周期
- *
- * @description
- * - 记录每次导出操作（CSV、ZIP、PDF等格式）
- * - status 跟踪导出状态：pending(待处理) | running(处理中) | done(完成) | failed(失败)
- * - 导出的文件存储在对象存储中，通过 fileUrl 访问
- * - expiresAt 设置文件过期时间，过期后自动清理以节省存储空间
- */
-export const exportRecords = pgTable("export_records", {
-  /** 导出记录唯一标识符 - UUID主键 */
-  exportId: uuid("export_id").defaultRandom().primaryKey(),
-  /** 关联的批次ID - 可为空，支持项目级导出 */
-  batchId: uuid("batch_id"),
-  /** 关联的项目ID列表 - 用于跨项目导出 */
-  projectIds: jsonb("project_ids").$type<string[]>().notNull().default([]),
-  /** 发起导出的用户ID */
-  userId: uuid("user_id").notNull(),
-  /** 导出类型 - csv | zip | pdf */
-  type: text("type").notNull(),
-  /** 导出状态 - pending | running | done | failed */
-  status: text("status").notNull().default("pending"),
-  /** 导出文件URL - 对象存储的访问地址 */
-  fileUrl: text("file_url"),
-  /** 对象存储Key - 用于后端管理和删除文件 */
-  storageKey: text("storage_key"),
-  /** 文件大小（字节） */
-  fileSize: integer("file_size"),
-  /** 文件过期时间 - 过期后自动清理，节省存储成本 */
-  expiresAt: timestamp("expires_at", { withTimezone: true }),
-  /** 导出记录创建时间 */
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-  /** 导出记录最后更新时间 */
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .defaultNow()
-    .notNull(),
-});
 
 /**
  * 用户设置表
@@ -384,17 +280,13 @@ export const exportRecords = pgTable("export_records", {
  * @description
  * - 以 userId 为主键，每个用户一条记录
  * - matchRulesJson 存储票据与费用的匹配规则（日期窗口、金额容差等）
- * - exportTemplateJson 存储导出文件的格式配置
+ *
  */
 export const settings = pgTable("settings", {
   /** 用户ID - 主键 */
   userId: uuid("user_id").primaryKey(),
   /** 匹配规则配置 - 票据与费用的自动匹配规则 */
   matchRulesJson: jsonb("match_rules_json")
-    .$type<Record<string, unknown>>()
-    .notNull(),
-  /** 导出模板配置 - 导出文件的格式 and 内容设置 */
-  exportTemplateJson: jsonb("export_template_json")
     .$type<Record<string, unknown>>()
     .notNull(),
   /** 设置最后更新时间 */
