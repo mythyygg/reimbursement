@@ -1,6 +1,6 @@
 import sharp from "sharp";
-import { formatAmount, formatDate } from "../../utils/index.js";
-import { downloadObject } from "../services/storage.js";
+import { formatAmount, formatDate } from "../utils/index.js";
+import { downloadObject } from "./services/storage.js";
 
 type ReceiptData = {
   receiptId: string;

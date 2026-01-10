@@ -4,7 +4,7 @@
 
 ## 前置要求
 
-- Node.js 18+（建议 20.x）和 npm（已随 Node 安装）
+- Node.js 18+（建议 20.x）和 npm（已随 Node 安装）；或 Bun 1.1+（可直接运行 npm 脚本）
 - Docker / Docker Desktop 已安装并已启动（用于 Postgres、MinIO）
 - 推荐使用 macOS/Linux 终端；Windows 用户建议在 WSL2 下运行
 
@@ -15,6 +15,8 @@
 ```bash
 npm install
 ```
+
+> 想用 Bun？直接运行 `bun install` / `bun run dev` 即可，命令与下文一致（读取同一份 package.json 工作区）。若团队统一使用 npm，请避免提交 `bun.lockb`。
 
 2. 准备环境变量（复制示例即可跑通本地）
 

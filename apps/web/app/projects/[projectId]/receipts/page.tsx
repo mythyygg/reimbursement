@@ -300,12 +300,15 @@ export default function ReceiptsPage() {
         });
 
         // 更新票据名称和金额
-        const patchData: Record<string, string> = {};
+        const patchData: Record<string, string | number> = {};
         if (ticketName) {
           patchData.merchant_keyword = ticketName;
         }
-        if (ticketAmount) {
-          patchData.receipt_amount = ticketAmount;
+        if (ticketAmount.trim() !== "") {
+          const parsedAmount = Number(ticketAmount);
+          if (!Number.isNaN(parsedAmount)) {
+            patchData.receipt_amount = parsedAmount;
+          }
         }
         if (Object.keys(patchData).length > 0) {
           await apiFetch(`/receipts/${receipt.receiptId}`, {
@@ -335,9 +338,9 @@ export default function ReceiptsPage() {
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
 
   return (
-    <div className="pb-24 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
+    <div className="pb-24 lg:pb-10 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
       <div className="mb-6 flex flex-col gap-4 rounded-3xl border border-border bg-white p-5 shadow-card">
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 lg:items-center">
           <div className="flex-1">
             <div className="text-base font-bold text-text-primary">票据收纳箱</div>
             <div className="text-xs text-text-secondary mt-1">
@@ -361,9 +364,9 @@ export default function ReceiptsPage() {
         </div>
       </div>
 
-      <div className="space-y-4">
+      <div className="grid gap-4 lg:grid-cols-2">
         {receipts.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
+          <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm lg:col-span-2">
             <div className="text-sm text-text-secondary font-medium">暂无票据</div>
             <div className="text-xs text-text-tertiary mt-1">点击上方按钮上传票据</div>
           </div>
@@ -540,14 +543,14 @@ function UploadReceiptModal({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-end bg-black/40 animate-fade-in"
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 animate-fade-in sm:items-center sm:p-4"
       onClick={handleClose}
       role="dialog"
       aria-modal="true"
       aria-labelledby="upload-dialog-title"
     >
       <div
-        className="w-full rounded-t-3xl bg-surface-0 p-5 shadow-2xl animate-fade-up"
+        className="w-full max-h-[85vh] overflow-y-auto rounded-t-3xl bg-surface-0 p-5 shadow-2xl animate-fade-up sm:max-w-lg sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 id="upload-dialog-title" className="text-base font-semibold text-text-primary mb-4">

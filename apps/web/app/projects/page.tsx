@@ -109,8 +109,8 @@ export default function ProjectsPage() {
   const recentProjects = projects.filter((p: any) => !p.pinned);
 
   return (
-    <div className="min-h-screen bg-surface-1 pb-24">
-      <div className="mx-auto max-w-2xl px-5 pt-6">
+    <div className="min-h-screen bg-surface-1 pb-24 lg:pb-10">
+      <div className="mx-auto max-w-5xl px-5 pt-6 lg:px-8">
         {/* 头部 */}
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl font-bold text-text-primary">项目</h1>
@@ -240,7 +240,7 @@ export default function ProjectsPage() {
                 </svg>
                 <h2 className="text-sm font-bold text-text-primary">置顶项目</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {pinnedProjects.map((project: any) => (
                   <ProjectCard
                     key={project.projectId}
@@ -265,7 +265,7 @@ export default function ProjectsPage() {
                 </svg>
                 <h2 className="text-sm font-bold text-text-primary">最近项目</h2>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {recentProjects.map((project: any) => (
                   <ProjectCard
                     key={project.projectId}
@@ -284,7 +284,7 @@ export default function ProjectsPage() {
 
       {/* 导出操作栏 */}
       {isSelectMode && selectedIds.length > 0 && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2">
+        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 lg:bottom-8">
           <button
             onClick={() => setShowExportOptions(true)}
             className="flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-sm font-bold text-white shadow-xl hover:bg-primary-hover active:scale-95 transition-all"
@@ -302,11 +302,11 @@ export default function ProjectsPage() {
       {/* 导出选项弹窗 */}
       {showExportOptions && (
         <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:p-4"
           onClick={() => setShowExportOptions(false)}
         >
           <div
-            className="w-full max-w-md bg-surface-0 rounded-t-3xl p-6 shadow-2xl"
+            className="w-full max-w-md bg-surface-0 rounded-t-3xl p-6 shadow-2xl sm:max-w-lg sm:rounded-3xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-6 flex items-center justify-between">

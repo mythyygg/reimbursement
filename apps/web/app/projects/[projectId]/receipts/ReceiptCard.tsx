@@ -187,10 +187,11 @@ export function ReceiptCard({
   return (
     <SwipeAction
       onDelete={() => onDelete(receipt.receiptId)}
-      className="rounded-2xl"
+      className={expanded ? "rounded-2xl lg:col-span-2 overflow-visible" : "rounded-2xl"}
+      disabled
     >
       <div
-        className="overflow-hidden rounded-2xl border border-border/80 bg-white shadow-[0_12px_38px_-28px_rgba(0,0,0,0.45)] animate-fade-up"
+        className={`rounded-2xl border border-border/80 bg-white shadow-[0_12px_38px_-28px_rgba(0,0,0,0.45)] animate-fade-up ${expanded ? "overflow-visible" : "overflow-hidden"}`}
         style={{ animationDelay: `${index * 50}ms` }}
       >
         <div
@@ -263,6 +264,16 @@ export function ReceiptCard({
 
         {expanded ? (
           <div className="grid gap-4 border-t border-border bg-gradient-to-b from-white to-surface-1 p-4">
+            <div className="flex items-center justify-between">
+              <div className="text-xs font-medium text-text-secondary">票据详情</div>
+              <button
+                className="h-9 rounded-full bg-primary/90 px-4 text-xs font-semibold text-white shadow-sm hover:shadow disabled:bg-primary/40 disabled:cursor-not-allowed"
+                onClick={saveReceiptFields}
+                disabled={saving}
+              >
+                {saving ? "保存中..." : "保存"}
+              </button>
+            </div>
             <div className="grid gap-3 rounded-xl bg-surface-1 p-3 border border-border/80 shadow-inner">
               <div className="flex items-center gap-3">
                 <label className="text-xs font-medium text-text-secondary w-12 flex-shrink-0">票据名</label>
@@ -306,46 +317,8 @@ export function ReceiptCard({
             </div>
 
             <div className="rounded-xl bg-surface-1 p-3">
-              <div className="text-[10px] font-medium text-text-secondary">推荐</div>
-              {candidateList.length ? (
-                <div className="mt-2 space-y-2">
-                  {candidateList.map((candidate) => {
-                    const { mainLabel, subLabel } = formatCandidateLabel(candidate);
-                    return (
-                      <div
-                        key={candidate.expenseId}
-                        className="flex items-start justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs border border-border/80 shadow-sm"
-                      >
-                        <div className="min-w-0">
-                          <div className="truncate">{mainLabel}</div>
-                          {subLabel ? <div className="truncate text-text-tertiary">{subLabel}</div> : null}
-                        </div>
-                        <div className="flex items-center gap-2">
-                          {candidate.confidence ? (
-                            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary">
-                              {candidate.confidence}
-                            </span>
-                          ) : null}
-                          <button
-                            className="text-primary disabled:text-primary/40 disabled:cursor-not-allowed"
-                            onClick={() => matchExpense(candidate.expenseId)}
-                            disabled={matching}
-                          >
-                            {matching ? "关联中..." : "关联"}
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="mt-2 text-xs text-text-secondary">暂无推荐。</div>
-              )}
-            </div>
-
-            <div className="rounded-xl bg-surface-1 p-3">
               <div className="text-[10px] font-medium text-text-secondary">手动关联</div>
-              <div className="mt-2 flex flex-wrap items-center gap-2">
+              <div className="mt-2 flex flex-wrap items-start gap-2">
                 <div className="relative min-w-[220px] flex-1" ref={dropdownRef}>
                   <button
                     type="button"
@@ -375,7 +348,7 @@ export function ReceiptCard({
                     </svg>
                   </button>
                   {manualSelectOpen ? (
-                    <div className="absolute right-0 z-20 mt-2 w-full overflow-hidden rounded-xl border border-border bg-surface-0 shadow-lg">
+                    <div className="mt-2 w-full overflow-hidden rounded-xl border border-border bg-surface-0 shadow-lg">
                       <div className="max-h-60 overflow-auto py-1">
                         {manualOptions.length ? (
                           manualOptions.map((option) => (
@@ -426,23 +399,6 @@ export function ReceiptCard({
                   )}
                 </div>
               </div>
-            </div>
-
-            <div className="flex flex-wrap justify-end gap-3">
-              <button
-                className="h-11 rounded-xl bg-primary/90 px-4 text-xs font-semibold text-white shadow-sm hover:shadow disabled:bg-primary/40 disabled:cursor-not-allowed"
-                onClick={saveReceiptFields}
-                disabled={saving}
-              >
-                {saving ? "保存中..." : "保存"}
-              </button>
-              <button
-                className="h-11 rounded-xl bg-danger/90 px-4 text-xs font-semibold text-white shadow-sm hover:bg-danger disabled:bg-danger/40 disabled:cursor-not-allowed"
-                onClick={() => onDelete(receipt.receiptId)}
-                disabled={saving}
-              >
-                删除票据
-              </button>
             </div>
           </div>
         ) : null}

@@ -123,158 +123,145 @@ export default function ExpensesPage() {
   };
 
   return (
-    <div className="pb-24 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
-      <div className="mb-5 space-y-4">
-        <div className="flex items-center justify-between rounded-3xl border border-border bg-white p-5 shadow-card">
-          <div>
-            <div className="text-base font-bold text-text-primary">报销单</div>
-            <div className="text-xs text-text-secondary mt-1">共 {expenses.length} 条记录</div>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full bg-primary-light/50 px-4 py-2 text-xs font-semibold text-primary border border-primary/20">
-            <span className="h-2 w-2 rounded-full bg-primary animate-pulse" />
-            底部快速新增
-          </div>
-        </div>
-        <div className="flex gap-2.5 overflow-x-auto rounded-3xl border border-border bg-white p-3 shadow-card scrollbar-hide">
-          {statusOptions.map((option) => (
-            <button
-              key={option}
-              className={`rounded-full px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
-                status === option
-                  ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
-                  : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
-              }`}
-              onClick={() => setStatus(option)}
-            >
-              {{
-                all: "全部",
-                pending: "新建",
-                processing: "处理中",
-                completed: "已报销"
-              }[option]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="space-y-3">
-        {expenses.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
-            <div className="text-sm text-text-secondary font-medium">暂无报销记录</div>
-            <div className="text-xs text-text-tertiary mt-1">在底部快速录入栏添加报销单</div>
-          </div>
-        ) : null}
-        {expenses.map((expense: any, index: number) => {
-          const meta =
-            statusMeta[expense.status as keyof typeof statusMeta] ??
-            ({ label: expense.status, tone: "text-text-secondary", dot: "bg-text-tertiary" } as const);
-          const { day, weekday } = getDateParts(expense.date);
-          const receiptCount = expense.receiptCount ?? 0;
-          const dateStr = new Date(expense.date).toISOString().slice(0, 10);
-          return (
-            <SwipeAction
-              key={expense.expenseId}
-              onDelete={() => setDeleteConfirm(expense.expenseId)}
-              className="rounded-3xl"
-            >
-              <div
-                className="w-full rounded-3xl border border-border bg-white p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all animate-fade-up cursor-pointer"
-                style={{ animationDelay: `${index * 30}ms` }}
-                onClick={() => setSelectedExpense(expense)}
-              >
-                <div className="flex items-start gap-4">
-                  <div className="flex flex-col items-center justify-center min-w-[44px] h-[44px] rounded-2xl bg-surface-2 text-text-secondary">
-                    <span className="text-xs font-bold">{weekday}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-3 mb-2">
-                      <span className="font-bold text-text-primary truncate">{expense.note}</span>
-                      <span className="font-bold text-lg text-primary whitespace-nowrap">
-                        ¥{Number(expense.amount).toFixed(2)}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-2.5 text-xs">
-                      <span className="text-text-secondary">{dateStr}</span>
-                      <span className="h-1 w-1 rounded-full bg-border-strong" />
-                      <span className={`flex items-center gap-1 ${meta.tone} font-medium`}>
-                        <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
-                        {meta.label}
-                      </span>
-                      {receiptCount > 0 ? (
-                        <>
-                          <span className="h-1 w-1 rounded-full bg-border-strong" />
-                          <span className="text-text-secondary flex items-center gap-1">
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                              <polyline points="14 2 14 8 20 8"></polyline>
-                            </svg>
-                            {receiptCount}
-                          </span>
-                        </>
-                      ) : null}
-                      {expense.category ? (
-                        <>
-                          <span className="h-1 w-1 rounded-full bg-border-strong" />
-                          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-semibold text-text-secondary">{expense.category}</span>
-                        </>
-                      ) : null}
-                    </div>
-                  </div>
-                </div>
+    <div className="pb-24 lg:pb-10 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
+      <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_360px] lg:gap-6">
+        <div>
+          <div className="mb-5 space-y-4">
+            <div className="flex flex-wrap items-center gap-3 overflow-x-auto rounded-3xl border border-border bg-white p-3 shadow-card scrollbar-hide lg:overflow-visible">
+              <div className="flex flex-wrap gap-2.5">
+                {statusOptions.map((option) => (
+                  <button
+                    key={option}
+                    className={`rounded-full px-4 py-2 text-xs font-bold transition-all whitespace-nowrap ${
+                      status === option
+                        ? "bg-primary text-white shadow-md shadow-primary/30 scale-105"
+                        : "text-text-secondary hover:text-text-primary hover:bg-surface-1"
+                    }`}
+                    onClick={() => setStatus(option)}
+                  >
+                    {{
+                      all: "全部",
+                      pending: "新建",
+                      processing: "处理中",
+                      completed: "已报销"
+                    }[option]}
+                  </button>
+                ))}
               </div>
-            </SwipeAction>
-          );
-        })}
-      </div>
-
-      <div className="fixed bottom-16 left-0 right-0 z-10">
-        <div className="mx-auto max-w-md px-4 pb-4">
-          <div className="flex flex-col gap-2.5">
-            {(errors.amount || errors.note) ? (
-              <div className="rounded-2xl bg-danger-light border border-danger/20 px-4 py-3 text-sm text-danger font-medium animate-slide-down">
-                {errors.amount || errors.note}
-              </div>
-            ) : null}
-            <div className="flex items-center gap-2.5 rounded-3xl border-2 border-border bg-white/98 p-3 shadow-xl backdrop-blur-sm">
-              <div className="relative min-w-[100px]">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-primary">¥</span>
-                <input
-                  className={`h-12 w-full rounded-2xl border-2 pl-8 pr-3 text-right text-sm font-bold transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none ${
-                    errors.amount ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary"
-                  }`}
-                  placeholder="0.00"
-                  inputMode="decimal"
-                  value={amount}
-                  onChange={(event) => {
-                    setAmount(event.target.value);
-                    if (errors.amount) setErrors({ ...errors, amount: undefined });
-                  }}
-                  aria-label="金额"
-                  aria-invalid={!!errors.amount}
-                />
-              </div>
-              <input
-                className={`h-12 flex-1 rounded-2xl border-2 px-4 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none ${
-                  errors.note ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary"
-                }`}
-                placeholder="描述报销事项..."
-                value={note}
-                onChange={(event) => {
-                  setNote(event.target.value);
-                  if (errors.note) setErrors({ ...errors, note: undefined });
-                }}
-                aria-label="描述"
-                aria-invalid={!!errors.note}
-              />
-              <button
-                className="h-12 rounded-2xl bg-primary px-6 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 disabled:bg-primary/40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
-                onClick={addExpense}
-                disabled={adding}
-              >
-                {adding ? "..." : "保存"}
-              </button>
+              <div className="ml-auto text-xs text-text-secondary whitespace-nowrap">共 {expenses.length} 条记录</div>
             </div>
           </div>
+
+          <div className="grid gap-3 lg:grid-cols-2">
+            {expenses.length === 0 ? (
+              <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm lg:col-span-2">
+                <div className="text-sm text-text-secondary font-medium">暂无报销记录</div>
+                <div className="text-xs text-text-tertiary mt-1">在快速录入栏添加报销单</div>
+              </div>
+            ) : null}
+            {expenses.map((expense: any, index: number) => {
+              const meta =
+                statusMeta[expense.status as keyof typeof statusMeta] ??
+                ({ label: expense.status, tone: "text-text-secondary", dot: "bg-text-tertiary" } as const);
+              const { weekday } = getDateParts(expense.date);
+              const receiptCount = expense.receiptCount ?? 0;
+              const dateStr = new Date(expense.date).toISOString().slice(0, 10);
+              return (
+                <SwipeAction
+                  key={expense.expenseId}
+                  onDelete={() => setDeleteConfirm(expense.expenseId)}
+                  className="rounded-3xl"
+                >
+                  <div
+                    className="w-full rounded-3xl border border-border bg-white p-5 shadow-card hover:shadow-card-hover hover:border-primary/30 transition-all animate-fade-up cursor-pointer"
+                    style={{ animationDelay: `${index * 30}ms` }}
+                    onClick={() => setSelectedExpense(expense)}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex flex-col items-center justify-center min-w-[44px] h-[44px] rounded-2xl bg-surface-2 text-text-secondary">
+                        <span className="text-xs font-bold">{weekday}</span>
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <span className="font-bold text-text-primary truncate">{expense.note}</span>
+                          <span className="font-bold text-lg text-primary whitespace-nowrap">
+                            ¥{Number(expense.amount).toFixed(2)}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2.5 text-xs">
+                          <span className="text-text-secondary">{dateStr}</span>
+                          <span className="h-1 w-1 rounded-full bg-border-strong" />
+                          <span className={`flex items-center gap-1 ${meta.tone} font-medium`}>
+                            <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                            {meta.label}
+                          </span>
+                          {receiptCount > 0 ? (
+                            <>
+                              <span className="h-1 w-1 rounded-full bg-border-strong" />
+                              <span className="text-text-secondary flex items-center gap-1">
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                  <polyline points="14 2 14 8 20 8"></polyline>
+                                </svg>
+                                {receiptCount}
+                              </span>
+                            </>
+                          ) : null}
+                          {expense.category ? (
+                            <>
+                              <span className="h-1 w-1 rounded-full bg-border-strong" />
+                              <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-semibold text-text-secondary">{expense.category}</span>
+                            </>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </SwipeAction>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="hidden lg:block">
+          <div className="sticky top-6 rounded-3xl border border-border bg-white p-5 shadow-card">
+            <div className="text-sm font-bold text-text-primary mb-3">快速新增</div>
+            <QuickAddForm
+              amount={amount}
+              note={note}
+              errors={errors}
+              adding={adding}
+              onAmountChange={(value) => {
+                setAmount(value);
+                if (errors.amount) setErrors({ ...errors, amount: undefined });
+              }}
+              onNoteChange={(value) => {
+                setNote(value);
+                if (errors.note) setErrors({ ...errors, note: undefined });
+              }}
+              onSubmit={addExpense}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="fixed bottom-16 left-0 right-0 z-10 lg:hidden">
+        <div className="mx-auto max-w-md px-4 pb-4">
+          <QuickAddForm
+            amount={amount}
+            note={note}
+            errors={errors}
+            adding={adding}
+            onAmountChange={(value) => {
+              setAmount(value);
+              if (errors.amount) setErrors({ ...errors, amount: undefined });
+            }}
+            onNoteChange={(value) => {
+              setNote(value);
+              if (errors.note) setErrors({ ...errors, note: undefined });
+            }}
+            onSubmit={addExpense}
+          />
         </div>
       </div>
 
@@ -298,6 +285,73 @@ export default function ExpensesPage() {
       />
 
       <BottomNav />
+    </div>
+  );
+}
+
+function QuickAddForm({
+  amount,
+  note,
+  errors,
+  adding,
+  onAmountChange,
+  onNoteChange,
+  onSubmit
+}: {
+  amount: string;
+  note: string;
+  errors: { amount?: string; note?: string };
+  adding: boolean;
+  onAmountChange: (value: string) => void;
+  onNoteChange: (value: string) => void;
+  onSubmit: () => void;
+}) {
+  return (
+    <div className="flex flex-col gap-2.5">
+      {(errors.amount || errors.note) ? (
+        <div className="rounded-2xl bg-danger-light border border-danger/20 px-4 py-3 text-sm text-danger font-medium animate-slide-down">
+          {errors.amount || errors.note}
+        </div>
+      ) : null}
+      <div className="flex items-center gap-2.5 rounded-3xl border-2 border-border bg-white/98 p-3 shadow-xl backdrop-blur-sm lg:flex-col lg:items-stretch lg:gap-3 lg:rounded-2xl lg:border lg:bg-white lg:p-4 lg:shadow-sm lg:backdrop-blur-none">
+        <div className="relative min-w-[100px] lg:flex lg:items-center lg:gap-3 lg:min-w-0 lg:w-full">
+          <span className="hidden w-12 text-xs font-semibold text-text-secondary lg:inline">金额</span>
+          <div className="relative flex-1">
+            <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-primary lg:text-sm">¥</span>
+            <input
+              className={`h-12 w-full rounded-2xl border-2 pl-8 pr-3 text-right text-sm font-bold transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none lg:h-10 lg:bg-surface-1 lg:text-sm lg:font-semibold ${
+                errors.amount ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary lg:border-border lg:bg-surface-1"
+              }`}
+              placeholder="0.00"
+              inputMode="decimal"
+              value={amount}
+              onChange={(event) => onAmountChange(event.target.value)}
+              aria-label="金额"
+              aria-invalid={!!errors.amount}
+            />
+          </div>
+        </div>
+        <div className="flex-1 lg:flex lg:items-center lg:gap-3">
+          <span className="hidden w-12 text-xs font-semibold text-text-secondary lg:inline">描述</span>
+          <input
+            className={`h-12 w-full rounded-2xl border-2 px-4 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none lg:h-10 lg:bg-surface-1 ${
+              errors.note ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary lg:border-border"
+            }`}
+            placeholder="描述报销事项..."
+            value={note}
+            onChange={(event) => onNoteChange(event.target.value)}
+            aria-label="描述"
+            aria-invalid={!!errors.note}
+          />
+        </div>
+        <button
+          className="h-12 rounded-2xl bg-primary px-6 text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 disabled:bg-primary/40 disabled:cursor-not-allowed disabled:shadow-none transition-all lg:h-10 lg:w-full lg:rounded-xl"
+          onClick={onSubmit}
+          disabled={adding}
+        >
+          {adding ? "..." : "保存"}
+        </button>
+      </div>
     </div>
   );
 }
@@ -372,7 +426,7 @@ function ExpenseDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end bg-black/50 backdrop-blur-sm animate-fade-in"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm animate-fade-in lg:items-center lg:justify-center lg:p-6"
       onClick={onClose}
       onTouchMove={(e) => {
         // Prevent scrolling of background when touching the overlay
@@ -382,7 +436,7 @@ function ExpenseDrawer({
       }}
     >
       <div
-        className="w-full rounded-t-4xl bg-surface-0 p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto"
+        className="w-full max-w-md rounded-t-4xl bg-surface-0 p-6 shadow-2xl animate-slide-up max-h-[85vh] overflow-y-auto lg:max-h-[90vh] lg:rounded-3xl lg:w-[440px]"
         onClick={(e) => e.stopPropagation()}
         onTouchMove={(e) => e.stopPropagation()}
       >
@@ -399,58 +453,64 @@ function ExpenseDrawer({
           </button>
         </div>
         <div className="space-y-4">
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-primary">金额</label>
-            <input
-              className={`h-12 w-full rounded-2xl border-2 px-4 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none ${
-                amountError ? "border-danger bg-danger-light" : "border-border bg-surface-1 focus:border-primary"
-              }`}
-              placeholder="0.00"
-              inputMode="decimal"
-              value={amount}
-              onChange={(event) => {
-                setAmount(event.target.value);
-                if (amountError) setAmountError("");
-              }}
-              aria-label="金额"
-              aria-invalid={!!amountError}
-            />
-            {amountError ? (
-              <p className="text-xs text-danger font-medium">{amountError}</p>
-            ) : null}
+          <div className="rounded-2xl border border-border bg-surface-1 p-4">
+            <div className="space-y-3">
+              <div>
+                <div className="flex items-center gap-3">
+                  <span className="w-14 text-xs font-semibold text-text-secondary">金额</span>
+                  <input
+                    className={`h-10 flex-1 rounded-xl border-2 px-3 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none ${
+                      amountError ? "border-danger bg-danger-light" : "border-border bg-white focus:border-primary"
+                    }`}
+                    placeholder="0.00"
+                    inputMode="decimal"
+                    value={amount}
+                    onChange={(event) => {
+                      setAmount(event.target.value);
+                      if (amountError) setAmountError("");
+                    }}
+                    aria-label="金额"
+                    aria-invalid={!!amountError}
+                  />
+                </div>
+                {amountError ? (
+                  <p className="text-xs text-danger font-medium mt-1 pl-[3.5rem]">{amountError}</p>
+                ) : null}
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="w-14 text-xs font-semibold text-text-secondary">描述</span>
+                <input
+                  className="h-10 flex-1 rounded-xl border-2 border-border bg-white px-3 text-sm transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                  placeholder="报销事项"
+                  value={note}
+                  onChange={(event) => setNote(event.target.value)}
+                  aria-label="描述"
+                />
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="w-14 text-xs font-semibold text-text-secondary">状态</span>
+                <select
+                  className="h-10 flex-1 rounded-xl border-2 border-border bg-white px-3 text-sm font-medium transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
+                  value={status}
+                  onChange={(event) => setStatus(event.target.value)}
+                  aria-label="状态"
+                >
+                  <option value="pending">新建</option>
+                  <option value="processing">处理中</option>
+                  <option value="completed">已报销</option>
+                </select>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-primary">描述</label>
-            <input
-              className="h-12 w-full rounded-2xl border-2 border-border bg-surface-1 px-4 text-sm transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-              placeholder="报销事项"
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              aria-label="描述"
-            />
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-sm font-semibold text-text-primary">状态</label>
-            <select
-              className="h-12 w-full rounded-2xl border-2 border-border bg-surface-1 px-4 text-sm font-medium transition-all focus:border-primary focus:ring-4 focus:ring-primary/10 focus:outline-none"
-              value={status}
-              onChange={(event) => setStatus(event.target.value)}
-              aria-label="状态"
-            >
-              <option value="pending">新建</option>
-              <option value="processing">处理中</option>
-              <option value="completed">已报销</option>
-            </select>
-          </div>
-
-          <div className="mt-6 pt-6 border-t border-border">
-            <div className="text-base font-bold mb-3 text-text-primary">已关联票据</div>
+          <div className="rounded-2xl border border-border bg-white p-4">
+            <div className="text-xs font-semibold text-text-secondary mb-3">已关联票据</div>
             {(receipts as any[] | undefined)?.length ? (
-              <div className="space-y-2.5">
+              <div className="space-y-2">
                 {(receipts as any[]).map((receipt) => (
-                  <div key={receipt.receiptId} className="flex items-center justify-between rounded-2xl bg-surface-2 px-4 py-3 border border-border">
+                  <div key={receipt.receiptId} className="flex items-center justify-between gap-3 rounded-xl bg-surface-1 px-3 py-2 border border-border">
                     <div className="flex-1 min-w-0">
                       <div className="truncate font-semibold text-sm text-text-primary">{receipt.merchantKeyword || receipt.receiptId.slice(0, 8)}</div>
                       {receipt.receiptAmount ? (
@@ -458,7 +518,7 @@ function ExpenseDrawer({
                       ) : null}
                     </div>
                     <button
-                      className="text-xs font-semibold text-danger hover:text-danger/80 ml-3 transition-colors"
+                      className="text-xs font-semibold text-danger hover:text-danger/80 transition-colors"
                       onClick={() => unmatchReceipt(receipt.receiptId)}
                     >
                       取消关联
@@ -472,7 +532,7 @@ function ExpenseDrawer({
           </div>
 
           <button
-            className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 disabled:bg-primary/40 disabled:cursor-not-allowed disabled:shadow-none transition-all mt-6"
+            className="h-11 w-full rounded-xl bg-primary text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 disabled:bg-primary/40 disabled:cursor-not-allowed disabled:shadow-none transition-all"
             onClick={save}
             disabled={loading}
           >

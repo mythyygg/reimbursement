@@ -1,11 +1,6 @@
 import { and, eq, gte, inArray, isNull, lte } from "drizzle-orm";
-import {
-  batchIssues,
-  batches,
-  expenses,
-  receipts,
-} from "../../db/index.js";
-import { db } from "../../db/client.js";
+import { batchIssues, batches, expenses, receipts } from "../db/index.js";
+import { db } from "../db/client.js";
 
 export async function processBatchCheckJob(input: {
   batchId: string;

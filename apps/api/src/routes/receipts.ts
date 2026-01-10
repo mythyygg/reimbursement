@@ -266,29 +266,17 @@ router.get("/projects/:projectId/receipts", async (c) => {
     .where(and(...filters));
   console.log(`[receipts] [DB] 查询票据列表耗时: ${Date.now() - t1}ms - 返回 ${data.length} 张`);
 
-  // 为每个票据生成预签名下载URL
-  // 【Promise.all】并发处理所有票据，类似 CompletableFuture.allOf()
+  // 使用 CDN 域名返回可访问的预览 URL（避免暴露上传域名）
   const t2 = Date.now();
-  const withSignedUrls = await Promise.all(
-    data.map(async (item) => {
-      if (item.storageKey) {
-        try {
-          // 生成S3预签名URL（有效期通常为1小时）
-          const signedUrl = await createReceiptDownloadUrl({
-            storageKey: item.storageKey,
-          });
-          // 【展开运算符】...item - 复制所有原有字段，添加fileUrl字段
-          return { ...item, fileUrl: signedUrl };
-        } catch {
-          // 如果生成失败，静默处理（不影响其他票据）
-        }
-      }
-      return item;
-    })
-  );
-  console.log(`[receipts] [S3] 生成 ${data.length} 个签名URL耗时: ${Date.now() - t2}ms, 总耗时: ${Date.now() - startTime}ms`);
+  const withPublicUrls = data.map((item) => {
+    if (item.storageKey && config.s3PublicBaseUrl) {
+      return { ...item, fileUrl: `${config.s3PublicBaseUrl}/${item.storageKey}` };
+    }
+    return item;
+  });
+  console.log(`[receipts] [CDN] 生成 ${data.length} 个公开URL耗时: ${Date.now() - t2}ms, 总耗时: ${Date.now() - startTime}ms`);
 
-  return ok(c, withSignedUrls);
+  return ok(c, withPublicUrls);
 });
 
 /**

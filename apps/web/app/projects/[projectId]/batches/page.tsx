@@ -1,332 +1,237 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useMemo, useState } from "react";
 import { useParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "../../../../lib/api";
 import BottomNav from "../../../../components/BottomNav";
-import SwipeAction from "../../../../components/SwipeAction";
 
-type ExportRecord = {
-  exportId: string;
-  status: "pending" | "running" | "completed" | "failed";
-  createdAt: string;
+type ExpenseRow = {
+  expenseId: string;
+  date: string;
+  amount: number | string;
+  category: string | null;
+  note: string | null;
+  status: "pending" | "processing" | "completed" | string | null;
+  receiptCount?: number;
 };
 
-type BatchWithExport = {
-  batchId: string;
-  name: string | null;
-  createdAt: string;
-  issueSummaryJson: {
-    missing_receipt?: number;
-    duplicate_receipt?: number;
-  } | null;
-  latestExport?: ExportRecord;
+type ReceiptItem = {
+  receiptId: string;
+  matchedExpenseId: string | null;
+  fileUrl?: string | null;
+  fileExt?: string | null;
+  receiptType?: string | null;
 };
 
-export default function BatchesPage() {
+const statusMeta = {
+  pending: { label: "新建", tone: "text-text-secondary", dot: "bg-text-tertiary", pill: "bg-surface-1 text-text-secondary" },
+  processing: { label: "处理中", tone: "text-warning", dot: "bg-warning", pill: "bg-warning-light text-warning" },
+  completed: { label: "已报销", tone: "text-success", dot: "bg-success", pill: "bg-success-light text-success" }
+};
+
+function formatDate(value: string) {
+  return new Date(value).toISOString().slice(0, 10);
+}
+
+export default function DetailsPage() {
   const params = useParams();
   const projectId = params.projectId as string;
-  const [exportingBatchIds, setExportingBatchIds] = useState<Set<string>>(new Set());
-  const [downloadingExportIds, setDownloadingExportIds] = useState<Set<string>>(new Set());
-  const pollingRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
+  const [preview, setPreview] = useState<{ url: string; isPdf: boolean } | null>(null);
 
-  const { data, refetch } = useQuery({
-    queryKey: ["batches", projectId],
-    queryFn: async () => {
-      const batches = await apiFetch(`/projects/${projectId}/batches`);
-      // Fetch latest export for each batch
-      const batchesWithExports = await Promise.all(
-        (batches as any[]).map(async (batch) => {
-          try {
-            const exports = await apiFetch(`/batches/${batch.batchId}/exports`);
-            const latestExport = (exports as ExportRecord[]).sort(
-              (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-            )[0];
-            return { ...batch, latestExport };
-          } catch {
-            return batch;
-          }
-        })
-      );
-      return batchesWithExports as BatchWithExport[];
-    },
+  const { data } = useQuery({
+    queryKey: ["expenses", projectId, "details"],
+    queryFn: () => apiFetch(`/projects/${projectId}/expenses`)
   });
 
-  const batches = Array.isArray(data) ? data : [];
+  const { data: receiptData } = useQuery({
+    queryKey: ["receipts", projectId, "details"],
+    queryFn: () => apiFetch(`/projects/${projectId}/receipts?matched=true`)
+  });
 
-  // Cleanup polling on unmount
-  useEffect(() => {
-    return () => {
-      pollingRef.current.forEach((timer) => clearInterval(timer));
-    };
-  }, []);
+  const expenses = Array.isArray(data) ? (data as ExpenseRow[]) : [];
+  const receipts = Array.isArray(receiptData) ? (receiptData as ReceiptItem[]) : [];
 
-  const startPolling = useCallback((batchId: string, exportId: string) => {
-    // Clear existing polling for this batch
-    const existingTimer = pollingRef.current.get(batchId);
-    if (existingTimer) {
-      clearInterval(existingTimer);
-    }
-
-    const timer = setInterval(async () => {
-      try {
-        const record = await apiFetch<ExportRecord>(`/exports/${exportId}`);
-        if (record.status === "completed" || record.status === "failed") {
-          clearInterval(timer);
-          pollingRef.current.delete(batchId);
-          setExportingBatchIds((prev) => {
-            const next = new Set(prev);
-            next.delete(batchId);
-            return next;
-          });
-          await refetch();
-        }
-      } catch (error) {
-        console.error("Polling error:", error);
+  const receiptsByExpense = useMemo(() => {
+    const map = new Map<string, ReceiptItem[]>();
+    for (const receipt of receipts) {
+      if (!receipt.matchedExpenseId) {
+        continue;
       }
-    }, 2000);
-
-    pollingRef.current.set(batchId, timer);
-  }, [refetch]);
-
-  const createBatch = async () => {
-    await apiFetch(`/projects/${projectId}/batches`, { method: "POST" });
-    await refetch();
-  };
-
-  const deleteBatch = async (batchId: string) => {
-    try {
-      await apiFetch(`/batches/${batchId}`, { method: "DELETE" });
-      await refetch();
-    } catch (error: any) {
-      console.error("删除失败:", error);
-      if (error.message?.includes("BATCH_HAS_EXPORTS")) {
-        alert("导出包含文件记录，请先删除所有导出文件");
-      } else {
-        alert("删除失败，请重试");
-      }
+      const list = map.get(receipt.matchedExpenseId) ?? [];
+      list.push(receipt);
+      map.set(receipt.matchedExpenseId, list);
     }
-  };
+    return map;
+  }, [receipts]);
 
-  const createExport = async (batchId: string) => {
-    try {
-      setExportingBatchIds((prev) => new Set(prev).add(batchId));
-      const record = await apiFetch<ExportRecord>(`/batches/${batchId}/exports`, {
-        method: "POST",
-        body: JSON.stringify({}),
-      });
-      startPolling(batchId, record.exportId);
-      await refetch();
-    } catch (error) {
-      console.error("创建导出失败:", error);
-      setExportingBatchIds((prev) => {
-        const next = new Set(prev);
-        next.delete(batchId);
-        return next;
-      });
-      alert("创建导出失败，请重试");
-    }
-  };
-
-  const downloadExport = async (exportId: string) => {
-    try {
-      setDownloadingExportIds((prev) => new Set(prev).add(exportId));
-      const result = await apiFetch<{ signed_url: string }>(
-        `/exports/${exportId}/download-url`,
-        { method: "POST" }
-      );
-      window.location.href = result.signed_url;
-    } catch (error) {
-      console.error("下载失败:", error);
-      alert("下载失败，请重试");
-    } finally {
-      setTimeout(() => {
-        setDownloadingExportIds((prev) => {
-          const next = new Set(prev);
-          next.delete(exportId);
-          return next;
-        });
-      }, 1000);
-    }
-  };
-
-  const getExportButton = (batch: BatchWithExport) => {
-    const isExporting = exportingBatchIds.has(batch.batchId);
-    const latestExport = batch.latestExport;
-
-    // Check if there's an in-progress export
-    if (isExporting || latestExport?.status === "pending" || latestExport?.status === "running") {
-      // Start polling if not already
-      if (latestExport && !pollingRef.current.has(batch.batchId)) {
-        startPolling(batch.batchId, latestExport.exportId);
-        setExportingBatchIds((prev) => new Set(prev).add(batch.batchId));
-      }
-      return (
-        <button
-          disabled
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-600 text-xs font-medium border border-blue-200"
-        >
-          <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-          </svg>
-          生成中...
-        </button>
-      );
-    }
-
-    // Export completed - show download button
-    if (latestExport?.status === "completed") {
-      const isDownloading = downloadingExportIds.has(latestExport.exportId);
-      return (
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            downloadExport(latestExport.exportId);
-          }}
-          disabled={isDownloading}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-medium shadow-sm hover:bg-primary-hover active:scale-95 transition-all disabled:opacity-50"
-        >
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-            <polyline points="7 10 12 15 17 10" />
-            <line x1="12" y1="15" x2="12" y2="3" />
-          </svg>
-          {isDownloading ? "下载中..." : "下载报告"}
-        </button>
-      );
-    }
-
-    // Export failed or no export - show create button
-    return (
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          createExport(batch.batchId);
-        }}
-        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface-1 text-text-primary text-xs font-medium border border-border hover:bg-surface-2 active:scale-95 transition-all"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-          <polyline points="14 2 14 8 20 8" />
-          <line x1="12" y1="18" x2="12" y2="12" />
-          <line x1="9" y1="15" x2="15" y2="15" />
-        </svg>
-        {latestExport?.status === "failed" ? "重新导出" : "生成报告"}
-      </button>
-    );
-  };
+  const summary = useMemo(() => {
+    const totalAmount = expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+    const totalReceipts = expenses.reduce((sum, expense) => sum + (expense.receiptCount ?? 0), 0);
+    return { totalAmount, totalReceipts };
+  }, [expenses]);
 
   return (
-    <div className="pb-24 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
+    <div className="pb-24 lg:pb-10 bg-gradient-to-b from-surface-0 via-surface-1/40 to-surface-1">
       <div className="rounded-3xl bg-white border border-border p-6 shadow-card mb-6">
-        <div className="flex items-start justify-between gap-4 mb-4">
-          <div className="flex-1">
-            <div className="text-lg font-bold text-text-primary">导出管理</div>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <div className="text-lg font-bold text-text-primary">明细</div>
             <div className="text-xs text-text-secondary mt-1">
-              创建导出后可生成包含费用清单和票据的报销报告
+              费用明细用于 PC 端录入报销系统，包含票据预览与数量统计。
             </div>
           </div>
         </div>
-        <button
-          className="h-12 w-full rounded-2xl bg-primary text-sm font-bold text-white shadow-md shadow-primary/25 hover:bg-primary-hover hover:shadow-lg hover:shadow-primary/30 active:scale-95 transition-all"
-          onClick={createBatch}
-        >
-          <span className="flex items-center justify-center gap-2">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            创建新导出
-          </span>
-        </button>
       </div>
 
-      <div className="space-y-4">
-        {batches.length === 0 ? (
-          <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
-            <div className="text-sm text-text-secondary font-medium">暂无导出</div>
-            <div className="text-xs text-text-tertiary mt-1">点击上方按钮创建第一个导出</div>
+      {expenses.length === 0 ? (
+        <div className="rounded-3xl border-2 border-dashed border-border bg-surface-0 p-8 text-center shadow-sm">
+          <div className="text-sm text-text-secondary font-medium">暂无费用明细</div>
+          <div className="text-xs text-text-tertiary mt-1">先在报销单中添加费用</div>
+        </div>
+      ) : (
+        <div className="rounded-3xl border border-border bg-white shadow-card overflow-hidden">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-6 py-4 bg-gradient-to-r from-surface-0 to-surface-1">
+            <div className="text-sm font-semibold text-text-primary">共 {expenses.length} 条明细</div>
+            <div className="flex flex-wrap items-center gap-4 text-xs text-text-secondary">
+              <span>票据 {summary.totalReceipts} 张</span>
+              <span>合计 ¥{summary.totalAmount.toFixed(2)}</span>
+            </div>
           </div>
-        ) : null}
-        {batches.map((batch, index) => {
-          const issueSummary = batch.issueSummaryJson || {};
-          const missingCount = issueSummary.missing_receipt ?? 0;
-          const duplicateCount = issueSummary.duplicate_receipt ?? 0;
-          const hasIssues = missingCount > 0 || duplicateCount > 0;
+          <div className="overflow-x-auto">
+            <table className="min-w-[1120px] w-full text-xs">
+              <thead className="bg-surface-1 text-text-secondary sticky top-0 z-10">
+                <tr className="text-[11px] uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left font-semibold">序号</th>
+                  <th className="px-6 py-3 text-left font-semibold">日期</th>
+                  <th className="px-6 py-3 text-right font-semibold">金额</th>
+                  <th className="px-6 py-3 text-left font-semibold">类别</th>
+                  <th className="px-6 py-3 text-left font-semibold">备注</th>
+                  <th className="px-6 py-3 text-left font-semibold">状态</th>
+                  <th className="px-6 py-3 text-right font-semibold">票据数</th>
+                  <th className="px-6 py-3 text-left font-semibold">票据</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {expenses.map((expense, index) => {
+                  const meta =
+                    statusMeta[expense.status as keyof typeof statusMeta] ??
+                    ({ label: expense.status ?? "-", tone: "text-text-secondary", dot: "bg-text-tertiary", pill: "bg-surface-1 text-text-secondary" } as const);
+                  const expenseReceipts = receiptsByExpense.get(expense.expenseId) ?? [];
+                  const fallbackCategory = expenseReceipts.find((receipt) => receipt.receiptType)?.receiptType ?? "未分类";
+                  return (
+                    <tr key={expense.expenseId} className={index % 2 === 0 ? "bg-white" : "bg-surface-0/50"}>
+                      <td className="px-6 py-4 text-text-tertiary font-medium">{index + 1}</td>
+                      <td className="px-6 py-4 text-text-secondary whitespace-nowrap">{formatDate(expense.date)}</td>
+                      <td className="px-6 py-4 text-right font-semibold text-text-primary whitespace-nowrap tabular-nums">
+                        ¥{Number(expense.amount).toFixed(2)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-flex items-center rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-semibold text-text-secondary">
+                          {expense.category ?? fallbackCategory}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-text-secondary max-w-[320px] whitespace-normal break-words" title={expense.note ?? ""}>
+                        {expense.note ?? "-"}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[11px] font-semibold ${meta.pill}`}>
+                          <span className={`h-1.5 w-1.5 rounded-full ${meta.dot}`} />
+                          {meta.label}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 text-right text-text-secondary tabular-nums">
+                        {expense.receiptCount ?? 0}
+                      </td>
+                      <td className="px-6 py-4">
+                        {expenseReceipts.length === 0 ? (
+                          <span className="text-text-tertiary">-</span>
+                        ) : (
+                          <div className="flex flex-wrap gap-2">
+                            {expenseReceipts.map((receipt) => {
+                              const ext = receipt.fileExt?.toLowerCase() ?? "";
+                              const isPdf = ext === "pdf";
+                              const previewUrl = receipt.fileUrl ?? "";
+                              if (!previewUrl) {
+                                return (
+                                  <div
+                                    key={receipt.receiptId}
+                                    className="h-12 w-12 rounded-xl border border-dashed border-border text-[10px] text-text-tertiary flex items-center justify-center"
+                                  >
+                                    缺文件
+                                  </div>
+                                );
+                              }
+                              if (isPdf) {
+                                return (
+                                  <button
+                                    key={receipt.receiptId}
+                                    type="button"
+                                    onClick={() => setPreview({ url: previewUrl, isPdf: true })}
+                                    className="h-12 w-12 rounded-xl border border-border bg-surface-1 text-[10px] font-bold text-danger flex flex-col items-center justify-center hover:bg-surface-2 transition"
+                                    title="查看 PDF 票据"
+                                  >
+                                    PDF
+                                  </button>
+                                );
+                              }
+                              return (
+                                <button
+                                  key={receipt.receiptId}
+                                  type="button"
+                                  onClick={() => setPreview({ url: previewUrl, isPdf: false })}
+                                  className="h-12 w-12 rounded-xl overflow-hidden border border-border bg-surface-0 hover:ring-2 hover:ring-primary/30 transition"
+                                  title="查看票据大图"
+                                >
+                                  <img
+                                    src={previewUrl}
+                                    alt="票据预览"
+                                    className="h-full w-full object-cover"
+                                    loading="lazy"
+                                  />
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
-          return (
-            <SwipeAction key={batch.batchId} onDelete={() => deleteBatch(batch.batchId)}>
-              <div
-                className="rounded-3xl border border-border bg-white p-5 shadow-card hover:shadow-card-hover transition-all animate-fade-up"
-                style={{ animationDelay: `${index * 40}ms` }}
-              >
-                <div className="flex items-start justify-between gap-4 mb-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-base font-bold text-text-primary truncate">
-                      {batch.name || `导出 #${batch.batchId.slice(0, 8)}`}
-                    </div>
-                    <div className="text-xs text-text-secondary mt-1">
-                      创建于 {new Date(batch.createdAt).toLocaleDateString("zh-CN")}
-                    </div>
-                  </div>
-                  {hasIssues ? (
-                    <span className="shrink-0 rounded-full bg-warning-light px-3 py-1 text-xs font-bold text-warning border border-warning/20">
-                      需处理
-                    </span>
-                  ) : (
-                    <span className="shrink-0 rounded-full bg-success-light px-3 py-1 text-xs font-bold text-success border border-success/20">
-                      已就绪
-                    </span>
-                  )}
-                </div>
+      {preview ? (
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center px-6"
+          onClick={() => setPreview(null)}
+        >
+          <div className="relative max-w-5xl w-full" onClick={(event) => event.stopPropagation()}>
+            <button
+              type="button"
+              onClick={() => setPreview(null)}
+              className="absolute -top-10 right-0 text-white text-sm"
+            >
+              关闭
+            </button>
+            <div className="rounded-2xl bg-white p-3 shadow-2xl">
+              {preview.isPdf ? (
+                <iframe
+                  src={`${preview.url}#toolbar=0`}
+                  title="PDF 票据预览"
+                  className="w-full h-[80vh] rounded-xl border border-border"
+                />
+              ) : (
+                <img src={preview.url} alt="票据大图" className="w-full max-h-[80vh] object-contain" />
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
 
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-xs">
-                    {batch.issueSummaryJson ? (
-                      <>
-                        {missingCount > 0 ? (
-                          <div className="flex items-center gap-1.5 text-danger">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <circle cx="12" cy="12" r="10" />
-                              <line x1="15" y1="9" x2="9" y2="15" />
-                              <line x1="9" y1="9" x2="15" y2="15" />
-                            </svg>
-                            <span className="font-medium">缺票 {missingCount} 条</span>
-                          </div>
-                        ) : null}
-                        {duplicateCount > 0 ? (
-                          <div className="flex items-center gap-1.5 text-warning">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                              <line x1="12" y1="9" x2="12" y2="13" />
-                              <line x1="12" y1="17" x2="12.01" y2="17" />
-                            </svg>
-                            <span className="font-medium">重复 {duplicateCount} 条</span>
-                          </div>
-                        ) : null}
-                        {!hasIssues ? (
-                          <div className="flex items-center gap-1.5 text-success">
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                              <polyline points="22 4 12 14.01 9 11.01" />
-                            </svg>
-                            <span className="font-medium">无异常</span>
-                          </div>
-                        ) : null}
-                      </>
-                    ) : (
-                      <div className="text-text-secondary">检查中...</div>
-                    )}
-                  </div>
-                  {getExportButton(batch)}
-                </div>
-              </div>
-            </SwipeAction>
-          );
-        })}
-      </div>
       <BottomNav />
     </div>
   );

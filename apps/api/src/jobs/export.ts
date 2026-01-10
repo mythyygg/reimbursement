@@ -6,10 +6,10 @@ import {
   projects,
   receipts,
   settings,
-} from "../../db/index.js";
-import { buildReceiptFilename } from "../../utils/index.js";
-import { db } from "../../db/client.js";
-import { uploadObject } from "../services/storage.js";
+} from "../db/index.js";
+import { buildReceiptFilename } from "../utils/index.js";
+import { db } from "../db/client.js";
+import { uploadObject } from "./services/storage.js";
 import { buildHtmlExport } from "./html-export.js";
 
 export async function processExportJob(input: {

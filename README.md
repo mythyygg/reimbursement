@@ -111,15 +111,15 @@ Worker (BullMQ) - 处理导出等耗时操作
 ### 极简启动
 
 ```bash
-# 1. 安装依赖
-npm install
+# 1. 安装依赖（可选 Bun）
+npm install          # 或者 bun install
 
 # 2. 配置环境变量
 cd apps/api && cp .env.example .env.local
 cd ../web && cp .env.example .env.local
 
 # 3. 启动开发服务器
-npm run dev
+npm run dev          # 或 bun run dev（仍需要 Node 运行 Next.js CLI）
 ```
 
 然后访问 http://localhost:3001

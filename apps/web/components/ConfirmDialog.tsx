@@ -27,14 +27,14 @@ export default function ConfirmDialog({
 
   return (
     <div
-      className="fixed inset-0 z-[90] flex items-end bg-black/40 animate-fade-in"
+      className="fixed inset-0 z-[90] flex items-end justify-center bg-black/40 animate-fade-in sm:items-center sm:p-4"
       onClick={onCancel}
       role="dialog"
       aria-modal="true"
       aria-labelledby="dialog-title"
     >
       <div
-        className="w-full rounded-t-3xl bg-surface-0 p-5 shadow-2xl animate-fade-up"
+        className="w-full rounded-t-3xl bg-surface-0 p-5 shadow-2xl animate-fade-up sm:max-w-md sm:rounded-3xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="mb-4">

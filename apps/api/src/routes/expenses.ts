@@ -62,7 +62,7 @@
 
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
-import { and, eq, gte, isNull, lte } from "drizzle-orm"; // Drizzle ORM 查询构建器
+import { and, eq, gte, isNull, lte, sql } from "drizzle-orm"; // Drizzle ORM 查询构建器
 import {
   expenseReceipts,
   expenses,
@@ -289,9 +289,39 @@ router.get("/projects/:projectId/expenses", async (c) => {
     // 【orderBy】排序：先按日期，再按创建时间
     .orderBy(expenses.date, expenses.createdAt);
 
+  // 查询每条费用的票据数量
+  const t2 = Date.now();
+  const receiptCounts = await db
+    .select({
+      expenseId: receipts.matchedExpenseId,
+      receiptCount: sql<number>`count(*)`.as("receiptCount"),
+    })
+    .from(receipts)
+    .where(
+      and(
+        eq(receipts.userId, userId),
+        eq(receipts.projectId, projectId),
+        isNull(receipts.deletedAt),
+        sql`${receipts.matchedExpenseId} is not null`
+      )
+    )
+    .groupBy(receipts.matchedExpenseId);
+  console.log(
+    `[expenses] [DB] 查询票据数量耗时: ${Date.now() - t2}ms - 返回 ${receiptCounts.length} 条`
+  );
+
+  const receiptCountMap = new Map(
+    receiptCounts.map((item) => [item.expenseId as string, item.receiptCount])
+  );
+
+  const withCounts = data.map((expense) => ({
+    ...expense,
+    receiptCount: receiptCountMap.get(expense.expenseId) ?? 0,
+  }));
+
   console.log(`[expenses] [DB] 查询费用列表耗时: ${Date.now() - t1}ms - 返回 ${data.length} 条, 总耗时: ${Date.now() - startTime}ms`);
 
-  return ok(c, data);
+  return ok(c, withCounts);
 });
 
 /**

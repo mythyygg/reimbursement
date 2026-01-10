@@ -32,7 +32,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-surface-0 border-t border-border"
+      className="fixed bottom-0 left-0 right-0 bg-surface-0 border-t border-border lg:hidden"
       style={{
         paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
       }}
