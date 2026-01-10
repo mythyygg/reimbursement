@@ -35,8 +35,7 @@
  *    - 删除批次（级联检查）
  *
  * 2. 批次检查：
- *    - 触发后台任务验证批次数据
- *    - Worker 进程异步处理
+ *    - 触发批次检查逻辑（现改为同步调用）
  *
  * 3. 导出记录：
  *    - 查询批次的所有导出记录
@@ -50,7 +49,7 @@
  * 【批次生命周期】
  * 1. 创建批次 → status=pending
  * 2. 触发检查任务（batch_check）
- * 3. Worker 验证数据 → status=checked
+ * 3. 同步验证数据 → status=checked
  * 4. 创建导出任务 → 生成文件
  * 5. 用户下载导出文件
  * 6. 可选：删除批次
@@ -63,9 +62,10 @@
 
 import { Hono } from "hono";
 import { and, desc, eq } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { batches, backendJobs, exportRecords } from "../db/index.js";
+import { batches, exportRecords } from "../db/index.js";
 import { db } from "../db/client.js";
 import { errorResponse, ok } from "../utils/http.js";
+import { processBatchCheckJob } from "../jobs/batch-check.js";
 
 const router = new Hono();
 
@@ -177,8 +177,7 @@ router.get("/projects/:projectId/batches", async (c) => {
  * - 类似 Java 的 Map<String, Object>
  *
  * 【后台任务】
- * - batch_check: 验证批次数据的后台任务
- * - Worker 会处理这个任务
+ * - batch_check: 验证批次数据的后台任务（现同步执行）
  * - 验证内容：
  *   - 检查项目是否存在
  *   - 统计符合条件的费用和票据
@@ -206,13 +205,8 @@ router.post("/projects/:projectId/batches", async (c) => {
     })
     .returning();
 
-  // 创建后台检查任务
-  // Worker 会验证批次数据并更新状态
-  await db.insert(backendJobs).values({
-    type: "batch_check",
-    payload: { batchId: batch.batchId, userId },
-    status: "pending",
-  });
+  // 直接执行批次检查逻辑，避免额外 Worker 依赖
+  await processBatchCheckJob({ batchId: batch.batchId, userId });
 
   return ok(c, batch);
 });
@@ -302,8 +296,7 @@ router.get("/batches/:batchId", async (c) => {
  * - 数据更新后重新检查批次
  * - 批次创建时自动触发一次
  *
- * 【后台任务处理】
- * Worker 进程会：
+ * 【检查处理步骤】
  * 1. 查询批次关联的项目
  * 2. 根据 filterJson 筛选费用和票据
  * 3. 统计数量和金额
@@ -326,12 +319,8 @@ router.post("/batches/:batchId/check", async (c) => {
     return errorResponse(c, 404, "BATCH_NOT_FOUND", "Batch not found");
   }
 
-  // 创建后台检查任务
-  await db.insert(backendJobs).values({
-    type: "batch_check",
-    payload: { batchId, userId },
-    status: "pending",
-  });
+  // 同步触发检查逻辑
+  await processBatchCheckJob({ batchId, userId });
 
   return ok(c, { success: true });
 });

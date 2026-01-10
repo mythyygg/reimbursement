@@ -1,4 +1,4 @@
-import type { AuthContext } from "./middleware/auth";
+import type { AuthContext } from "./middleware/auth.js";
 
 /**
  * Hono框架类型扩展

@@ -9,33 +9,31 @@
  *    - 生成下载URL
  *    - 删除导出记录
  *
- * 2. 异步处理机制：
+ * 2. 后台处理机制（现同步执行）：
  *    - 创建导出记录（exportRecords 表）
- *    - 创建后台任务（backendJobs 表）
- *    - Worker 进程异步执行任务
- *    - 轮询查询任务状态
+ *    - 调用导出处理逻辑完成文件生成与上传
+ *    - 可按需轮询查询状态（兼容前端逻辑）
  *
  * 3. 支持的导出格式：
  *    - HTML: 自包含的报销报告，包含费用清单和票据缩略图
  *
- * 【异步任务流程】
+ * 【处理流程】
  * 1. API 接收请求 → 创建 exportRecord (status=pending)
- * 2. API 创建 backendJob (type=export, status=pending)
- * 3. Worker 监听 backendJobs 表 → 拉取任务
- * 4. Worker 执行导出 → 更新 exportRecord (status=running → completed)
- * 5. Worker 上传文件到 S3 → 更新 storageKey
- * 6. 前端轮询查询状态 → status=completed 时显示下载按钮
- * 7. 用户点击下载 → 获取预签名URL → 从S3下载
+ * 2. 直接执行导出处理 → 更新 exportRecord (status=running → completed)
+ * 3. 上传文件到 S3 → 更新 storageKey
+ * 4. 前端如需可轮询查询状态
+ * 5. 用户点击下载 → 获取预签名URL → 从S3下载
  */
 
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
 import { and, eq, inArray } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { batches, downloadLogs, exportRecords, backendJobs, projects } from "../db/index.js";
+import { batches, downloadLogs, exportRecords, projects } from "../db/index.js";
 import { db } from "../db/client.js";
 import { createExportDownloadUrl } from "../services/storage.js";
 import { errorResponse, ok } from "../utils/http.js";
 import { getMissingProjectIds } from "../utils/ownership.js";
+import { processExportJob } from "../jobs/export.js";
 
 const router = new Hono();
 
@@ -58,7 +56,7 @@ const exportCreateSchema = z.object({
  * 1. 查询批次记录（验证存在性和权限）
  * 2. 检查是否有运行中的导出（防重复）
  * 3. 创建导出记录（status=pending, type=html）
- * 4. 创建后台任务（Worker 会处理）
+ * 4. 同步执行导出逻辑
  * 5. 返回导出记录
  *
  * 【错误响应】
@@ -117,16 +115,10 @@ router.post("/batches/:batchId/exports", async (c) => {
     .returning();
   console.log(`[exports] [DB] 插入导出记录耗时: ${Date.now() - t3}ms`);
 
-  // 【创建后台任务】Worker 会监听并处理
-  // payload 包含必要的任务参数
+  // 直接处理导出，避免额外 Worker 依赖
   const t4 = Date.now();
-  await db.insert(backendJobs).values({
-    type: "export",
-    payload: { exportId: record.exportId, userId },
-    status: "pending",
-  });
-  console.log(`[exports] [DB] 插入后台任务耗时: ${Date.now() - t4}ms`);
-  console.log(`[exports] [API] 创建批次导出任务完成, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
+  await processExportJob({ exportId: record.exportId, userId });
+  console.log(`[exports] [API] 创建批次导出并完成处理, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
 
   return ok(c, record);
 });
@@ -240,15 +232,10 @@ router.post("/projects/exports", async (c) => {
     .returning();
   console.log(`[exports] [DB] 插入导出记录耗时: ${Date.now() - t1}ms`);
 
-  // 创建后台任务
+  // 直接处理导出
   const t2 = Date.now();
-  await db.insert(backendJobs).values({
-    type: "export",
-    payload: { exportId: record.exportId, userId },
-    status: "pending",
-  });
-  console.log(`[exports] [DB] 插入后台任务耗时: ${Date.now() - t2}ms`);
-  console.log(`[exports] [API] 创建项目导出任务完成, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
+  await processExportJob({ exportId: record.exportId, userId });
+  console.log(`[exports] [API] 创建项目导出并完成处理, 总耗时: ${Date.now() - startTime}ms, exportId: ${record.exportId}`);
 
   return ok(c, record);
 });
@@ -279,7 +266,7 @@ router.post("/projects/exports", async (c) => {
  *
  * 【状态说明】
  * - pending: 等待处理（任务在队列中）
- * - running: 正在处理（Worker 正在执行）
+ * - running: 正在处理（导出逻辑执行中）
  * - completed: 已完成（可以下载）
  * - failed: 失败（查看 errorMessage 字段）
  *
@@ -411,7 +398,7 @@ router.get("/exports/:exportId", async (c) => {
  * 【过期检查】
  * - expiresAt: 导出文件的过期时间
  * - 过期后返回 410 Gone（资源已删除）
- * - Worker 会定期清理过期文件
+ * - 可由后续清理脚本/任务定期清理过期文件
  *
  * 【下载日志】
  * - 记录用户的下载行为（审计）
@@ -526,7 +513,7 @@ router.post("/exports/:exportId/download-url", async (c) => {
  * 【物理删除】
  * - 导出记录使用物理删除（DELETE FROM export_records）
  * - 不需要保留删除的导出记录
- * - S3文件由 Worker 定期清理
+ * - S3 文件可由后续清理脚本定期清理
  *
  * 【错误响应】
  * - 404 EXPORT_NOT_FOUND: 导出不存在或无权限
@@ -552,7 +539,7 @@ router.delete("/exports/:exportId", async (c) => {
   }
 
   // 【删除限制】不允许删除进行中的任务
-  // 防止删除正在处理的任务导致 Worker 出错
+  // 防止删除正在处理的任务导致导出逻辑出错
   if (record.status === "pending" || record.status === "running") {
     return errorResponse(c, 400, "EXPORT_IN_PROGRESS", "Cannot delete export in progress");
   }
