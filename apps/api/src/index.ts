@@ -45,8 +45,6 @@
  *    - /api/v1/projects - 项目管理
  *    - /api/v1/expenses - 费用管理
  *    - /api/v1/receipts - 票据管理
- *    - /api/v1/batches - 批次管理
- *    - /api/v1/exports - 导出管理
  */
 
 import "./types.js";  // 【重要】扩展 Hono 上下文类型，添加自定义变量类型
@@ -62,8 +60,6 @@ import authRoutes from "./routes/auth.js";
 import projectRoutes from "./routes/projects.js";
 import expenseRoutes from "./routes/expenses.js";
 import receiptRoutes from "./routes/receipts.js";
-import batchRoutes from "./routes/batches.js";
-import exportRoutes from "./routes/exports.js";
 import { logError } from "./utils/logger.js";
 
 // 创建 Hono 应用实例
@@ -276,8 +272,6 @@ app.use("/api/v1/*", authMiddleware);
  * - /api/v1/projects - 项目管理（CRUD）
  * - /api/v1/expenses - 费用管理
  * - /api/v1/receipts - 票据管理
- * - /api/v1/batches - 批次管理
- * - /api/v1/exports - 导出管理
  *
  * 【路由参数说明】
  * - projectRoutes 挂载到 /api/v1/projects
@@ -291,8 +285,6 @@ app.use("/api/v1/*", authMiddleware);
 app.route("/api/v1/projects", projectRoutes);
 app.route("/api/v1", expenseRoutes);
 app.route("/api/v1", receiptRoutes);
-app.route("/api/v1", batchRoutes);
-app.route("/api/v1", exportRoutes);
 
 /**
  * 404 处理器

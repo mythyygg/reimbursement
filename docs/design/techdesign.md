@@ -486,9 +486,6 @@ C) 后端方案（Backend Plan）：**架构、数据模型、核心流程、API
 
 ### 4.6 导出
 
-- `POST /batches/{batch_id}/exports`（type: csv|zip|pdf）
-- `GET /exports/{export_id}`
-- `POST /exports/{export_id}/download-url`（记录下载）
 
 ### 4.7 设置
 

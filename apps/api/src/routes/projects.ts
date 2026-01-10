@@ -40,14 +40,14 @@
  * - 所有操作都需要认证（authMiddleware）
  * - 用户只能操作自己的项目（userId 过滤）
  * - 归档项目不会被删除，可以恢复
- * - 删除项目前必须先删除关联的费用、票据和导出批次
+ * - 删除项目前必须先删除关联的费用、票据
  * - 项目名称不能为空
  */
 
 import { Hono } from "hono";
 import { z } from "zod"; // Zod 验证库
 import { and, desc, eq, ilike, isNull, or, sql, type SQL } from "drizzle-orm"; // Drizzle ORM 查询构建器
-import { projects, receipts, expenses, batches } from "../db/index.js";
+import { projects, receipts, expenses } from "../db/index.js";
 import { db } from "../db/client.js";
 import { errorResponse, ok } from "../utils/http.js";
 
@@ -513,9 +513,8 @@ router.post(":projectId/archive", async (c) => {
  *     // 检查是否有关联数据
  *     long expenseCount = expenseRepository.countByProjectId(projectId);
  *     long receiptCount = receiptRepository.countByProjectIdAndDeletedAtIsNull(projectId);
- *     long batchCount = batchRepository.countByProjectId(projectId);
  *
- *     if (expenseCount > 0 || receiptCount > 0 || batchCount > 0) {
+ *     if (expenseCount > 0 || receiptCount > 0) {
  *         throw new BadRequestException(
  *             "Cannot delete project with existing data"
  *         );
@@ -527,13 +526,13 @@ router.post(":projectId/archive", async (c) => {
  * ```
  *
  * 【业务规则】
- * - 只能删除空项目（没有费用、票据、导出批次）
+ * - 只能删除空项目（没有费用、票据）
  * - 防止误删除导致数据丢失
  * - 如果有关联数据，必须先删除关联数据
  *
  * 【处理流程】
  * 1. 验证项目存在且属于当前用户
- * 2. 统计关联的费用、票据、导出批次数量
+ * 2. 统计关联的费用、票据数量
  * 3. 如果有任何关联数据，返回错误
  * 4. 删除项目
  *
@@ -544,7 +543,7 @@ router.post(":projectId/archive", async (c) => {
  *
  * 【性能优化】
  * - 添加详细的性能日志
- * - 分别统计三种关联数据的数量
+ * - 分别统计两种关联数据的数量
  * - 记录每个查询的耗时，便于排查慢查询
  *
  * 【错误响应】
@@ -584,27 +583,18 @@ router.delete(":projectId", async (c) => {
     .where(and(eq(receipts.projectId, projectId), isNull(receipts.deletedAt)));
   console.log(`[projects] [DB] 查询票据数量耗时: ${Date.now() - t1}ms - ${receiptCount?.count ?? 0} 张`);
 
-  // 4. 检查项目下是否有导出批次
-  t1 = Date.now();
-  const [batchCount] = await db
-    .select({ count: sql<number>`count(*)` })
-    .from(batches)
-    .where(eq(batches.projectId, projectId));
-  console.log(`[projects] [DB] 查询导出数量耗时: ${Date.now() - t1}ms - ${batchCount?.count ?? 0} 个`);
-
-  // 5. 判断是否有关联数据
+  // 4. 判断是否有关联数据
   // 【空值合并】?? 0 - 如果 count 为 undefined，使用 0
   const hasData =
     (expenseCount?.count ?? 0) > 0 ||
-    (receiptCount?.count ?? 0) > 0 ||
-    (batchCount?.count ?? 0) > 0;
+    (receiptCount?.count ?? 0) > 0;
 
   if (hasData) {
     return errorResponse(
       c,
       400,
       "PROJECT_HAS_DATA",
-      "Cannot delete project with existing data. Please delete all expenses, receipts, and exports first."
+      "Cannot delete project with existing data. Please delete all expenses and receipts first."
     );
   }
 

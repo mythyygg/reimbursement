@@ -114,7 +114,7 @@ export default function ProjectCard({
         )}
         {/* 票据数 - 灰色 */}
         <span className="inline-flex items-center gap-1 rounded-full bg-surface-2 px-2.5 py-0.5 text-xs font-medium text-text-secondary">
-          未导出 {project.receiptCount ?? 0}
+          票据 {project.receiptCount ?? 0}
         </span>
       </div>
 

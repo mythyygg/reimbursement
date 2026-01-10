@@ -382,48 +382,6 @@ paths:
             application/json:
               schema:
                 $ref: ./openapi_components_core.yaml#/components/schemas/Batch
-  /batches/{batch_id}/exports:
-    post:
-      summary: Create export
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/batch_id
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: ./openapi_components_requests.yaml#/components/schemas/ExportCreateRequest
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/ExportRecord
-  /exports/{export_id}:
-    get:
-      summary: Get export record
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/export_id
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/ExportRecord
-  /exports/{export_id}/download-url:
-    post:
-      summary: Create export download url
-      parameters:
-        - $ref: ./openapi_components_core.yaml#/components/parameters/export_id
-      responses:
-        "200":
-          description: OK
-          content:
-            application/json:
-              schema:
-                $ref: ./openapi_components_core.yaml#/components/schemas/DownloadUrlResponse
 components:
   securitySchemes:
     bearerAuth:

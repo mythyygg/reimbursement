@@ -15,10 +15,6 @@ export default function ProjectsPage() {
   const [description, setDescription] = useState("");
   const [creating, setCreating] = useState(false);
   const [nameError, setNameError] = useState("");
-  const [isSelectMode, setIsSelectMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [showExportOptions, setShowExportOptions] = useState(false);
-  const [exporting, setExporting] = useState(false);
 
   const { showSuccess, showToast } = useToast();
   const { handleError } = useErrorHandler();
@@ -63,42 +59,11 @@ export default function ProjectsPage() {
       showSuccess("项目已删除");
     } catch (error: any) {
       if (error.message?.includes("PROJECT_HAS_DATA")) {
-        showToast("项目包含数据，请先删除所有费用、票据和导出", "error");
+        showToast("项目包含数据，请先删除所有费用和票据", "error");
       } else {
         handleError(error, "删除项目失败");
       }
     }
-  };
-
-  const handleExport = async (type: "csv" | "zip" | "pdf") => {
-    if (selectedIds.length === 0) return;
-
-    setExporting(true);
-    try {
-      await apiFetch("/projects/exports", {
-        method: "POST",
-        body: JSON.stringify({
-          type,
-          projectIds: selectedIds
-        })
-      });
-      showToast("导出任务已提交，请稍后在导出记录中查看", "info");
-      setIsSelectMode(false);
-      setSelectedIds([]);
-      setShowExportOptions(false);
-    } catch (error) {
-      handleError(error, "提交导出失败");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const toggleSelect = (projectId: string) => {
-    setSelectedIds(prev =>
-      prev.includes(projectId)
-        ? prev.filter(id => id !== projectId)
-        : [...prev, projectId]
-    );
   };
 
   const projects = (Array.isArray(data) ? data : []).filter(
@@ -114,70 +79,50 @@ export default function ProjectsPage() {
         {/* 头部 */}
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-2xl font-bold text-text-primary">项目</h1>
-          <div className="flex gap-2.5">
-            {!showForm && (
-              <button
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-all ${
-                  isSelectMode
-                    ? "bg-surface-0 border border-border text-text-secondary"
-                    : "bg-surface-0 border border-border text-text-secondary hover:border-primary/40"
-                }`}
-                onClick={() => {
-                  setIsSelectMode(!isSelectMode);
-                  setSelectedIds([]);
-                }}
-              >
-                {isSelectMode ? "取消" : "选择"}
-              </button>
-            )}
-            <button
-              className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary-hover transition-all active:scale-95 shadow-sm"
-              onClick={() => {
-                setShowForm((prev) => !prev);
-                if (isSelectMode) setIsSelectMode(false);
-              }}
-            >
-              + 新建
-            </button>
-          </div>
+          <button
+            className="rounded-full bg-primary px-5 py-2 text-sm font-bold text-white hover:bg-primary-hover transition-all active:scale-95 shadow-sm"
+            onClick={() => {
+              setShowForm((prev) => !prev);
+            }}
+          >
+            + 新建
+          </button>
         </div>
 
         {/* 搜索框 */}
-        {!isSelectMode && (
-          <div className="relative mb-6">
-            <svg
-              className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary"
-              width="18"
-              height="18"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+        <div className="relative mb-6">
+          <svg
+            className="absolute left-4 top-1/2 -translate-y-1/2 text-text-tertiary"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="11" cy="11" r="8" />
+            <path d="m21 21-4.35-4.35" />
+          </svg>
+          <input
+            className="h-11 w-full rounded-full border border-border bg-surface-0 pl-11 pr-4 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none transition-all"
+            placeholder="搜索项目名称或项目号..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+          />
+          {search && (
+            <button
+              onClick={() => setSearch("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-2 rounded-full transition-colors"
             >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-            <input
-              className="h-11 w-full rounded-full border border-border bg-surface-0 pl-11 pr-4 text-sm placeholder:text-text-tertiary focus:border-primary focus:outline-none transition-all"
-              placeholder="搜索项目名称或项目号..."
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-surface-2 rounded-full transition-colors"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            )}
-          </div>
-        )}
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          )}
+        </div>
 
         {/* 新建表单 */}
         {showForm && (
@@ -245,9 +190,8 @@ export default function ProjectsPage() {
                   <ProjectCard
                     key={project.projectId}
                     project={project}
-                    isSelectMode={isSelectMode}
-                    isSelected={selectedIds.includes(project.projectId)}
-                    onToggleSelect={() => toggleSelect(project.projectId)}
+                    isSelectMode={false}
+                    isSelected={false}
                     onDelete={() => deleteProject(project.projectId)}
                   />
                 ))}
@@ -270,9 +214,8 @@ export default function ProjectsPage() {
                   <ProjectCard
                     key={project.projectId}
                     project={project}
-                    isSelectMode={isSelectMode}
-                    isSelected={selectedIds.includes(project.projectId)}
-                    onToggleSelect={() => toggleSelect(project.projectId)}
+                    isSelectMode={false}
+                    isSelected={false}
                     onDelete={() => deleteProject(project.projectId)}
                   />
                 ))}
@@ -281,91 +224,6 @@ export default function ProjectsPage() {
           )}
         </div>
       </div>
-
-      {/* 导出操作栏 */}
-      {isSelectMode && selectedIds.length > 0 && (
-        <div className="fixed bottom-24 left-1/2 -translate-x-1/2 lg:bottom-8">
-          <button
-            onClick={() => setShowExportOptions(true)}
-            className="flex items-center gap-2.5 rounded-full bg-primary px-8 py-4 text-sm font-bold text-white shadow-xl hover:bg-primary-hover active:scale-95 transition-all"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            导出 {selectedIds.length} 个项目
-          </button>
-        </div>
-      )}
-
-      {/* 导出选项弹窗 */}
-      {showExportOptions && (
-        <div
-          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 backdrop-blur-sm sm:items-center sm:p-4"
-          onClick={() => setShowExportOptions(false)}
-        >
-          <div
-            className="w-full max-w-md bg-surface-0 rounded-t-3xl p-6 shadow-2xl sm:max-w-lg sm:rounded-3xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-6 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-text-primary">选择导出格式</h2>
-              <button
-                onClick={() => setShowExportOptions(false)}
-                className="rounded-full p-2 hover:bg-surface-2 transition-colors"
-              >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-            <div className="grid grid-cols-3 gap-3">
-              <button
-                disabled={exporting}
-                onClick={() => handleExport("csv")}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
-              >
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                </div>
-                <span className="text-xs font-bold text-text-primary">CSV表格</span>
-              </button>
-              <button
-                disabled={exporting}
-                onClick={() => handleExport("zip")}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
-              >
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M21.5 13v6a2 2 0 0 1-2 2h-15a2 2 0 0 1-2-2v-6" />
-                    <polyline points="7 8 12 3 17 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                </div>
-                <span className="text-xs font-bold text-text-primary">ZIP压缩</span>
-              </button>
-              <button
-                disabled={exporting}
-                onClick={() => handleExport("pdf")}
-                className="flex flex-col items-center gap-3 p-5 rounded-2xl bg-surface-1 hover:bg-surface-2 transition-all disabled:opacity-50"
-              >
-                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                    <polyline points="14 2 14 8 20 8" />
-                  </svg>
-                </div>
-                <span className="text-xs font-bold text-text-primary">PDF文档</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <BottomNav />
     </div>
