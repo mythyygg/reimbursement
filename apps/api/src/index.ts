@@ -98,13 +98,28 @@ app.use("*", securityHeadersMiddleware);
  * 例如：前端在 localhost:3001，后端在 localhost:8787
  */
 const isProduction = process.env.NODE_ENV === "production";
+const normalizedAllowedOrigins = config.corsAllowedOrigins.map((entry) => {
+  try {
+    // Normalize to origin to avoid trailing slash / protocol-case mismatches
+    return new URL(entry).origin;
+  } catch {
+    return entry.replace(/\/$/, "");
+  }
+});
 const corsOptions = isProduction
   ? {
       origin: (origin: string | undefined) => {
         if (!origin) {
           return undefined;
         }
-        return config.corsAllowedOrigins.includes(origin) ? origin : undefined;
+        const normalized = (() => {
+          try {
+            return new URL(origin).origin;
+          } catch {
+            return origin.replace(/\/$/, "");
+          }
+        })();
+        return normalizedAllowedOrigins.includes(normalized) ? origin : undefined;
       },
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
       allowHeaders: ["Content-Type", "Authorization"],
