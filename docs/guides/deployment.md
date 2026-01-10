@@ -93,8 +93,9 @@ export const PATCH = handle(app);
 export const DELETE = handle(app);
 ```
 
-并在 Vercel 创建独立项目指向 `apps/api`：
-- Build Command: `npm --workspace apps/api run build`（如需 Edge 专用构建，可改为 bundler 步骤）
+并在 Vercel 创建独立项目指向 `apps/api`（Root Directory = `apps/api`）：
+- Install Command: `cd ../.. && npm install`（使用根目录 lockfile / workspaces）
+- Build Command: `cd ../.. && npm --workspace apps/api run build`（如需 Edge 专用构建，可改为 bundler 步骤）
 - Output / Functions: 自动由 `api/` 路由生成；若使用上方入口，可在根创建 `api/[[...route]]/route.ts` 代理至 `vercel.ts`。
 - Env: 填写表格中的后端变量。
 
@@ -198,7 +199,7 @@ docker run -d --name reimbursement-api -p 8787:8787 \
 
 1. Vercel Dashboard -> Add New Project -> 导入 `reimbursement`。
 2. **Framework Preset**: `Next.js`。
-3. **Root Directory**: 保持默认 `./` (由根目录 `vercel.json` 控制构建)。
+3. **Root Directory**: 选择 `apps/web`（读取 `apps/web/vercel.json`）。
 
 ### 步骤 3.2：环境变量
 
@@ -207,7 +208,7 @@ docker run -d --name reimbursement-api -p 8787:8787 \
 
 ### 步骤 3.3：部署
 
-- 点击 Deploy（仓库根目录已有 `vercel.json`，自动执行 `npm --workspace apps/web run build`）。
+- 点击 Deploy（`apps/web/vercel.json` 已配置从仓库根执行 `npm install` + workspace build）。
 - 部署成功后，绑定自定义域名（如 `m-reimburse.example.com`）。
 
 ---
