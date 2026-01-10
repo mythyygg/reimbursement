@@ -122,13 +122,27 @@ const corsOptions = isProduction
         return normalizedAllowedOrigins.includes(normalized) ? origin : undefined;
       },
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization"],
+      allowHeaders: [
+        "content-type",
+        "authorization",
+        "x-requested-with",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+      ],
       maxAge: 86400,
     }
   : {
       origin: (origin: string | undefined) => origin ?? "*",
       allowMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-      allowHeaders: ["Content-Type", "Authorization"],
+      allowHeaders: [
+        "content-type",
+        "authorization",
+        "x-requested-with",
+        "Content-Type",
+        "Authorization",
+        "X-Requested-With",
+      ],
     };
 
 app.use("*", cors(corsOptions));
