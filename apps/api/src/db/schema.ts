@@ -57,7 +57,7 @@
  * 【注意】
  * - 本文件定义表结构（DDL），不包含数据操作（DML）
  * - 类似 JPA 的实体类，但只定义结构，不包含业务逻辑
- * - 所有表都由 apps/api（含内置 worker）共享使用
+ * - 所有表都由 apps/api 共享使用
  */
 
 import {
@@ -280,7 +280,6 @@ export const expenseReceipts = pgTable(
  * @description
  * - 以 userId 为主键，每个用户一条记录
  * - matchRulesJson 存储票据与费用的匹配规则（日期窗口、金额容差等）
- *
  */
 export const settings = pgTable("settings", {
   /** 用户ID - 主键 */

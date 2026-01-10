@@ -7,7 +7,6 @@
 - 📝 记录垫付支出（金额、日期、备注等）
 - 📎 收纳票据（截图、文件、PDF 等）
 - 🔗 智能匹配支出和票据
-- 📦 批量导出报销包（CSV + ZIP）
 
 **移动端优先设计**：可以在手机上快速录入支出和上传票据。
 
@@ -20,7 +19,7 @@
 ```
 reimbursement/
 ├── apps/                    # 应用层
-│   ├── api/                # 后端 API 服务（含内置 worker 循环）
+│   ├── api/                # 后端 API 服务
 │   └── web/                # 前端 Web 应用 (Next.js)
 ├── packages/               # 共享代码
 │   └── shared/             # 数据库 schema、类型定义、工具函数
@@ -45,11 +44,6 @@ reimbursement/
 - **PostgreSQL**: 关系型数据库
 - **MinIO**: 对象存储（兼容 AWS S3 API）
 
-#### 后台任务（内置于 apps/api）
-
-- 复用数据库表 backendJobs 轮询，处理批次检查、导出 CSV/ZIP 等耗时任务
-- 通过环境变量 `START_WORKER=true` 控制是否在 API 进程中启动循环
-
 #### 共享代码 (packages/shared)
 
 - 数据库表结构定义 (Drizzle schema)
@@ -68,8 +62,6 @@ reimbursement/
 PostgreSQL 数据库 - localhost:5432
     ↓ 存储文件
 MinIO 对象存储 - localhost:9000
-    ↓ 后台任务
-Worker (BullMQ) - 处理导出等耗时操作
 ```
 
 ## 核心概念（业务逻辑）
@@ -97,12 +89,6 @@ Worker (BullMQ) - 处理导出等耗时操作
 - 系统会智能推荐票据和支出的匹配关系
 - 根据金额、日期、类别等信息计算相似度
 - **必须人工确认**才会真正绑定
-
-### 5. 批次导出 (Batch Export)
-
-- 选择日期范围内的支出
-- 生成 CSV 清单 + ZIP 压缩包（包含所有票据）
-- 可以直接提交给财务部门
 
 ## 快速开始
 
@@ -150,9 +136,6 @@ npm run dev:web
 # 只启动后端 API
 npm run dev:api
 
-# 启动 API 并在同进程运行 Worker
-START_WORKER=true npm run dev:api
-
 # 数据库迁移
 npm run db:generate    # 生成迁移文件
 npm run db:migrate     # 执行迁移
@@ -177,11 +160,6 @@ npm run db:studio      # 打开 Drizzle Studio 可视化管理数据库
   - `login/`: 登录页面
 - `components/`: React 组件
 - `lib/`: 工具函数和 API 客户端
-
-#### apps/api/src/worker/
-
-- `jobs/`: 后台任务定义（批次检查、导出）
-- `services/`: 任务使用的存储等服务
 
 #### packages/shared/
 
