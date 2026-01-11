@@ -1,6 +1,6 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "framework": "hono",
-    "installCommand": "cd ../.. && npm install",
-    "buildCommand": "cd ../.. && npm --workspace apps/api run build"
+    "installCommand": "npm install",
+    "buildCommand": "npm run build"
 }
