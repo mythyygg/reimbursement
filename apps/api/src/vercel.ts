@@ -2,7 +2,7 @@ import app from "./index";
 import { handle } from "hono/vercel";
 
 // Vercel Node.js runtime (serverless). Edge is not suitable because we rely on Node APIs (pg, aws-sdk).
-export const runtime = "nodejs";
+export const config = { runtime: "nodejs" };
 
 // Shared handler for all HTTP methods.
 export const handler = handle(app);
