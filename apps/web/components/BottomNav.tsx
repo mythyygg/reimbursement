@@ -32,7 +32,7 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-surface-0 border-t border-border lg:hidden"
+      className="fixed bottom-0 left-0 right-0 bg-surface-0/95 backdrop-blur-lg border-t border-border lg:hidden shadow-soft-lg"
       style={{
         paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
       }}
@@ -45,18 +45,18 @@ export default function BottomNav() {
               <Link
                 key={tab.href}
                 href={tab.href}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
+                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all duration-200 ease-out cursor-pointer ${
                   active
                     ? "text-primary"
-                    : "text-text-tertiary hover:text-text-secondary"
+                    : "text-text-tertiary hover:text-text-secondary hover:bg-surface-2/50"
                 }`}
               >
-                <div className="transition-transform active:scale-90">
+                <div className="transition-transform duration-200 active:scale-90">
                   {tab.icon(active)}
                 </div>
                 <span
-                  className={`text-xs font-medium transition-all ${
-                    active ? "font-bold" : ""
+                  className={`text-xs transition-all duration-200 ${
+                    active ? "font-semibold" : "font-medium"
                   }`}
                 >
                   {tab.label}

@@ -15,10 +15,10 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
-  `connect-src 'self' ${apiOrigin}`.trim(),
+  `connect-src 'self' ${apiOrigin} https://*.r2.cloudflarestorage.com`.trim(),
   "img-src 'self' data: blob: https:",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' https://fonts.gstatic.com data:",
+  "style-src 'self' 'unsafe-inline'",
+  "font-src 'self' data:",
   "script-src 'self' 'unsafe-inline'",
 ].join("; ");
 

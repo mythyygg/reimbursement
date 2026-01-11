@@ -3,35 +3,37 @@
 @tailwind utilities;
 
 :root {
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
 }
 
 :root {
-  /* Surface Colors - 清爽的背景层次 */
+  /* Surface Colors - 清爽的背景层次（Soft UI Evolution） */
   --surface-0: 255 255 255;
-  --surface-1: 249 250 251;
-  --surface-2: 243 244 246;
-  --surface-highlight: 240 253 244;
+  --surface-1: 248 250 252;
+  --surface-2: 241 245 249;
+  --surface-3: 226 232 240;
+  --surface-highlight: 236 253 245;
 
-  /* Border Colors - 精细的边框层次 */
-  --border: 229 231 235;
-  --border-light: 243 244 246;
-  --border-strong: 209 213 219;
+  /* Border Colors - 精细的边框层次（改进对比度） */
+  --border: 226 232 240;
+  --border-light: 241 245 249;
+  --border-strong: 203 213 225;
 
-  /* Text Colors - 清晰的文本层次 */
-  --text-primary: 17 24 39;
-  --text-secondary: 107 114 128;
-  --text-tertiary: 156 163 175;
+  /* Text Colors - 清晰的文本层次（WCAG AA+） */
+  --text-primary: 15 23 42;
+  --text-secondary: 71 85 105;
+  --text-tertiary: 148 163 184;
 
-  /* Brand Colors - 现代绿色主题 */
-  --primary: 16 185 129;
-  --primary-hover: 5 150 105;
-  --primary-light: 209 250 229;
+  /* Brand Colors - 现代蓝色主题（专业可信赖） */
+  --primary: 37 99 235;
+  --primary-hover: 29 78 216;
+  --primary-light: 219 234 254;
+  --primary-dark: 30 64 175;
 
-  /* Semantic Colors - 清晰的语义色 */
-  --success: 16 185 129;
-  --success-light: 209 250 229;
-  --warning: 245 158 11;
+  /* Semantic Colors - 现代语义色系 */
+  --success: 34 197 94;
+  --success-light: 220 252 231;
+  --warning: 251 146 60;
   --warning-light: 254 243 199;
   --danger: 239 68 68;
   --danger-light: 254 226 226;
@@ -51,7 +53,7 @@ body {
 
 body {
   margin: 0;
-  font-family: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   background: rgb(var(--surface-1));
   color: rgb(var(--text-primary));
   overflow-x: hidden;
@@ -68,11 +70,11 @@ button {
   font-family: inherit;
 }
 
-/* 动画系统 - 更流畅的动画效果 */
+/* 动画系统 - 更流畅的动画效果（Soft UI Evolution + UX最佳实践） */
 @keyframes fade-up {
   0% {
     opacity: 0;
-    transform: translateY(12px);
+    transform: translateY(8px);
   }
   100% {
     opacity: 1;
@@ -92,7 +94,7 @@ button {
 @keyframes scale-in {
   0% {
     opacity: 0;
-    transform: scale(0.96);
+    transform: scale(0.97);
   }
   100% {
     opacity: 1;
@@ -103,7 +105,7 @@ button {
 @keyframes slide-up {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(16px);
   }
   100% {
     opacity: 1;
@@ -114,7 +116,7 @@ button {
 @keyframes slide-down {
   0% {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-16px);
   }
   100% {
     opacity: 1;
@@ -122,24 +124,25 @@ button {
   }
 }
 
+/* 使用UX最佳实践的缓动函数 */
 .animate-fade-up {
-  animation: fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: fade-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-fade-in {
-  animation: fade-in 0.3s ease both;
+  animation: fade-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-scale-in {
-  animation: scale-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: scale-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-slide-up {
-  animation: slide-up 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slide-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 .animate-slide-down {
-  animation: slide-down 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation: slide-down 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 /* 无障碍 - 尊重用户的动画偏好 */
@@ -157,6 +160,15 @@ button {
 button,
 a {
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* 现代按钮样式增强 */
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
 }
 
 /* 自定义滚动条（仅webkit浏览器） */

@@ -43,7 +43,7 @@ export default function ProjectCard({
                 e.preventDefault();
                 setShowMenu(!showMenu);
               }}
-              className="p-1 hover:bg-surface-2 rounded-lg transition-colors"
+              className="p-1.5 hover:bg-surface-2 rounded-lg transition-colors duration-200 cursor-pointer"
             >
               <svg
                 width="16"
@@ -58,14 +58,14 @@ export default function ProjectCard({
               </svg>
             </button>
             {showMenu && (
-              <div className="absolute right-0 top-full mt-1 w-32 bg-surface-0 border border-border rounded-xl shadow-lg py-1 z-10">
+              <div className="absolute right-0 top-full mt-1 w-32 bg-surface-0 border border-border rounded-xl shadow-soft-lg py-1 z-10 animate-fade-in">
                 <button
                   onClick={(e) => {
                     e.preventDefault();
                     onDelete?.();
                     setShowMenu(false);
                   }}
-                  className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-light/50 transition-colors"
+                  className="w-full px-3 py-2 text-left text-sm text-danger hover:bg-danger-light/50 transition-colors duration-200 cursor-pointer"
                 >
                   删除
                 </button>
@@ -140,10 +140,10 @@ export default function ProjectCard({
     return (
       <div
         onClick={onToggleSelect}
-        className={`rounded-2xl border p-4 cursor-pointer transition-all ${
+        className={`rounded-2xl border p-4 cursor-pointer transition-all duration-200 ease-out ${
           isSelected
-            ? "border-primary bg-primary-light/20 shadow-sm"
-            : "border-border bg-surface-0 hover:border-primary/30"
+            ? "border-primary bg-primary-light/30 shadow-soft"
+            : "border-border bg-surface-0 hover:border-primary/40 hover:shadow-soft"
         }`}
       >
         {cardContent}
@@ -154,7 +154,7 @@ export default function ProjectCard({
   return (
     <Link
       href={`/projects/${project.projectId}/expenses`}
-      className="block rounded-2xl border border-border bg-surface-0 p-4 transition-all hover:border-primary/40 hover:shadow-sm"
+      className="block rounded-2xl border border-border bg-surface-0 p-4 shadow-card transition-all duration-200 ease-out hover:border-primary/40 hover:shadow-card-hover cursor-pointer"
       onClick={() => setShowMenu(false)}
     >
       {cardContent}

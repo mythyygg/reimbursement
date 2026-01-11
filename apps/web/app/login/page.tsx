@@ -89,32 +89,41 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-surface-1 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-surface-0 p-6 shadow-sm">
-        <h1 className="text-xl font-semibold mb-2">报销助手</h1>
-        <p className="text-sm text-text-secondary mb-6">
+      <div className="w-full max-w-md rounded-2xl bg-surface-0 p-8 shadow-soft-lg animate-fade-up">
+        <h1 className="text-2xl font-bold mb-2 text-text-primary">报销助手</h1>
+        <p className="text-sm text-text-secondary mb-8">
           {mode === "login" ? "登录以继续" : "创建新账号"}
         </p>
-        <div className="flex gap-2 mb-6">
+        <div className="flex gap-2 mb-8 p-1 bg-surface-2 rounded-xl">
           <button
-            className={`flex-1 rounded-full px-3 py-2 text-sm ${mode === "login" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
-              }`}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out cursor-pointer ${
+              mode === "login"
+                ? "bg-surface-0 text-primary shadow-soft"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
+            }`}
             onClick={() => setMode("login")}
           >
             登录
           </button>
           <button
-            className={`flex-1 rounded-full px-3 py-2 text-sm ${mode === "register" ? "bg-primary text-white" : "bg-surface-1 text-text-secondary"
-              }`}
+            className={`flex-1 rounded-lg px-4 py-2.5 text-sm font-semibold transition-all duration-200 ease-out cursor-pointer ${
+              mode === "register"
+                ? "bg-surface-0 text-primary shadow-soft"
+                : "bg-transparent text-text-secondary hover:text-text-primary"
+            }`}
             onClick={() => setMode("register")}
           >
             注册
           </button>
         </div>
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-4">
           <div>
             <input
-              className={`h-11 w-full rounded-xl border px-3 text-sm ${errors.emailOrPhone ? "border-danger" : "border-border"
-                }`}
+              className={`h-12 w-full rounded-xl border px-4 text-sm transition-all duration-200 focus:outline-none focus:ring-2 ${
+                errors.emailOrPhone
+                  ? "border-danger bg-danger-light/50 focus:border-danger focus:ring-danger/20"
+                  : "border-border bg-surface-1 focus:border-primary focus:ring-primary/20"
+              }`}
               placeholder="邮箱或手机号"
               value={emailOrPhone}
               onChange={(event) => handleEmailOrPhoneChange(event.target.value)}
@@ -124,16 +133,19 @@ export default function LoginPage() {
               aria-describedby={errors.emailOrPhone ? "email-error" : undefined}
             />
             {errors.emailOrPhone ? (
-              <p id="email-error" className="mt-1 text-xs text-danger">
+              <p id="email-error" className="mt-1.5 text-xs text-danger font-medium">
                 {errors.emailOrPhone}
               </p>
             ) : null}
           </div>
           <div>
             <input
-              className={`h-11 w-full rounded-xl border px-3 text-sm ${errors.password ? "border-danger" : "border-border"
-                }`}
-              placeholder="密码"
+              className={`h-12 w-full rounded-xl border px-4 text-sm transition-all duration-200 focus:outline-none focus:ring-2 ${
+                errors.password
+                  ? "border-danger bg-danger-light/50 focus:border-danger focus:ring-danger/20"
+                  : "border-border bg-surface-1 focus:border-primary focus:ring-primary/20"
+              }`}
+              placeholder="密码（至少8位）"
               type="password"
               value={password}
               onChange={(event) => handlePasswordChange(event.target.value)}
@@ -148,13 +160,13 @@ export default function LoginPage() {
               aria-describedby={errors.password ? "password-error" : undefined}
             />
             {errors.password ? (
-              <p id="password-error" className="mt-1 text-xs text-danger">
+              <p id="password-error" className="mt-1.5 text-xs text-danger font-medium">
                 {errors.password}
               </p>
             ) : null}
           </div>
           <button
-            className="h-11 rounded-xl bg-primary text-white text-sm disabled:bg-primary/40 disabled:cursor-not-allowed"
+            className="h-12 rounded-xl bg-primary text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed hover:bg-primary-hover transition-all duration-200 ease-out active:scale-[0.98] shadow-soft cursor-pointer"
             onClick={submit}
             disabled={loading}
           >

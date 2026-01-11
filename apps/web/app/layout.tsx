@@ -8,19 +8,11 @@
 // 导入全局样式（TailwindCSS + 自定义样式）
 import "./globals.css";
 
-import { Manrope } from "next/font/google";
-
 // 导入 Providers 组件（用于注入全局状态管理、主题等）
 import Providers from "./providers";
 
 // ReactNode 是 React 的类型定义，表示可以渲染的内容（组件、文本、数字等）
 import type { ReactNode } from "react";
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["500", "600", "700", "800"],
-  display: "swap",
-});
 
 /**
  * metadata - 页面元数据
@@ -74,8 +66,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     // lang="zh-CN": 设置页面语言为中文
     // suppressHydrationWarning: 抑制 Next.js 的 hydration 警告（服务端渲染和客户端渲染可能有细微差异）
     <html lang="zh-CN" suppressHydrationWarning>
-      {/* body 标签 */}
-      <body suppressHydrationWarning className={manrope.className}>
+      {/* body 标签 - 使用系统字体 */}
+      <body suppressHydrationWarning className="font-sans">
         {/*
           Providers 组件包裹所有内容
           它提供了：
