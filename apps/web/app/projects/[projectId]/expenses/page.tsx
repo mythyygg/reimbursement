@@ -245,8 +245,8 @@ export default function ExpensesPage() {
         </div>
       </div>
 
-      <div className="fixed bottom-16 left-0 right-0 z-10 lg:hidden">
-        <div className="mx-auto max-w-md px-4 pb-4">
+      <div className="fixed bottom-20 left-0 right-0 z-10 lg:hidden pb-safe">
+        <div className="mx-auto max-w-md px-4 pb-2">
           <QuickAddForm
             amount={amount}
             note={note}
@@ -320,7 +320,7 @@ function QuickAddForm({
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-base font-bold text-primary lg:text-sm">¥</span>
             <input
               className={`h-12 w-full rounded-2xl border-2 pl-8 pr-3 text-right text-sm font-bold transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none lg:h-10 lg:bg-surface-1 lg:text-sm lg:font-semibold ${
-                errors.amount ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary lg:border-border lg:bg-surface-1"
+                errors.amount ? "border-danger bg-danger-light" : "border-primary/20 bg-white focus:border-primary lg:border-border lg:bg-surface-1"
               }`}
               placeholder="0.00"
               inputMode="decimal"
@@ -335,7 +335,7 @@ function QuickAddForm({
           <span className="hidden w-12 text-xs font-semibold text-text-secondary lg:inline">描述</span>
           <input
             className={`h-12 w-full rounded-2xl border-2 px-4 text-sm transition-all focus:ring-4 focus:ring-primary/10 focus:outline-none lg:h-10 lg:bg-surface-1 ${
-              errors.note ? "border-danger bg-danger-light" : "border-transparent bg-surface-1 focus:border-primary lg:border-border"
+              errors.note ? "border-danger bg-danger-light" : "border-primary/20 bg-white focus:border-primary lg:border-border"
             }`}
             placeholder="描述报销事项..."
             value={note}

@@ -289,7 +289,7 @@ export function ReceiptCard({
                 <label className="text-xs font-medium text-text-secondary w-12 flex-shrink-0">日期</label>
                 <input
                   type="date"
-                  className="h-11 flex-1 rounded-xl border border-border bg-surface-0 px-3 text-xs focus:border-primary/40"
+                  className="h-11 flex-1 rounded-xl border border-border bg-surface-0 px-3 text-xs text-left focus:border-primary/40"
                   value={dateInput}
                   onChange={(event) => setDateInput(event.target.value)}
                   aria-label="日期"
