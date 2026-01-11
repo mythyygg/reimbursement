@@ -15,7 +15,7 @@ const contentSecurityPolicy = [
   "default-src 'self'",
   "base-uri 'self'",
   "frame-ancestors 'none'",
-  `connect-src 'self' ${apiOrigin} https://*.r2.cloudflarestorage.com`.trim(),
+  `connect-src 'self' ${apiOrigin} https://*.r2.cloudflarestorage.com https://s3-cf.caicaizi.xyz`.trim(),
   "img-src 'self' data: blob: https:",
   "style-src 'self' 'unsafe-inline'",
   "font-src 'self' data:",
